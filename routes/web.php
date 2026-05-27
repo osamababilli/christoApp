@@ -6,6 +6,7 @@ use App\Http\Controllers\MotorController;
 use App\Http\Controllers\PartController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\WorkshopDashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -23,6 +24,7 @@ Route::get('/', [WorkshopDashboardController::class, 'index'])->name('dashboard'
 
 // Motors
 Route::resource('motors', MotorController::class);
+Route::get('motors/{motor}/print', [MotorController::class, 'printView'])->name('motors.print');
 Route::patch('motors/{motor}/status', [MotorController::class, 'updateStatus'])->name('motors.update-status');
 Route::delete('motors-bulk', [MotorController::class, 'bulkDestroy'])->name('motors.bulk-destroy');
 
@@ -38,6 +40,10 @@ Route::get('/parts', [PartController::class, 'index'])->name('parts.index');
 Route::post('/parts', [PartController::class, 'store'])->name('parts.store');
 Route::put('/parts/{part}', [PartController::class, 'update'])->name('parts.update');
 Route::delete('/parts/{part}', [PartController::class, 'destroy'])->name('parts.destroy');
+
+// Transactions (payments per motor)
+Route::post('/motors/{motor}/transactions', [TransactionController::class, 'store'])->name('transactions.store');
+Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
 
 // Reports
 Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');

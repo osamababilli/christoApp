@@ -112,6 +112,7 @@ class MotorController extends Controller
         $motor->load([
             'customer',
             'maintenanceOrders.parts.supplier',
+            'transactions',
         ]);
 
         $suppliers = Supplier::orderBy('name')->get(['id', 'name'])
@@ -137,6 +138,14 @@ class MotorController extends Controller
                 'notes'            => $motor->notes,
                 'received_at'      => $motor->received_at?->format('Y-m-d H:i'),
                 'delivered_at'     => $motor->delivered_at?->format('Y-m-d H:i'),
+                'transactions' => $motor->transactions->sortByDesc('transaction_date')->values()->map(fn($t) => [
+                    'id'               => $t->id,
+                    'type'             => $t->type,
+                    'type_label'       => $t->type === 'payment' ? 'دفعة' : 'خصم',
+                    'amount'           => (float) $t->amount,
+                    'notes'            => $t->notes,
+                    'transaction_date' => $t->transaction_date->format('Y-m-d'),
+                ]),
                 'maintenance_orders' => $motor->maintenanceOrders->map(fn($o) => [
                     'id'           => $o->id,
                     'stage'        => $o->stage,
@@ -158,6 +167,56 @@ class MotorController extends Controller
                         'is_paid'       => $p->is_paid,
                         'supplier_name' => $p->supplier?->name,
                     ]),
+                ]),
+            ],
+        ]);
+    }
+
+    public function printView(Motor $motor): Response
+    {
+        $motor->load([
+            'customer',
+            'maintenanceOrders.parts.supplier',
+            'transactions',
+        ]);
+
+        return Inertia::render('print/motor', [
+            'motor' => [
+                'id'               => $motor->id,
+                'reference_number' => $motor->reference_number,
+                'customer'         => [
+                    'name'  => $motor->customer->name,
+                    'phone' => $motor->customer->phone,
+                ],
+                'brand'            => $motor->brand,
+                'model'            => $motor->model,
+                'status_label'     => Motor::statusLabel($motor->status),
+                'condition_label'  => $motor->condition_rating ? Motor::conditionLabel($motor->condition_rating) : null,
+                'notes'            => $motor->notes,
+                'received_at'      => $motor->received_at?->format('Y-m-d'),
+                'delivered_at'     => $motor->delivered_at?->format('Y-m-d'),
+                'maintenance_orders' => $motor->maintenanceOrders->map(fn($o) => [
+                    'id'           => $o->id,
+                    'stage'        => $o->stage,
+                    'description'  => $o->description,
+                    'started_at'   => $o->started_at?->format('Y-m-d'),
+                    'completed_at' => $o->completed_at?->format('Y-m-d'),
+                    'labor_cost'   => (float) $o->labor_cost,
+                    'status_label' => MaintenanceOrder::statusLabel($o->status),
+                    'parts'        => $o->parts->map(fn($p) => [
+                        'part_name'  => $p->part_name,
+                        'type_label' => Part::typeLabel($p->type),
+                        'quantity'   => (float) $p->quantity,
+                        'unit_cost'  => (float) $p->unit_cost,
+                        'total_cost' => (float) $p->total_cost,
+                        'supplier_name' => $p->supplier?->name,
+                    ]),
+                ]),
+                'transactions' => $motor->transactions->sortByDesc('transaction_date')->values()->map(fn($t) => [
+                    'type_label'       => $t->type === 'payment' ? 'دفعة' : 'خصم',
+                    'amount'           => (float) $t->amount,
+                    'notes'            => $t->notes,
+                    'transaction_date' => $t->transaction_date->format('Y-m-d'),
                 ]),
             ],
         ]);

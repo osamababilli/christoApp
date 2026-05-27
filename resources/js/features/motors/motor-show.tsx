@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { router, Link } from '@inertiajs/react';
+import { router, Link, useForm } from '@inertiajs/react';
 import {
     ArrowRight,
     Calendar,
@@ -34,11 +34,21 @@ import {
     Printer,
     Trash2,
     User,
+    Wallet,
     Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
 import { MaintenanceOrderForm } from '../maintenance/maintenance-order-form';
 import { PartForm } from '../parts/part-form';
+
+interface Transaction {
+    id: number;
+    type: 'payment' | 'discount';
+    type_label: string;
+    amount: number;
+    notes: string | null;
+    transaction_date: string;
+}
 
 interface Part {
     id: number;
@@ -78,6 +88,7 @@ interface Motor {
     notes: string | null;
     received_at: string;
     delivered_at: string | null;
+    transactions: Transaction[];
     maintenance_orders: MaintenanceOrder[];
 }
 
@@ -320,6 +331,235 @@ function PartsSection({ order, suppliers, onDeletePart }: { order: MaintenanceOr
     );
 }
 
+const paymentTypeConfig = {
+    payment:  { label: 'دفعة',  color: 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300',     active: 'ring-2 ring-green-400'  },
+    discount: { label: 'خصم',   color: 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300', active: 'ring-2 ring-purple-400' },
+};
+
+function PaymentsSection({ motor, grandTotal }: { motor: Motor; grandTotal: number }) {
+    const [showForm, setShowForm] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
+
+    const { data, setData, post, processing, errors, reset } = useForm({
+        type:             'payment' as 'payment' | 'discount',
+        amount:           '',
+        notes:            '',
+        transaction_date: new Date().toISOString().split('T')[0],
+    });
+
+    const totalPaid     = motor.transactions.filter((t) => t.type === 'payment').reduce((s, t) => s + t.amount, 0);
+    const totalDiscount = motor.transactions.filter((t) => t.type === 'discount').reduce((s, t) => s + t.amount, 0);
+    const totalCredited = totalPaid + totalDiscount;
+    const remaining     = grandTotal - totalCredited;
+
+    function submit(e: React.FormEvent) {
+        e.preventDefault();
+        post(`/motors/${motor.id}/transactions`, {
+            preserveScroll: true,
+            onSuccess: () => { reset(); setShowForm(false); },
+        });
+    }
+
+    function confirmDelete() {
+        if (!deleteTarget) return;
+        router.delete(`/transactions/${deleteTarget.id}`, { preserveScroll: true });
+        setDeleteTarget(null);
+    }
+
+    return (
+        <>
+            <Card>
+                <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <Wallet className="h-4 w-4 text-muted-foreground" />
+                            كشف الحساب
+                        </CardTitle>
+                        <Button size="sm" className="gap-1.5" onClick={() => setShowForm(!showForm)}>
+                            <Plus className="h-3.5 w-3.5" />
+                            إضافة دفعة
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+
+                    {/* Summary */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="rounded-xl border bg-muted/40 px-4 py-3">
+                            <p className="text-xs text-muted-foreground">إجمالي الفاتورة</p>
+                            <p className="mt-0.5 text-lg font-bold">{grandTotal.toFixed(2)}</p>
+                        </div>
+                        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 dark:border-green-900 dark:bg-green-950/30">
+                            <p className="text-xs text-green-700 dark:text-green-400">المدفوع</p>
+                            <p className="mt-0.5 text-lg font-bold text-green-700 dark:text-green-400">{totalCredited.toFixed(2)}</p>
+                        </div>
+                        <div className={cn(
+                            'rounded-xl border px-4 py-3',
+                            remaining <= 0
+                                ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30'
+                                : 'border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/30',
+                        )}>
+                            <p className={cn('text-xs', remaining <= 0 ? 'text-green-700 dark:text-green-400' : 'text-orange-700 dark:text-orange-400')}>
+                                المتبقي
+                            </p>
+                            <p className={cn('mt-0.5 text-lg font-bold', remaining <= 0 ? 'text-green-700 dark:text-green-400' : 'text-orange-700 dark:text-orange-400')}>
+                                {remaining <= 0 ? '✓ مسدد' : remaining.toFixed(2)}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Add payment form */}
+                    {showForm && (
+                        <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 space-y-3">
+                            <form onSubmit={submit} className="space-y-3">
+                                {/* Type chips */}
+                                <div className="flex gap-2">
+                                    {(Object.entries(paymentTypeConfig) as [string, typeof paymentTypeConfig.payment][]).map(([val, cfg]) => (
+                                        <button
+                                            key={val}
+                                            type="button"
+                                            onClick={() => setData('type', val as 'payment' | 'discount')}
+                                            className={cn(
+                                                'rounded-lg border px-4 py-1.5 text-sm font-semibold transition-all cursor-pointer',
+                                                cfg.color,
+                                                data.type === val && cfg.active,
+                                            )}
+                                        >
+                                            {data.type === val && <span className="me-1">✓</span>}
+                                            {cfg.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-muted-foreground">
+                                            المبلغ <span className="text-destructive">*</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0.01"
+                                            step="0.01"
+                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            placeholder="0.00"
+                                            value={data.amount}
+                                            onChange={(e) => setData('amount', e.target.value)}
+                                        />
+                                        {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-muted-foreground">التاريخ</label>
+                                        <input
+                                            type="date"
+                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            value={data.transaction_date}
+                                            onChange={(e) => setData('transaction_date', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-muted-foreground">ملاحظة</label>
+                                        <input
+                                            type="text"
+                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            placeholder="اختياري..."
+                                            value={data.notes}
+                                            onChange={(e) => setData('notes', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <Button type="submit" size="sm" className="flex-1 gap-2" disabled={processing}>
+                                        {processing ? <><Clock className="h-3.5 w-3.5 animate-spin" /> جاري الحفظ...</> : <><CheckCircle2 className="h-3.5 w-3.5" /> تسجيل</>}
+                                    </Button>
+                                    <Button type="button" variant="outline" size="sm" className="px-5" onClick={() => setShowForm(false)}>
+                                        إلغاء
+                                    </Button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+
+                    {/* Transactions list */}
+                    {motor.transactions.length > 0 && (
+                        <div className="overflow-x-auto rounded-lg border">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-muted/40">
+                                        <TableHead className="text-right text-xs">التاريخ</TableHead>
+                                        <TableHead className="text-right text-xs">النوع</TableHead>
+                                        <TableHead className="text-right text-xs">ملاحظة</TableHead>
+                                        <TableHead className="text-right text-xs">المبلغ</TableHead>
+                                        <TableHead className="w-8" />
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {motor.transactions.map((t) => (
+                                        <TableRow key={t.id}>
+                                            <TableCell className="text-sm text-muted-foreground">{t.transaction_date}</TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant="outline"
+                                                    className={cn('text-xs', t.type === 'payment'
+                                                        ? 'border-green-200 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300'
+                                                        : 'border-purple-200 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-300'
+                                                    )}
+                                                >
+                                                    {t.type_label}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">{t.notes ?? '—'}</TableCell>
+                                            <TableCell className="font-semibold text-sm">{t.amount.toFixed(2)}</TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-destructive hover:text-destructive"
+                                                    onClick={() => setDeleteTarget(t)}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+
+                    {motor.transactions.length === 0 && !showForm && (
+                        <p className="text-center text-sm text-muted-foreground py-4">لا توجد دفعات مسجلة</p>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Delete transaction confirmation */}
+            <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            سيتم حذف {deleteTarget?.type_label} بمبلغ{' '}
+                            <span className="font-bold text-foreground">{deleteTarget?.amount.toFixed(2)}</span>.
+                            <br />
+                            هذا الإجراء لا يمكن التراجع عنه.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={confirmDelete}
+                        >
+                            نعم، احذف
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
+    );
+}
+
 export function MotorShow({ motor, suppliers }: Props) {
     const [showAddMaintenance, setShowAddMaintenance]   = useState(false);
     const [deleteMaintenanceTarget, setDeleteMaintenanceTarget] = useState<MaintenanceOrder | null>(null);
@@ -417,10 +657,12 @@ export function MotorShow({ motor, suppliers }: Props) {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
-                                <Printer className="h-4 w-4" />
-                                طباعة
-                            </Button>
+                            <a href={`/motors/${motor.id}/print`} target="_blank" rel="noreferrer">
+                                <Button variant="outline" size="sm" className="gap-2">
+                                    <Printer className="h-4 w-4" />
+                                    طباعة
+                                </Button>
+                            </a>
                             <Link href={`/motors/${motor.id}/edit`}>
                                 <Button size="sm" className="gap-2">
                                     <Pencil className="h-4 w-4" />
@@ -500,7 +742,7 @@ export function MotorShow({ motor, suppliers }: Props) {
                             </div>
                             <Separator />
                             <div className="flex items-center justify-between rounded-lg border-2 border-primary/20 bg-primary/5 px-4 py-3">
-                                <span className="font-bold">الإجمالي</span>
+                                <span className="font-bold">إجمالي الفاتورة</span>
                                 <span className="text-xl font-bold text-primary">{grandTotal.toFixed(2)}</span>
                             </div>
                             <p className="text-center text-xs text-muted-foreground">
@@ -510,6 +752,9 @@ export function MotorShow({ motor, suppliers }: Props) {
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* ── Payments / Account ── */}
+                <PaymentsSection motor={motor} grandTotal={grandTotal} />
 
                 {/* ── Maintenance orders ── */}
                 <div className="space-y-4">

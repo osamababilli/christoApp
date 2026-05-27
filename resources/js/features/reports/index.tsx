@@ -3,22 +3,26 @@ import { Main } from '@/components/layout/main';
 import { ProfileDropdown } from '@/components/profile-dropdown';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { Link } from '@inertiajs/react';
+import { router, Link } from '@inertiajs/react';
 import {
     BarChart3,
     CheckCircle2,
     ClipboardList,
     Clock,
     DollarSign,
+    FilterX,
     Package,
     Truck,
     Users,
+    Wallet,
     Wrench,
 } from 'lucide-react';
+import { useState } from 'react';
 
 interface Financial {
     total_labor: number;
@@ -26,6 +30,7 @@ interface Financial {
     paid_parts: number;
     unpaid_parts: number;
     grand_total: number;
+    total_paid: number;
 }
 
 interface Totals {
@@ -59,19 +64,20 @@ interface Props {
     parts_by_type: PartByType[];
     recent_motors: RecentMotor[];
     totals: Totals;
+    filters: { date_from?: string; date_to?: string };
 }
 
 const motorStatusConfig: Record<string, { label: string; color: string; dot: string }> = {
-    in_workshop: { label: 'في الورشة',     color: 'border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-300',     dot: 'bg-blue-500'   },
-    in_progress: { label: 'قيد الإصلاح',  color: 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:border-yellow-800 dark:text-yellow-300', dot: 'bg-yellow-500' },
-    ready:       { label: 'جاهز للاستلام', color: 'border-green-200 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300',   dot: 'bg-green-500'  },
-    delivered:   { label: 'تم التسليم',    color: 'border-gray-200 bg-gray-50 text-gray-600 dark:bg-gray-800/40 dark:border-gray-700 dark:text-gray-300',         dot: 'bg-gray-400'   },
+    in_workshop: { label: 'في الورشة',      color: 'border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-300',           dot: 'bg-blue-500'   },
+    in_progress: { label: 'قيد الإصلاح',   color: 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:border-yellow-800 dark:text-yellow-300', dot: 'bg-yellow-500' },
+    ready:       { label: 'جاهز للاستلام', color: 'border-green-200 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300',       dot: 'bg-green-500'  },
+    delivered:   { label: 'تم التسليم',     color: 'border-gray-200 bg-gray-50 text-gray-600 dark:bg-gray-800/40 dark:border-gray-700 dark:text-gray-300',             dot: 'bg-gray-400'   },
 };
 
 const maintenanceStatusConfig: Record<string, { label: string; color: string; dot: string }> = {
     in_progress: { label: 'قيد التنفيذ', color: 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:border-yellow-800 dark:text-yellow-300', dot: 'bg-yellow-500' },
-    completed:   { label: 'مكتمل',       color: 'border-green-200 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300',       dot: 'bg-green-500'  },
-    on_hold:     { label: 'موقوف',        color: 'border-red-200 bg-red-50 text-red-700 dark:bg-red-950/40 dark:border-red-800 dark:text-red-300',                   dot: 'bg-red-500'    },
+    completed:   { label: 'مكتمل',       color: 'border-green-200 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300',         dot: 'bg-green-500'  },
+    on_hold:     { label: 'موقوف',        color: 'border-red-200 bg-red-50 text-red-700 dark:bg-red-950/40 dark:border-red-800 dark:text-red-300',                     dot: 'bg-red-500'    },
 };
 
 const typeColors: Record<string, string> = {
@@ -82,13 +88,7 @@ const typeColors: Record<string, string> = {
     other:     'bg-gray-100 text-gray-600 border-gray-200',
 };
 
-function StatCard({ icon: Icon, label, value, sub, color }: {
-    icon: React.ElementType;
-    label: string;
-    value: string | number;
-    sub?: string;
-    color: string;
-}) {
+function StatCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string | number; color: string }) {
     return (
         <Card>
             <CardContent className="flex items-center gap-4 p-5">
@@ -98,28 +98,19 @@ function StatCard({ icon: Icon, label, value, sub, color }: {
                 <div>
                     <p className="text-2xl font-bold">{value}</p>
                     <p className="text-sm text-muted-foreground">{label}</p>
-                    {sub && <p className="text-xs text-muted-foreground/70">{sub}</p>}
                 </div>
             </CardContent>
         </Card>
     );
 }
 
-function StatusBreakdown({ title, data, config }: {
-    title: string;
-    data: Record<string, number>;
-    config: Record<string, { label: string; color: string; dot: string }>;
-}) {
+function StatusBreakdown({ title, data, config }: { title: string; data: Record<string, number>; config: Record<string, { label: string; color: string; dot: string }> }) {
     const total = Object.values(data).reduce((s, n) => s + n, 0);
     return (
         <Card>
-            <CardHeader className="pb-3">
-                <CardTitle className="text-base">{title}</CardTitle>
-            </CardHeader>
+            <CardHeader className="pb-3"><CardTitle className="text-base">{title}</CardTitle></CardHeader>
             <CardContent className="space-y-2">
-                {total === 0 ? (
-                    <p className="text-sm text-muted-foreground">لا توجد بيانات</p>
-                ) : (
+                {total === 0 ? <p className="text-sm text-muted-foreground">لا توجد بيانات</p> : (
                     Object.entries(config).map(([key, cfg]) => {
                         const count = data[key] ?? 0;
                         const pct   = total > 0 ? Math.round((count / total) * 100) : 0;
@@ -133,10 +124,7 @@ function StatusBreakdown({ title, data, config }: {
                                     <span className="font-semibold">{count}</span>
                                 </div>
                                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                                    <div
-                                        className={cn('h-full rounded-full transition-all', cfg.dot)}
-                                        style={{ width: `${pct}%` }}
-                                    />
+                                    <div className={cn('h-full rounded-full transition-all', cfg.dot)} style={{ width: `${pct}%` }} />
                                 </div>
                             </div>
                         );
@@ -147,15 +135,64 @@ function StatusBreakdown({ title, data, config }: {
     );
 }
 
-export function Reports({ financial, motors_by_status, maintenance_by_status, parts_by_type, recent_motors, totals }: Props) {
+export function Reports({ financial, motors_by_status, maintenance_by_status, parts_by_type, recent_motors, totals, filters }: Props) {
+    const [dateFrom, setDateFrom] = useState(filters.date_from ?? '');
+    const [dateTo, setDateTo]     = useState(filters.date_to   ?? '');
+
+    const isFiltered = !!(filters.date_from || filters.date_to);
+
+    function applyFilters() {
+        router.get('/reports', { date_from: dateFrom, date_to: dateTo }, { preserveState: true, replace: true });
+    }
+
+    function clearFilters() {
+        setDateFrom('');
+        setDateTo('');
+        router.get('/reports', {}, { preserveState: true, replace: true });
+    }
+
     const partsGrandTotal = parts_by_type.reduce((s, p) => s + p.total, 0);
 
     return (
         <>
-            <Header>
-                <div className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-muted-foreground" />
-                    <h1 className="text-lg font-semibold">التقارير والإحصائيات</h1>
+            <Header fixed>
+                <div className="flex flex-1 items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5 text-muted-foreground" />
+                        <h1 className="text-lg font-semibold">التقارير والإحصائيات</h1>
+                    </div>
+                    {/* Date filter */}
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5">
+                            <label className="text-xs text-muted-foreground whitespace-nowrap">من:</label>
+                            <input
+                                type="date"
+                                className="bg-transparent text-sm focus:outline-none w-32"
+                                value={dateFrom}
+                                onChange={(e) => setDateFrom(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
+                            />
+                        </div>
+                        <div className="flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5">
+                            <label className="text-xs text-muted-foreground whitespace-nowrap">إلى:</label>
+                            <input
+                                type="date"
+                                className="bg-transparent text-sm focus:outline-none w-32"
+                                value={dateTo}
+                                onChange={(e) => setDateTo(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
+                            />
+                        </div>
+                        <Button size="sm" variant="outline" className="min-h-[36px]" onClick={applyFilters}>
+                            تطبيق
+                        </Button>
+                        {isFiltered && (
+                            <Button size="sm" variant="ghost" className="min-h-[36px] gap-1.5 text-muted-foreground" onClick={clearFilters}>
+                                <FilterX className="h-3.5 w-3.5" />
+                                إلغاء
+                            </Button>
+                        )}
+                    </div>
                 </div>
                 <div className="ms-auto flex items-center gap-3">
                     <ThemeSwitch />
@@ -165,13 +202,26 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
 
             <Main className="flex flex-col gap-6 pb-10">
 
+                {/* Active filter banner */}
+                {isFiltered && (
+                    <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm">
+                        <BarChart3 className="h-4 w-4 text-primary" />
+                        <span>
+                            عرض البيانات من{' '}
+                            {filters.date_from && <strong>{filters.date_from}</strong>}
+                            {filters.date_from && filters.date_to && ' حتى '}
+                            {filters.date_to && <strong>{filters.date_to}</strong>}
+                        </span>
+                    </div>
+                )}
+
                 {/* ── Overview counts ── */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                    <StatCard icon={Wrench}        label="الموتورات"    value={totals.motors}      color="bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300" />
-                    <StatCard icon={Users}          label="العملاء"      value={totals.customers}   color="bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300" />
-                    <StatCard icon={Truck}          label="الموردون"     value={totals.suppliers}   color="bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300" />
-                    <StatCard icon={ClipboardList}  label="أوامر الصيانة" value={totals.maintenance} color="bg-yellow-100 text-yellow-700 dark:bg-yellow-950/60 dark:text-yellow-300" />
-                    <StatCard icon={Package}        label="القطع"        value={totals.parts}       color="bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300" />
+                    <StatCard icon={Wrench}       label="الموتورات"     value={totals.motors}      color="bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300" />
+                    <StatCard icon={Users}         label="العملاء"       value={totals.customers}   color="bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300" />
+                    <StatCard icon={Truck}         label="الموردون"      value={totals.suppliers}   color="bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300" />
+                    <StatCard icon={ClipboardList} label="أوامر الصيانة" value={totals.maintenance} color="bg-yellow-100 text-yellow-700 dark:bg-yellow-950/60 dark:text-yellow-300" />
+                    <StatCard icon={Package}       label="القطع"         value={totals.parts}       color="bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300" />
                 </div>
 
                 {/* ── Financial summary ── */}
@@ -184,8 +234,8 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
                     </CardHeader>
                     <CardContent>
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                            <div className="rounded-xl border-2 border-primary/20 bg-primary/5 px-5 py-4 lg:col-span-1">
-                                <p className="text-xs text-muted-foreground">الإجمالي الكلي</p>
+                            <div className="rounded-xl border-2 border-primary/20 bg-primary/5 px-5 py-4">
+                                <p className="text-xs text-muted-foreground">إجمالي الفواتير</p>
                                 <p className="mt-1 text-2xl font-bold text-primary">{financial.grand_total.toFixed(2)}</p>
                             </div>
                             <div className="rounded-xl border bg-muted/40 px-5 py-4">
@@ -193,18 +243,18 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
                                 <p className="mt-1 text-xl font-semibold">{financial.total_labor.toFixed(2)}</p>
                             </div>
                             <div className="rounded-xl border bg-muted/40 px-5 py-4">
-                                <p className="text-xs text-muted-foreground">تكلفة القطع (إجمالي)</p>
+                                <p className="text-xs text-muted-foreground">تكلفة القطع</p>
                                 <p className="mt-1 text-xl font-semibold">{financial.total_parts.toFixed(2)}</p>
                             </div>
                             <div className="rounded-xl border border-green-200 bg-green-50 px-5 py-4 dark:border-green-900 dark:bg-green-950/30">
                                 <p className="flex items-center gap-1 text-xs text-green-700 dark:text-green-400">
-                                    <CheckCircle2 className="h-3.5 w-3.5" /> مدفوع
+                                    <Wallet className="h-3.5 w-3.5" /> المدفوع (دفعات)
                                 </p>
-                                <p className="mt-1 text-xl font-semibold text-green-700 dark:text-green-400">{financial.paid_parts.toFixed(2)}</p>
+                                <p className="mt-1 text-xl font-semibold text-green-700 dark:text-green-400">{financial.total_paid.toFixed(2)}</p>
                             </div>
                             <div className="rounded-xl border border-orange-200 bg-orange-50 px-5 py-4 dark:border-orange-900 dark:bg-orange-950/30">
                                 <p className="flex items-center gap-1 text-xs text-orange-700 dark:text-orange-400">
-                                    <Clock className="h-3.5 w-3.5" /> غير مدفوع
+                                    <Clock className="h-3.5 w-3.5" /> قطع غير مدفوعة
                                 </p>
                                 <p className="mt-1 text-xl font-semibold text-orange-700 dark:text-orange-400">{financial.unpaid_parts.toFixed(2)}</p>
                             </div>
@@ -214,27 +264,16 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
 
                 {/* ── Status breakdowns ── */}
                 <div className="grid gap-6 lg:grid-cols-2">
-                    <StatusBreakdown
-                        title="الموتورات حسب الحالة"
-                        data={motors_by_status}
-                        config={motorStatusConfig}
-                    />
-                    <StatusBreakdown
-                        title="أوامر الصيانة حسب الحالة"
-                        data={maintenance_by_status}
-                        config={maintenanceStatusConfig}
-                    />
+                    <StatusBreakdown title="الموتورات حسب الحالة"      data={motors_by_status}      config={motorStatusConfig} />
+                    <StatusBreakdown title="أوامر الصيانة حسب الحالة" data={maintenance_by_status} config={maintenanceStatusConfig} />
                 </div>
 
                 {/* ── Parts by type + Recent motors ── */}
                 <div className="grid gap-6 lg:grid-cols-2">
-
-                    {/* Parts by type */}
                     <Card>
                         <CardHeader className="pb-3">
                             <CardTitle className="flex items-center gap-2 text-base">
-                                <Package className="h-4 w-4 text-muted-foreground" />
-                                القطع حسب النوع
+                                <Package className="h-4 w-4 text-muted-foreground" /> القطع حسب النوع
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -245,9 +284,7 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
                                     {parts_by_type.map((p) => (
                                         <div key={p.type} className="flex items-center justify-between rounded-lg border px-3 py-2">
                                             <div className="flex items-center gap-2">
-                                                <Badge variant="outline" className={cn('text-xs', typeColors[p.type] ?? '')}>
-                                                    {p.label}
-                                                </Badge>
+                                                <Badge variant="outline" className={cn('text-xs', typeColors[p.type] ?? '')}>{p.label}</Badge>
                                                 <span className="text-sm text-muted-foreground">{p.count} قطعة</span>
                                             </div>
                                             <span className="font-semibold text-sm">{p.total.toFixed(2)}</span>
@@ -263,12 +300,11 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
                         </CardContent>
                     </Card>
 
-                    {/* Recent motors */}
                     <Card>
                         <CardHeader className="pb-3">
                             <CardTitle className="flex items-center gap-2 text-base">
                                 <Wrench className="h-4 w-4 text-muted-foreground" />
-                                آخر الموتورات المضافة
+                                {isFiltered ? 'الموتورات في الفترة المحددة' : 'آخر الموتورات المضافة'}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
@@ -290,10 +326,7 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
                                             return (
                                                 <TableRow key={m.id}>
                                                     <TableCell>
-                                                        <Link
-                                                            href={`/motors/${m.id}`}
-                                                            className="font-mono text-sm font-semibold text-primary hover:underline underline-offset-4"
-                                                        >
+                                                        <Link href={`/motors/${m.id}`} className="font-mono text-sm font-semibold text-primary hover:underline underline-offset-4">
                                                             {m.reference_number}
                                                         </Link>
                                                     </TableCell>
