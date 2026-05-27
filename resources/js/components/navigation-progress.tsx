@@ -6,15 +6,12 @@ export function NavigationProgress() {
     const ref = useRef<LoadingBarRef>(null);
 
     useEffect(() => {
-        const startHandler = () => ref.current?.continuousStart();
-        const finishHandler = () => ref.current?.complete();
-
-        router.on('start', startHandler);
-        router.on('finish', finishHandler);
+        const offStart = router.on('start', () => ref.current?.continuousStart());
+        const offFinish = router.on('finish', () => ref.current?.complete());
 
         return () => {
-            router.off('start', startHandler);
-            router.off('finish', finishHandler);
+            offStart();
+            offFinish();
         };
     }, []);
 

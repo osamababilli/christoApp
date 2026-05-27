@@ -15,9 +15,11 @@
     }
     html {
         @apply overflow-x-hidden;
+        font-family: 'Cairo', 'Inter', sans-serif;
     }
     body {
         @apply min-h-svh w-full bg-background text-foreground has-[div[data-variant='inset']]:bg-sidebar;
+        font-family: 'Cairo', 'Inter', sans-serif;
     }
 
     /* Override Radix scroll locking for sticky headers */
@@ -29,6 +31,31 @@
     button:not(:disabled),
     [role='button']:not(:disabled) {
         cursor: pointer;
+    }
+
+    /* Sonner toast close button — strip default box, pin left center */
+    [data-sonner-toast] [data-close-button] {
+        position: absolute !important;
+        left: 10px !important;
+        right: auto !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 2px !important;
+        width: 18px !important;
+        height: 18px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: inherit !important;
+        opacity: 0.45;
+        transition: opacity 0.15s;
+    }
+    [data-sonner-toast] [data-close-button]:hover {
+        opacity: 1 !important;
+        background: transparent !important;
     }
 
     /* Prevent focus zoom on mobile devices */
