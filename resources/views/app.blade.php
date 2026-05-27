@@ -32,7 +32,7 @@
         
         <meta
             name="description"
-            content="Admin Dashboard UI built with Laravel, Shadcn and Vite."
+            content="نظام إدارة ورشة الموتورات — تتبع الموتورات والصيانة والعملاء والمالية."
         />
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />

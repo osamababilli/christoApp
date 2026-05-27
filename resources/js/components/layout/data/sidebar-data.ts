@@ -1,16 +1,11 @@
 import {
-    Bell,
     Bug,
     Construction,
     FileX,
     LayoutDashboard,
     Lock,
-    Monitor,
-    Palette,
     ServerOff,
-    Settings,
     ShieldCheck,
-    UserCog,
     Users,
     Wrench,
     ClipboardList,
@@ -23,8 +18,8 @@ import { type SidebarData } from '../types';
 
 export const sidebarData: SidebarData = {
     user: {
-        name: 'صاحب الورشة',
-        email: 'workshop@local.com',
+        name: 'سوبر ادمن',
+        email: 'admin@workshop.com',
         avatar: '/avatars/shadcn.jpg',
     },
     teams: [
@@ -77,37 +72,6 @@ export const sidebarData: SidebarData = {
                     title: 'التقارير',
                     url: '/reports',
                     icon: BarChart3,
-                },
-            ],
-        },
-        {
-            title: 'الإعدادات',
-            items: [
-                {
-                    title: 'الإعدادات',
-                    icon: Settings,
-                    items: [
-                        {
-                            title: 'الملف الشخصي',
-                            url: '/settings',
-                            icon: UserCog,
-                        },
-                        {
-                            title: 'المظهر',
-                            url: '/settings/appearance',
-                            icon: Palette,
-                        },
-                        {
-                            title: 'الإشعارات',
-                            url: '/settings/notifications',
-                            icon: Bell,
-                        },
-                        {
-                            title: 'العرض',
-                            url: '/settings/display',
-                            icon: Monitor,
-                        },
-                    ],
                 },
             ],
         },
