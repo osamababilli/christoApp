@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Motor;
-use App\Models\Part;
-use App\Models\Transaction;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,9 +15,36 @@ class WorkshopDashboardController extends Controller
         $overdueCount = Motor::whereIn('status', ['in_workshop', 'in_progress'])
             ->where('received_at', '<', now()->subDays(7))
             ->count();
-        $unpaidTotal = Transaction::where('type', 'invoice')
-            ->where('remaining_amount', '>', 0)
-            ->sum('remaining_amount');
+        $allMotors = Motor::with(['customer', 'maintenanceOrders.parts', 'transactions'])->get();
+
+        $unpaidTotal = 0;
+        $unpaidMotorsList = [];
+
+        foreach ($allMotors as $motor) {
+            $labor      = $motor->maintenanceOrders->sum('labor_cost');
+            $parts      = $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
+            $grandTotal = $labor + $parts;
+            $paid       = $motor->transactions->sum('amount');
+            $remaining  = $grandTotal - $paid;
+
+            if ($remaining > 0.009) {
+                $unpaidTotal += $remaining;
+                $unpaidMotorsList[] = [
+                    'id'               => $motor->id,
+                    'reference_number' => $motor->reference_number,
+                    'customer_id'      => $motor->customer->id,
+                    'customer_name'    => $motor->customer->name,
+                    'customer_phone'   => $motor->customer->phone,
+                    'status'           => $motor->status,
+                    'status_label'     => Motor::statusLabel($motor->status),
+                    'remaining'        => $remaining,
+                ];
+            }
+        }
+
+        usort($unpaidMotorsList, fn($a, $b) => $b['remaining'] <=> $a['remaining']);
+        $top5Unpaid = array_slice($unpaidMotorsList, 0, 5);
+        $top5Unpaid = array_map(fn($m) => array_merge($m, ['remaining' => number_format($m['remaining'], 2)]), $top5Unpaid);
 
         $recentMotors = Motor::with('customer')
             ->latest()
@@ -28,6 +53,7 @@ class WorkshopDashboardController extends Controller
             ->map(fn($m) => [
                 'id'               => $m->id,
                 'reference_number' => $m->reference_number,
+                'customer_id'      => $m->customer->id,
                 'customer_name'    => $m->customer->name,
                 'customer_phone'   => $m->customer->phone,
                 'brand'            => $m->brand,
@@ -43,8 +69,10 @@ class WorkshopDashboardController extends Controller
                 'readyCount'   => $readyCount,
                 'overdueCount' => $overdueCount,
                 'unpaidTotal'  => number_format((float) $unpaidTotal, 2),
+                'unpaidCount'  => count($unpaidMotorsList),
             ],
             'recentMotors' => $recentMotors,
+            'unpaidMotors' => $top5Unpaid,
         ]);
     }
 }

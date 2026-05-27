@@ -40,6 +40,7 @@ class PartController extends Controller
                 'supplier_name'  => $p->supplier?->name,
                 'motor_id'       => $p->maintenance->motor->id,
                 'reference_number' => $p->maintenance->motor->reference_number,
+                'customer_id'    => $p->maintenance->motor->customer->id,
                 'customer_name'  => $p->maintenance->motor->customer->name,
                 'stage'          => $p->maintenance->stage,
             ]),

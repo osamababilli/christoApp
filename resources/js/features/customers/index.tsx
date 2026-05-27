@@ -2,12 +2,13 @@ import { Header } from '@/components/layout/header';
 import { Main } from '@/components/layout/main';
 import { ProfileDropdown } from '@/components/profile-dropdown';
 import { ThemeSwitch } from '@/components/theme-switch';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { router, Link } from '@inertiajs/react';
-import { Search } from 'lucide-react';
+import { Search, Star } from 'lucide-react';
 import { useState } from 'react';
 
 interface Customer {
@@ -16,6 +17,7 @@ interface Customer {
     phone: string;
     email: string | null;
     motors_count: number;
+    is_loyal: boolean;
     created_at: string;
 }
 
@@ -63,7 +65,7 @@ export function Customers({ customers, filters }: Props) {
             <Main className="flex flex-1 flex-col gap-4">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">العملاء</h2>
-                    <p className="text-muted-foreground">إجمالي: {customers.total} عميل</p>
+                    <p className="text-muted-foreground">إجمالي: <span dir="ltr">{customers.total}</span> عميل</p>
                 </div>
 
                 <Card>
@@ -89,19 +91,41 @@ export function Customers({ customers, filters }: Props) {
                                 ) : (
                                     customers.data.map((c) => (
                                         <TableRow key={c.id}>
-                                            <TableCell className="font-semibold text-base">{c.name}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <Link
+                                                        href={`/customers/${c.id}`}
+                                                        className="font-semibold text-base hover:underline underline-offset-4 text-primary"
+                                                    >
+                                                        {c.name}
+                                                    </Link>
+                                                    {c.is_loyal && (
+                                                        <Badge className="gap-1 bg-amber-100 text-amber-800 border-amber-300 text-xs px-1.5 py-0.5">
+                                                            <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                                                            دائم
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            </TableCell>
                                             <TableCell dir="ltr" className="text-right">{c.phone}</TableCell>
                                             <TableCell>{c.email ?? '—'}</TableCell>
-                                            <TableCell>
+                                            <TableCell dir="ltr" className="text-right">
                                                 <span className="font-semibold">{c.motors_count}</span>
                                             </TableCell>
-                                            <TableCell>{c.created_at}</TableCell>
+                                            <TableCell dir="ltr" className="text-right">{c.created_at}</TableCell>
                                             <TableCell>
-                                                <Link href={`/motors?search=${c.phone}`}>
-                                                    <Button variant="ghost" size="sm">
-                                                        عرض الموتورات
-                                                    </Button>
-                                                </Link>
+                                                <div className="flex items-center gap-1">
+                                                    <Link href={`/customers/${c.id}`}>
+                                                        <Button variant="ghost" size="sm">
+                                                            كشف الحساب
+                                                        </Button>
+                                                    </Link>
+                                                    <Link href={`/motors?search=${c.phone}`}>
+                                                        <Button variant="ghost" size="sm">
+                                                            الموتورات
+                                                        </Button>
+                                                    </Link>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))

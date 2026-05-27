@@ -25,6 +25,7 @@ Route::get('/', [WorkshopDashboardController::class, 'index'])->name('dashboard'
 // Motors
 Route::resource('motors', MotorController::class);
 Route::get('motors/{motor}/print', [MotorController::class, 'printView'])->name('motors.print');
+Route::get('motors/{motor}/print/delivery', [MotorController::class, 'printDelivery'])->name('motors.print-delivery');
 Route::patch('motors/{motor}/status', [MotorController::class, 'updateStatus'])->name('motors.update-status');
 Route::delete('motors-bulk', [MotorController::class, 'bulkDestroy'])->name('motors.bulk-destroy');
 
@@ -50,6 +51,7 @@ Route::get('/reports', [ReportController::class, 'index'])->name('reports.index'
 
 // Customers
 Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
 
 // Suppliers
 Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');

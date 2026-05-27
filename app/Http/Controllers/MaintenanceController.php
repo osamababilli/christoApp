@@ -34,6 +34,7 @@ class MaintenanceController extends Controller
                 'id'               => $o->id,
                 'motor_id'         => $o->motor_id,
                 'reference_number' => $o->motor->reference_number,
+                'customer_id'      => $o->motor->customer->id,
                 'customer_name'    => $o->motor->customer->name,
                 'customer_phone'   => $o->motor->customer->phone,
                 'stage'            => $o->stage,

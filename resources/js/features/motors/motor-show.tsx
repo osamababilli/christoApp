@@ -28,6 +28,7 @@ import {
     Clock,
     DollarSign,
     FileText,
+    Lock,
     Pencil,
     Phone,
     Plus,
@@ -255,7 +256,7 @@ const typeColors: Record<string, string> = {
     other:     'bg-gray-100 text-gray-600',
 };
 
-function PartsSection({ order, suppliers, onDeletePart }: { order: MaintenanceOrder; suppliers: SupplierOption[]; onDeletePart: (id: number, name: string) => void }) {
+function PartsSection({ order, suppliers, onDeletePart, isLocked }: { order: MaintenanceOrder; suppliers: SupplierOption[]; onDeletePart: (id: number, name: string) => void; isLocked: boolean }) {
     const [showForm, setShowForm] = useState(false);
     return (
         <div className="space-y-3">
@@ -263,15 +264,17 @@ function PartsSection({ order, suppliers, onDeletePart }: { order: MaintenanceOr
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     القطع والمستلزمات ({order.parts.length})
                 </p>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 gap-1.5 text-xs"
-                    onClick={() => setShowForm(!showForm)}
-                >
-                    <Plus className="h-3.5 w-3.5" />
-                    إضافة قطعة
-                </Button>
+                {!isLocked && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1.5 text-xs"
+                        onClick={() => setShowForm(!showForm)}
+                    >
+                        <Plus className="h-3.5 w-3.5" />
+                        إضافة قطعة
+                    </Button>
+                )}
             </div>
 
             {showForm && (
@@ -311,16 +314,18 @@ function PartsSection({ order, suppliers, onDeletePart }: { order: MaintenanceOr
                                             ? <CheckCircle2 className="h-4 w-4 text-green-600" />
                                             : <Clock className="h-4 w-4 text-orange-500" />}
                                     </TableCell>
-                                    <TableCell>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 text-destructive hover:text-destructive"
-                                            onClick={() => onDeletePart(part.id, part.part_name)}
-                                        >
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                        </Button>
-                                    </TableCell>
+                                    {!isLocked && (
+                                        <TableCell>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                                onClick={() => onDeletePart(part.id, part.part_name)}
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -336,7 +341,7 @@ const paymentTypeConfig = {
     discount: { label: 'خصم',   color: 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300', active: 'ring-2 ring-purple-400' },
 };
 
-function PaymentsSection({ motor, grandTotal }: { motor: Motor; grandTotal: number }) {
+function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandTotal: number; isLocked: boolean }) {
     const [showForm, setShowForm] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
 
@@ -375,10 +380,12 @@ function PaymentsSection({ motor, grandTotal }: { motor: Motor; grandTotal: numb
                             <Wallet className="h-4 w-4 text-muted-foreground" />
                             كشف الحساب
                         </CardTitle>
-                        <Button size="sm" className="gap-1.5" onClick={() => setShowForm(!showForm)}>
-                            <Plus className="h-3.5 w-3.5" />
-                            إضافة دفعة
-                        </Button>
+                        {!isLocked && (
+                            <Button size="sm" className="gap-1.5" onClick={() => setShowForm(!showForm)}>
+                                <Plus className="h-3.5 w-3.5" />
+                                إضافة دفعة
+                            </Button>
+                        )}
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -510,16 +517,18 @@ function PaymentsSection({ motor, grandTotal }: { motor: Motor; grandTotal: numb
                                             </TableCell>
                                             <TableCell className="text-sm text-muted-foreground">{t.notes ?? '—'}</TableCell>
                                             <TableCell className="font-semibold text-sm">{t.amount.toFixed(2)}</TableCell>
-                                            <TableCell>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 text-destructive hover:text-destructive"
-                                                    onClick={() => setDeleteTarget(t)}
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
-                                            </TableCell>
+                                            {!isLocked && (
+                                                <TableCell>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-destructive hover:text-destructive"
+                                                        onClick={() => setDeleteTarget(t)}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </TableCell>
+                                            )}
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -565,9 +574,12 @@ export function MotorShow({ motor, suppliers }: Props) {
     const [deleteMaintenanceTarget, setDeleteMaintenanceTarget] = useState<MaintenanceOrder | null>(null);
     const [deletePartTarget, setDeletePartTarget]       = useState<{ id: number; part_name: string } | null>(null);
 
-    const totalLabor = motor.maintenance_orders.reduce((s, o) => s + Number(o.labor_cost), 0);
-    const totalParts = motor.maintenance_orders.flatMap((o) => o.parts).reduce((s, p) => s + Number(p.total_cost), 0);
-    const grandTotal = totalLabor + totalParts;
+    const totalLabor    = motor.maintenance_orders.reduce((s, o) => s + Number(o.labor_cost), 0);
+    const totalParts    = motor.maintenance_orders.flatMap((o) => o.parts).reduce((s, p) => s + Number(p.total_cost), 0);
+    const grandTotal    = totalLabor + totalParts;
+    const totalCredited = motor.transactions.reduce((s, t) => s + t.amount, 0);
+    const remaining     = grandTotal - totalCredited;
+    const isLocked      = motor.status === 'delivered' && remaining <= 0.009;
 
     function deleteMaintenance(id: number) {
         const order = motor.maintenance_orders.find((o) => o.id === id);
@@ -660,28 +672,51 @@ export function MotorShow({ motor, suppliers }: Props) {
                             <a href={`/motors/${motor.id}/print`} target="_blank" rel="noreferrer">
                                 <Button variant="outline" size="sm" className="gap-2">
                                     <Printer className="h-4 w-4" />
-                                    طباعة
+                                    فاتورة
                                 </Button>
                             </a>
-                            <Link href={`/motors/${motor.id}/edit`}>
-                                <Button size="sm" className="gap-2">
-                                    <Pencil className="h-4 w-4" />
-                                    تعديل
+                            <a href={`/motors/${motor.id}/print/delivery`} target="_blank" rel="noreferrer">
+                                <Button variant="outline" size="sm" className="gap-2">
+                                    <FileText className="h-4 w-4" />
+                                    ورقة تسليم
                                 </Button>
-                            </Link>
+                            </a>
+                            {!isLocked && (
+                                <Link href={`/motors/${motor.id}/edit`}>
+                                    <Button size="sm" className="gap-2">
+                                        <Pencil className="h-4 w-4" />
+                                        تعديل
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>
 
+                {/* ── Locked banner ── */}
+                {isLocked && (
+                    <div className="flex items-center gap-3 rounded-xl border border-green-300 bg-green-50 px-5 py-3 dark:border-green-800 dark:bg-green-950/30">
+                        <Lock className="h-5 w-5 shrink-0 text-green-700 dark:text-green-400" />
+                        <div>
+                            <p className="font-semibold text-green-800 dark:text-green-300">ملف مغلق</p>
+                            <p className="text-sm text-green-700/80 dark:text-green-400/80">
+                                تم تسليم الموتور وسداد الفاتورة بالكامل — لا يمكن إجراء أي تعديلات.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* ── Status update ── */}
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-base text-muted-foreground">تحديث حالة الموتور</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <StatusUpdateBar motor={motor} />
-                    </CardContent>
-                </Card>
+                {!isLocked && (
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base text-muted-foreground">تحديث حالة الموتور</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <StatusUpdateBar motor={motor} />
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* ── Info + Finance row ── */}
                 <div className="grid gap-6 lg:grid-cols-5">
@@ -754,7 +789,7 @@ export function MotorShow({ motor, suppliers }: Props) {
                 </div>
 
                 {/* ── Payments / Account ── */}
-                <PaymentsSection motor={motor} grandTotal={grandTotal} />
+                <PaymentsSection motor={motor} grandTotal={grandTotal} isLocked={isLocked} />
 
                 {/* ── Maintenance orders ── */}
                 <div className="space-y-4">
@@ -768,10 +803,12 @@ export function MotorShow({ motor, suppliers }: Props) {
                                 </span>
                             </h2>
                         </div>
-                        <Button className="gap-2" onClick={() => setShowAddMaintenance(!showAddMaintenance)}>
-                            <Plus className="h-4 w-4" />
-                            إضافة أمر صيانة
-                        </Button>
+                        {!isLocked && (
+                            <Button className="gap-2" onClick={() => setShowAddMaintenance(!showAddMaintenance)}>
+                                <Plus className="h-4 w-4" />
+                                إضافة أمر صيانة
+                            </Button>
+                        )}
                     </div>
 
                     {showAddMaintenance && (
@@ -815,16 +852,18 @@ export function MotorShow({ motor, suppliers }: Props) {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-destructive hover:text-destructive"
-                                                        onClick={() => deleteMaintenance(order.id)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
+                                                {!isLocked && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-destructive hover:text-destructive"
+                                                            onClick={() => deleteMaintenance(order.id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Description */}
@@ -852,14 +891,16 @@ export function MotorShow({ motor, suppliers }: Props) {
                                             </div>
 
                                             {/* Status update */}
-                                            <div className="rounded-lg bg-muted/40 px-3 py-2.5">
-                                                <p className="mb-2 text-xs text-muted-foreground">تحديث الحالة</p>
-                                                <MaintenanceStatusBar order={order} />
-                                            </div>
+                                            {!isLocked && (
+                                                <div className="rounded-lg bg-muted/40 px-3 py-2.5">
+                                                    <p className="mb-2 text-xs text-muted-foreground">تحديث الحالة</p>
+                                                    <MaintenanceStatusBar order={order} />
+                                                </div>
+                                            )}
 
                                             {/* Parts */}
                                             <Separator />
-                                            <PartsSection order={order} suppliers={suppliers} onDeletePart={deletePart} />
+                                            <PartsSection order={order} suppliers={suppliers} onDeletePart={deletePart} isLocked={isLocked} />
                                         </CardContent>
                                     </Card>
                                 );

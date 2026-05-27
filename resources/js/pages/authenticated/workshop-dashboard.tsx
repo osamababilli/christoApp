@@ -6,10 +6,12 @@ interface Props {
         readyCount: number;
         overdueCount: number;
         unpaidTotal: string;
+        unpaidCount: number;
     };
     recentMotors: Array<{
         id: number;
         reference_number: string;
+        customer_id: number;
         customer_name: string;
         customer_phone: string;
         brand: string | null;
@@ -18,8 +20,18 @@ interface Props {
         status_label: string;
         received_at: string;
     }>;
+    unpaidMotors: Array<{
+        id: number;
+        reference_number: string;
+        customer_id: number;
+        customer_name: string;
+        customer_phone: string;
+        status: string;
+        status_label: string;
+        remaining: string;
+    }>;
 }
 
-export default function WorkshopDashboardPage({ stats, recentMotors }: Props) {
-    return <WorkshopDashboard stats={stats} recentMotors={recentMotors} />;
+export default function WorkshopDashboardPage({ stats, recentMotors, unpaidMotors }: Props) {
+    return <WorkshopDashboard stats={stats} recentMotors={recentMotors} unpaidMotors={unpaidMotors} />;
 }

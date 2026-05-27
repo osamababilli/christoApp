@@ -55,7 +55,7 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
     const remaining   = grandTotal - totalPaid - totalDisc;
 
     return (
-        <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", background: '#fff', color: '#111', minHeight: '100vh' }}>
+        <div dir="rtl" style={{ fontFamily: "'IBM Plex Sans Arabic', sans-serif", background: '#fff', color: '#111', minHeight: '100vh' }}>
 
             {/* Print actions — hidden when printing */}
             <div className="no-print" style={{ padding: '12px 24px', background: '#f4f4f5', borderBottom: '1px solid #e4e4e7', display: 'flex', gap: 10, alignItems: 'center' }}>

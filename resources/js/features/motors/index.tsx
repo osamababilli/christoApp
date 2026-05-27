@@ -26,6 +26,7 @@ import { useState } from 'react';
 interface Motor {
     id: number;
     reference_number: string;
+    customer_id: number;
     customer_name: string;
     customer_phone: string;
     brand: string | null;
@@ -245,7 +246,11 @@ export function Motors({ motors, filters }: Props) {
                                                     {motor.reference_number}
                                                 </Link>
                                             </TableCell>
-                                            <TableCell className="font-medium">{motor.customer_name}</TableCell>
+                                            <TableCell className="font-medium">
+                                                <Link href={`/customers/${motor.customer_id}`} className="hover:underline underline-offset-4 text-primary">
+                                                    {motor.customer_name}
+                                                </Link>
+                                            </TableCell>
                                             <TableCell dir="ltr" className="text-right">
                                                 {motor.customer_phone}
                                             </TableCell>

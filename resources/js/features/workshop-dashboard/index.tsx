@@ -12,6 +12,7 @@ import { AlertCircle, CheckCircle2, Clock, DollarSign, Plus, Wrench } from 'luci
 interface Motor {
     id: number;
     reference_number: string;
+    customer_id: number;
     customer_name: string;
     customer_phone: string;
     brand: string | null;
@@ -21,16 +22,29 @@ interface Motor {
     received_at: string;
 }
 
+interface UnpaidMotor {
+    id: number;
+    reference_number: string;
+    customer_id: number;
+    customer_name: string;
+    customer_phone: string;
+    status: string;
+    status_label: string;
+    remaining: string;
+}
+
 interface Stats {
     inWorkshop: number;
     readyCount: number;
     overdueCount: number;
     unpaidTotal: string;
+    unpaidCount: number;
 }
 
 interface Props {
     stats: Stats;
     recentMotors: Motor[];
+    unpaidMotors: UnpaidMotor[];
 }
 
 const statusColors: Record<string, string> = {
@@ -40,7 +54,7 @@ const statusColors: Record<string, string> = {
     delivered: 'bg-gray-100 text-gray-700 border-gray-200',
 };
 
-export function WorkshopDashboard({ stats, recentMotors }: Props) {
+export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) {
     return (
         <>
             <Header>
@@ -126,10 +140,72 @@ export function WorkshopDashboard({ stats, recentMotors }: Props) {
                             <div className="text-3xl font-bold text-red-700 dark:text-red-400">
                                 {stats.unpaidTotal}
                             </div>
-                            <p className="mt-1 text-xs text-red-600/70">إجمالي المستحق</p>
+                            <p className="mt-1 text-xs text-red-600/70">{stats.unpaidCount} موتور — إجمالي المستحق</p>
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* Unpaid Motors */}
+                {unpaidMotors.length > 0 && (
+                    <Card className="border-red-100">
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle className="text-lg text-red-700 dark:text-red-400">أعلى الفواتير غير المدفوعة</CardTitle>
+                            <Link href="/motors">
+                                <Button variant="outline" size="sm">عرض الكل</Button>
+                            </Link>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="text-right">رقم المرجع</TableHead>
+                                        <TableHead className="text-right">العميل</TableHead>
+                                        <TableHead className="text-right">الجوال</TableHead>
+                                        <TableHead className="text-right">الحالة</TableHead>
+                                        <TableHead className="text-right">المتبقي</TableHead>
+                                        <TableHead></TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {unpaidMotors.map((motor) => (
+                                        <TableRow key={motor.id} className="hover:bg-muted/50">
+                                            <TableCell>
+                                                <Link
+                                                    href={`/motors/${motor.id}`}
+                                                    className="font-mono font-medium text-primary hover:underline underline-offset-4"
+                                                >
+                                                    {motor.reference_number}
+                                                </Link>
+                                            </TableCell>
+                                            <TableCell className="font-medium">
+                                                <Link href={`/customers/${motor.customer_id}`} className="hover:underline underline-offset-4 text-primary">
+                                                    {motor.customer_name}
+                                                </Link>
+                                            </TableCell>
+                                            <TableCell dir="ltr" className="text-right">{motor.customer_phone}</TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant="outline"
+                                                    className={`min-w-[90px] justify-center text-sm ${statusColors[motor.status] ?? ''}`}
+                                                >
+                                                    {motor.status_label}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="font-bold text-red-600 dark:text-red-400">
+                                                {motor.remaining}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Link href={`/motors/${motor.id}`}>
+                                                    <Button variant="ghost" size="sm">عرض</Button>
+                                                </Link>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Recent Motors */}
                 <Card>
@@ -174,7 +250,11 @@ export function WorkshopDashboard({ stats, recentMotors }: Props) {
                                                     {motor.reference_number}
                                                 </Link>
                                             </TableCell>
-                                            <TableCell className="font-medium">{motor.customer_name}</TableCell>
+                                            <TableCell className="font-medium">
+                                                <Link href={`/customers/${motor.customer_id}`} className="hover:underline underline-offset-4 text-primary">
+                                                    {motor.customer_name}
+                                                </Link>
+                                            </TableCell>
                                             <TableCell dir="ltr" className="text-right">
                                                 {motor.customer_phone}
                                             </TableCell>

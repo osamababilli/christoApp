@@ -64,6 +64,7 @@ class ReportController extends Controller
             ->map(fn($m) => [
                 'id'               => $m->id,
                 'reference_number' => $m->reference_number,
+                'customer_id'      => $m->customer->id,
                 'customer_name'    => $m->customer->name,
                 'status'           => $m->status,
                 'status_label'     => Motor::statusLabel($m->status),

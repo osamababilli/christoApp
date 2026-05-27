@@ -51,6 +51,7 @@ interface PartByType {
 interface RecentMotor {
     id: number;
     reference_number: string;
+    customer_id: number;
     customer_name: string;
     status: string;
     status_label: string;
@@ -330,7 +331,11 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
                                                             {m.reference_number}
                                                         </Link>
                                                     </TableCell>
-                                                    <TableCell className="text-sm">{m.customer_name}</TableCell>
+                                                    <TableCell className="text-sm">
+                                                        <Link href={`/customers/${m.customer_id}`} className="hover:underline underline-offset-4 text-primary">
+                                                            {m.customer_name}
+                                                        </Link>
+                                                    </TableCell>
                                                     <TableCell>
                                                         <Badge variant="outline" className={cn('text-xs', cfg.color)}>
                                                             <span className={cn('me-1 inline-block h-1.5 w-1.5 rounded-full', cfg.dot)} />

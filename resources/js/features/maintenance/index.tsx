@@ -26,6 +26,7 @@ interface Order {
     id: number;
     motor_id: number;
     reference_number: string;
+    customer_id: number;
     customer_name: string;
     customer_phone: string;
     stage: number;
@@ -160,7 +161,9 @@ export function Maintenance({ orders, filters }: Props) {
                                                 </Link>
                                             </TableCell>
                                             <TableCell>
-                                                <div>{order.customer_name}</div>
+                                                <Link href={`/customers/${order.customer_id}`} className="hover:underline underline-offset-4 text-primary font-medium">
+                                                    {order.customer_name}
+                                                </Link>
                                                 <div className="text-xs text-muted-foreground text-right" dir="ltr">
                                                     {order.customer_phone}
                                                 </div>

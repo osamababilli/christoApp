@@ -34,6 +34,7 @@ interface Part {
     supplier_name: string | null;
     motor_id: number;
     reference_number: string;
+    customer_id: number;
     customer_name: string;
     stage: number;
 }
@@ -203,7 +204,11 @@ export function Parts({ parts, filters }: Props) {
                                                         {part.reference_number}
                                                     </Link>
                                                 </TableCell>
-                                                <TableCell className="font-medium text-sm">{part.customer_name}</TableCell>
+                                                <TableCell className="font-medium text-sm">
+                                                    <Link href={`/customers/${part.customer_id}`} className="hover:underline underline-offset-4 text-primary">
+                                                        {part.customer_name}
+                                                    </Link>
+                                                </TableCell>
                                                 <TableCell>
                                                     <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
                                                         {part.stage}

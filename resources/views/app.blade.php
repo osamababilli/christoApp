@@ -38,8 +38,8 @@
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-        href="https://fonts.googleapis.com/css2?family=Cairo:wght@300..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Manrope:wght@200..800&display=swap"
-        rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100;200;300;400;500;600;700&display=swap"
+            rel="stylesheet"
         />
 
         <meta name="theme-color" content="#fff" />

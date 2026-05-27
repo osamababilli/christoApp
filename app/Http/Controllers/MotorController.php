@@ -35,6 +35,7 @@ class MotorController extends Controller
             'motors' => $motors->through(fn($m) => [
                 'id'               => $m->id,
                 'reference_number' => $m->reference_number,
+                'customer_id'      => $m->customer->id,
                 'customer_name'    => $m->customer->name,
                 'customer_phone'   => $m->customer->phone,
                 'brand'            => $m->brand,
@@ -222,8 +223,58 @@ class MotorController extends Controller
         ]);
     }
 
+    public function printDelivery(Motor $motor): Response
+    {
+        $motor->load(['customer', 'maintenanceOrders.parts', 'transactions']);
+
+        $labor      = $motor->maintenanceOrders->sum('labor_cost');
+        $parts      = $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
+        $grandTotal = $labor + $parts;
+        $paid       = $motor->transactions->sum('amount');
+
+        return Inertia::render('print/delivery', [
+            'motor' => [
+                'id'               => $motor->id,
+                'reference_number' => $motor->reference_number,
+                'customer'         => [
+                    'name'  => $motor->customer->name,
+                    'phone' => $motor->customer->phone,
+                ],
+                'brand'            => $motor->brand,
+                'model'            => $motor->model,
+                'status_label'     => Motor::statusLabel($motor->status),
+                'condition_label'  => $motor->condition_rating ? Motor::conditionLabel($motor->condition_rating) : null,
+                'notes'            => $motor->notes,
+                'received_at'      => $motor->received_at?->format('Y-m-d'),
+                'delivered_at'     => $motor->delivered_at?->format('Y-m-d'),
+                'maintenance_summary' => $motor->maintenanceOrders->map(fn($o) => [
+                    'stage'       => $o->stage,
+                    'description' => $o->description,
+                    'status_label' => MaintenanceOrder::statusLabel($o->status),
+                ]),
+                'grand_total'  => (float) $grandTotal,
+                'total_paid'   => (float) $paid,
+                'remaining'    => (float) ($grandTotal - $paid),
+            ],
+        ]);
+    }
+
+    private function isLocked(Motor $motor): bool
+    {
+        $motor->loadMissing(['maintenanceOrders.parts', 'transactions']);
+        $grandTotal = $motor->maintenanceOrders->sum('labor_cost')
+            + $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
+        $paid = $motor->transactions->sum('amount');
+        return $motor->status === 'delivered' && ($grandTotal - $paid) <= 0.009;
+    }
+
     public function edit(Motor $motor): Response
     {
+        if ($this->isLocked($motor)) {
+            return redirect()->route('motors.show', $motor)
+                ->with('error', 'لا يمكن تعديل موتور مسلَّم ومسدَّد بالكامل.');
+        }
+
         $motor->load('customer');
 
         return Inertia::render('authenticated/motors/edit', [
@@ -247,6 +298,11 @@ class MotorController extends Controller
 
     public function update(Request $request, Motor $motor): RedirectResponse
     {
+        if ($this->isLocked($motor)) {
+            return redirect()->route('motors.show', $motor)
+                ->with('error', 'لا يمكن تعديل موتور مسلَّم ومسدَّد بالكامل.');
+        }
+
         $validated = $request->validate([
             'customer_id'      => 'nullable|exists:customers,id',
             'customer_name'    => 'required_without:customer_id|nullable|string|max:255',
