@@ -5,12 +5,15 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { router } from '@inertiajs/react';
+import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 const formSchema = z
     .object({
+        name: z.string().min(1, 'Please enter your name'),
         email: z.email({
             error: (iss) => (iss.input === '' ? 'Please enter your email' : undefined),
         }),
@@ -28,6 +31,7 @@ export function SignUpForm({ className, ...props }: React.HTMLAttributes<HTMLFor
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            name: '',
             email: '',
             password: '',
             confirmPassword: '',
@@ -36,18 +40,41 @@ export function SignUpForm({ className, ...props }: React.HTMLAttributes<HTMLFor
 
     function onSubmit(data: z.infer<typeof formSchema>) {
         setIsLoading(true);
-
-        // eslint-disable-next-line no-console
-        console.log(data);
-
-        setTimeout(() => {
-            setIsLoading(false);
-        }, 3000);
+        router.post(
+            '/register',
+            {
+                name: data.name,
+                email: data.email,
+                password: data.password,
+                password_confirmation: data.confirmPassword,
+            },
+            {
+                onFinish: () => setIsLoading(false),
+                onError: (errors) => {
+                    if (errors.name) form.setError('name', { message: errors.name });
+                    if (errors.email) form.setError('email', { message: errors.email });
+                    if (errors.password) form.setError('password', { message: errors.password });
+                },
+            },
+        );
     }
 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className={cn('grid gap-3', className)} {...props}>
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                                <Input placeholder="John Doe" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="email"
@@ -88,6 +115,7 @@ export function SignUpForm({ className, ...props }: React.HTMLAttributes<HTMLFor
                     )}
                 />
                 <Button className="mt-2" disabled={isLoading}>
+                    {isLoading && <Loader2 className="animate-spin" />}
                     Create Account
                 </Button>
 

@@ -27,7 +27,7 @@ type DataTableProps = {
 
 export function UsersTable({ data }: DataTableProps) {
     const searchParams = new URLSearchParams(window.location.search);
-    const usernameParam = searchParams.get('username') || '';
+    const nameParam = searchParams.get('name') || '';
     const statusParam = searchParams.get('status') ? JSON.parse(searchParams.get('status')!) : [];
     const roleParam = searchParams.get('role') ? JSON.parse(searchParams.get('role')!) : [];
     const pageParam = searchParams.get('page');
@@ -38,8 +38,8 @@ export function UsersTable({ data }: DataTableProps) {
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
         const filters: ColumnFiltersState = [];
-        if (usernameParam) {
-            filters.push({ id: 'username', value: usernameParam });
+        if (nameParam) {
+            filters.push({ id: 'name', value: nameParam });
         }
         if (statusParam.length > 0) {
             filters.push({ id: 'status', value: statusParam });
@@ -60,22 +60,20 @@ export function UsersTable({ data }: DataTableProps) {
 
         const params = new URLSearchParams(window.location.search);
 
-        params.delete('username');
+        params.delete('name');
         params.delete('status');
         params.delete('role');
-        // params.delete('page');
 
-        // Add new filter params
         newFilters.forEach((filter) => {
-            if (filter.id === 'username' && typeof filter.value === 'string' && filter.value) {
-                params.set('username', filter.value);
+            if (filter.id === 'name' && typeof filter.value === 'string' && filter.value) {
+                params.set('name', filter.value);
             } else if (Array.isArray(filter.value) && filter.value.length > 0) {
                 params.set(filter.id, JSON.stringify(filter.value));
             }
         });
 
         const queryString = params.toString();
-        const url = queryString ? `/users?${queryString}` : '/users';
+        const url = queryString ? `/settings/users?${queryString}` : '/settings/users';
 
         window.history.replaceState({}, '', url);
 
@@ -90,7 +88,6 @@ export function UsersTable({ data }: DataTableProps) {
 
         const params = new URLSearchParams(window.location.search);
 
-        // Update pagination params
         const page = newPagination.pageIndex + 1;
         if (page > 1) {
             params.set('page', String(page));
@@ -105,7 +102,7 @@ export function UsersTable({ data }: DataTableProps) {
         }
 
         const queryString = params.toString();
-        const url = queryString ? `/users?${queryString}` : '/users';
+        const url = queryString ? `/settings/users?${queryString}` : '/settings/users';
 
         window.history.replaceState({}, '', url);
 
@@ -144,8 +141,8 @@ export function UsersTable({ data }: DataTableProps) {
         <div className={cn('max-sm:has-[div[role="toolbar"]]:mb-16', 'flex flex-1 flex-col gap-4')}>
             <DataTableToolbar
                 table={table}
-                searchPlaceholder="Filter users..."
-                searchKey="username"
+                searchPlaceholder="Search users..."
+                searchKey="name"
                 filters={[
                     {
                         columnId: 'status',
@@ -153,7 +150,6 @@ export function UsersTable({ data }: DataTableProps) {
                         options: [
                             { label: 'Active', value: 'active' },
                             { label: 'Inactive', value: 'inactive' },
-                            { label: 'Invited', value: 'invited' },
                             { label: 'Suspended', value: 'suspended' },
                         ],
                     },

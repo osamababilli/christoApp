@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { cn, sleep } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
 import { ArrowRight, Loader2 } from 'lucide-react';
@@ -26,18 +26,15 @@ export function ForgotPasswordForm({ className, ...props }: React.HTMLAttributes
 
     function onSubmit(data: z.infer<typeof formSchema>) {
         setIsLoading(true);
-        // eslint-disable-next-line no-console
-        console.log(data);
-
-        toast.promise(sleep(2000), {
-            loading: 'Sending email...',
-            success: () => {
-                setIsLoading(false);
+        router.post('/forgot-password', data, {
+            onFinish: () => setIsLoading(false),
+            onSuccess: () => {
                 form.reset();
-                router.visit('/auth/otp');
-                return `Email sent to ${data.email}`;
+                toast.success(`Password reset link sent to ${data.email}`);
             },
-            error: 'Error',
+            onError: (errors) => {
+                if (errors.email) form.setError('email', { message: errors.email });
+            },
         });
     }
 
