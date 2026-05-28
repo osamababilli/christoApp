@@ -7,6 +7,8 @@ interface Props {
         overdueCount: number;
         unpaidTotal: string;
         unpaidCount: number;
+        receivedToday: number;
+        deliveredToday: number;
     };
     recentMotors: Array<{
         id: number;
@@ -14,11 +16,10 @@ interface Props {
         customer_id: number;
         customer_name: string;
         customer_phone: string;
-        brand: string | null;
-        model: string | null;
         status: string;
         status_label: string;
         received_at: string;
+        category_name: string | null;
     }>;
     unpaidMotors: Array<{
         id: number;

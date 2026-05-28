@@ -32,7 +32,7 @@
         
         <meta
             name="description"
-            content="نظام إدارة ورشة الموتورات — تتبع الموتورات والصيانة والعملاء والمالية."
+            content="نظام إدارة ورشة كريستين — تتبع قيود الاستلام والصيانة والعملاء والمالية."
         />
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />

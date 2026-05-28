@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Link } from '@inertiajs/react';
-import { AlertCircle, CheckCircle2, Clock, DollarSign, Plus, Wrench } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, DollarSign, PackageCheck, PackagePlus, Plus, Wrench } from 'lucide-react';
 
 interface Motor {
     id: number;
@@ -15,11 +15,10 @@ interface Motor {
     customer_id: number;
     customer_name: string;
     customer_phone: string;
-    brand: string | null;
-    model: string | null;
     status: string;
     status_label: string;
     received_at: string;
+    category_name: string | null;
 }
 
 interface UnpaidMotor {
@@ -39,6 +38,8 @@ interface Stats {
     overdueCount: number;
     unpaidTotal: string;
     unpaidCount: number;
+    receivedToday: number;
+    deliveredToday: number;
 }
 
 interface Props {
@@ -60,7 +61,7 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
             <Header>
                 <div className="flex items-center gap-2">
                     <Wrench className="h-5 w-5" />
-                    <span className="text-lg font-semibold">ورشة الموتورات</span>
+                    <span className="text-lg font-semibold">ورشة كريستين</span>
                 </div>
                 <div className="ms-auto flex items-center gap-3">
                     <ThemeSwitch />
@@ -77,12 +78,50 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                     <Link href="/motors/create">
                         <Button size="lg" className="min-h-12 gap-2 text-base">
                             <Plus className="h-5 w-5" />
-                            تسجيل موتور جديد
+                            تسجيل طلب جديد
                         </Button>
                     </Link>
                 </div>
 
-                {/* Stats Cards */}
+                <div className="mb-3">
+                    <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">اليوم</h2>
+                </div>
+                <div className="mb-6 grid gap-4 grid-cols-2">
+                    <Card className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium text-green-700 dark:text-green-400">
+                                استُلم اليوم
+                            </CardTitle>
+                            <PackagePlus className="h-5 w-5 text-green-500" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-4xl font-bold text-green-700 dark:text-green-400">
+                                {stats.receivedToday}
+                            </div>
+                            <p className="mt-1 text-xs text-green-600/70">طلب استُلم اليوم</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-teal-200 bg-teal-50 dark:border-teal-900 dark:bg-teal-950/30">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium text-teal-700 dark:text-teal-400">
+                                سُلِّم اليوم
+                            </CardTitle>
+                            <PackageCheck className="h-5 w-5 text-teal-500" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-4xl font-bold text-teal-700 dark:text-teal-400">
+                                {stats.deliveredToday}
+                            </div>
+                            <p className="mt-1 text-xs text-teal-600/70">طلب سُلِّم اليوم</p>
+                        </CardContent>
+                    </Card>
+
+                </div>
+
+                <div className="mb-3">
+                    <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">الإجمالي</h2>
+                </div>
                 <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <Card className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -95,7 +134,7 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                             <div className="text-4xl font-bold text-blue-700 dark:text-blue-400">
                                 {stats.inWorkshop}
                             </div>
-                            <p className="mt-1 text-xs text-blue-600/70">موتور نشط</p>
+                            <p className="mt-1 text-xs text-blue-600/70">طلب نشط</p>
                         </CardContent>
                     </Card>
 
@@ -140,14 +179,13 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                             <div className="text-3xl font-bold text-red-700 dark:text-red-400">
                                 {stats.unpaidTotal}
                             </div>
-                            <p className="mt-1 text-xs text-red-600/70">{stats.unpaidCount} موتور — إجمالي المستحق</p>
+                            <p className="mt-1 text-xs text-red-600/70">{stats.unpaidCount} طلب — إجمالي المستحق</p>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Unpaid Motors */}
                 {unpaidMotors.length > 0 && (
-                    <Card className="border-red-100">
+                    <Card className="mb-6 border-red-100">
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle className="text-lg text-red-700 dark:text-red-400">أعلى الفواتير غير المدفوعة</CardTitle>
                             <Link href="/motors">
@@ -207,10 +245,9 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                     </Card>
                 )}
 
-                {/* Recent Motors */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-xl">آخر الموتورات المستلمة</CardTitle>
+                        <CardTitle className="text-xl">آخر الطلبات المستلمة</CardTitle>
                         <Link href="/motors">
                             <Button variant="outline" size="sm">
                                 عرض الكل
@@ -221,9 +258,9 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                         {recentMotors.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                                 <AlertCircle className="mb-3 h-10 w-10 opacity-40" />
-                                <p className="text-lg">لا توجد موتورات مسجلة بعد</p>
+                                <p className="text-lg">لا توجد طلبات مسجلة بعد</p>
                                 <Link href="/motors/create" className="mt-3">
-                                    <Button>سجّل أول موتور</Button>
+                                    <Button>سجّل أول طلب</Button>
                                 </Link>
                             </div>
                         ) : (
@@ -233,7 +270,7 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                                         <TableHead className="text-right">رقم المرجع</TableHead>
                                         <TableHead className="text-right">العميل</TableHead>
                                         <TableHead className="text-right">الجوال</TableHead>
-                                        <TableHead className="text-right">الماركة / الموديل</TableHead>
+                                        <TableHead className="text-right">التصنيف</TableHead>
                                         <TableHead className="text-right">الحالة</TableHead>
                                         <TableHead className="text-right">تاريخ الاستلام</TableHead>
                                         <TableHead></TableHead>
@@ -259,9 +296,7 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                                                 {motor.customer_phone}
                                             </TableCell>
                                             <TableCell>
-                                                {motor.brand || motor.model
-                                                    ? `${motor.brand ?? ''} ${motor.model ?? ''}`.trim()
-                                                    : '—'}
+                                                {motor.category_name ?? '—'}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge

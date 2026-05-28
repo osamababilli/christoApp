@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Customer;
 use App\Models\MaintenanceOrder;
 use App\Models\Motor;
@@ -16,15 +17,13 @@ class MotorController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = Motor::with('customer')
+        $query = Motor::with(['customer', 'category'])
             ->when($request->search, function ($q, $search) {
                 $q->where('reference_number', 'like', "%{$search}%")
                     ->orWhereHas('customer', fn($q) => $q
                         ->where('name', 'like', "%{$search}%")
                         ->orWhere('phone', 'like', "%{$search}%")
-                    )
-                    ->orWhere('brand', 'like', "%{$search}%")
-                    ->orWhere('model', 'like', "%{$search}%");
+                    );
             })
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->latest();
@@ -38,14 +37,12 @@ class MotorController extends Controller
                 'customer_id'      => $m->customer->id,
                 'customer_name'    => $m->customer->name,
                 'customer_phone'   => $m->customer->phone,
-                'brand'            => $m->brand,
-                'model'            => $m->model,
                 'status'           => $m->status,
                 'status_label'     => Motor::statusLabel($m->status),
-                'condition_rating' => $m->condition_rating,
-                'condition_label'  => $m->condition_rating ? Motor::conditionLabel($m->condition_rating) : null,
                 'received_at'      => $m->received_at?->format('Y-m-d'),
                 'delivered_at'     => $m->delivered_at?->format('Y-m-d'),
+                'category_id'      => $m->category_id,
+                'category_name'    => $m->category?->name ?? null,
             ]),
             'filters' => $request->only(['search', 'status']),
         ]);
@@ -67,7 +64,8 @@ class MotorController extends Controller
     public function create(): Response
     {
         return Inertia::render('authenticated/motors/create', [
-            'customers' => $this->customersList(),
+            'customers'  => $this->customersList(),
+            'categories' => Category::orderBy('name')->get(['id', 'name', 'color', 'icon']),
         ]);
     }
 
@@ -77,10 +75,8 @@ class MotorController extends Controller
             'customer_id'      => 'nullable|exists:customers,id',
             'customer_name'    => 'required_without:customer_id|nullable|string|max:255',
             'customer_phone'   => 'required_without:customer_id|nullable|string|max:50',
-            'brand'            => 'nullable|string|max:100',
-            'model'            => 'nullable|string|max:100',
+            'category_id'      => 'nullable|exists:categories,id',
             'status'           => 'required|in:in_workshop,in_progress,ready,delivered',
-            'condition_rating' => 'nullable|in:excellent,good,fair,poor',
             'notes'            => 'nullable|string',
         ]);
 
@@ -96,22 +92,22 @@ class MotorController extends Controller
 
         Motor::create([
             'customer_id'      => $customer->id,
-            'brand'            => $validated['brand'] ?? null,
-            'model'            => $validated['model'] ?? null,
+            'category_id'      => $validated['category_id'] ?? null,
             'status'           => $validated['status'],
-            'condition_rating' => $validated['condition_rating'] ?? null,
             'notes'            => $validated['notes'] ?? null,
             'received_at'      => $validated['received_at'] ?? now(),
         ]);
 
         return redirect()->route('motors.index')
-            ->with('success', 'تم تسجيل الموتور بنجاح');
+            ->with('success', 'تم تسجيل قيد الاستلام بنجاح');
     }
 
     public function show(Motor $motor): Response
     {
         $motor->load([
             'customer',
+            'category',
+            'assignedToUser',
             'maintenanceOrders.parts.supplier',
             'transactions',
         ]);
@@ -130,15 +126,15 @@ class MotorController extends Controller
                     'name'  => $motor->customer->name,
                     'phone' => $motor->customer->phone,
                 ],
-                'brand'            => $motor->brand,
-                'model'            => $motor->model,
                 'status'           => $motor->status,
                 'status_label'     => Motor::statusLabel($motor->status),
-                'condition_rating' => $motor->condition_rating,
-                'condition_label'  => $motor->condition_rating ? Motor::conditionLabel($motor->condition_rating) : null,
                 'notes'            => $motor->notes,
                 'received_at'      => $motor->received_at?->format('Y-m-d H:i'),
                 'delivered_at'     => $motor->delivered_at?->format('Y-m-d H:i'),
+                'category_id'               => $motor->category_id,
+                'category_name'             => $motor->category?->name ?? null,
+                'assigned_to'               => $motor->assigned_to,
+                'assigned_to_name'          => $motor->assignedToUser?->name ?? null,
                 'transactions' => $motor->transactions->sortByDesc('transaction_date')->values()->map(fn($t) => [
                     'id'               => $t->id,
                     'type'             => $t->type,
@@ -189,10 +185,7 @@ class MotorController extends Controller
                     'name'  => $motor->customer->name,
                     'phone' => $motor->customer->phone,
                 ],
-                'brand'            => $motor->brand,
-                'model'            => $motor->model,
                 'status_label'     => Motor::statusLabel($motor->status),
-                'condition_label'  => $motor->condition_rating ? Motor::conditionLabel($motor->condition_rating) : null,
                 'notes'            => $motor->notes,
                 'received_at'      => $motor->received_at?->format('Y-m-d'),
                 'delivered_at'     => $motor->delivered_at?->format('Y-m-d'),
@@ -240,10 +233,7 @@ class MotorController extends Controller
                     'name'  => $motor->customer->name,
                     'phone' => $motor->customer->phone,
                 ],
-                'brand'            => $motor->brand,
-                'model'            => $motor->model,
                 'status_label'     => Motor::statusLabel($motor->status),
-                'condition_label'  => $motor->condition_rating ? Motor::conditionLabel($motor->condition_rating) : null,
                 'notes'            => $motor->notes,
                 'received_at'      => $motor->received_at?->format('Y-m-d'),
                 'delivered_at'     => $motor->delivered_at?->format('Y-m-d'),
@@ -268,30 +258,30 @@ class MotorController extends Controller
         return $motor->status === 'delivered' && ($grandTotal - $paid) <= 0.009;
     }
 
-    public function edit(Motor $motor): Response
+    public function edit(Motor $motor): Response|RedirectResponse
     {
         if ($this->isLocked($motor)) {
             return redirect()->route('motors.show', $motor)
-                ->with('error', 'لا يمكن تعديل موتور مسلَّم ومسدَّد بالكامل.');
+                ->with('error', 'لا يمكن تعديل قيد استلام مسلَّم ومسدَّد بالكامل.');
         }
 
         $motor->load('customer');
 
         return Inertia::render('authenticated/motors/edit', [
-            'customers' => $this->customersList(),
+            'customers'  => $this->customersList(),
+            'categories' => Category::orderBy('name')->get(['id', 'name', 'color', 'icon']),
             'motor' => [
-                'id'               => $motor->id,
-                'reference_number' => $motor->reference_number,
-                'customer_id'      => $motor->customer->id,
-                'customer_name'    => $motor->customer->name,
-                'customer_phone'   => $motor->customer->phone,
-                'brand'            => $motor->brand,
-                'model'            => $motor->model,
-                'status'           => $motor->status,
-                'condition_rating' => $motor->condition_rating,
-                'notes'            => $motor->notes,
-                'received_at'      => $motor->received_at?->format('Y-m-d'),
-                'delivered_at'     => $motor->delivered_at?->format('Y-m-d'),
+                'id'                => $motor->id,
+                'reference_number'  => $motor->reference_number,
+                'customer_id'       => $motor->customer->id,
+                'customer_name'     => $motor->customer->name,
+                'customer_phone'    => $motor->customer->phone,
+                'category_id'       => $motor->category_id,
+                'status'            => $motor->status,
+                'notes'             => $motor->notes,
+                'received_at'       => $motor->received_at?->format('Y-m-d'),
+                'delivered_at'      => $motor->delivered_at?->format('Y-m-d'),
+                'assigned_to'       => $motor->assigned_to,
             ],
         ]);
     }
@@ -300,19 +290,18 @@ class MotorController extends Controller
     {
         if ($this->isLocked($motor)) {
             return redirect()->route('motors.show', $motor)
-                ->with('error', 'لا يمكن تعديل موتور مسلَّم ومسدَّد بالكامل.');
+                ->with('error', 'لا يمكن تعديل قيد استلام مسلَّم ومسدَّد بالكامل.');
         }
 
         $validated = $request->validate([
-            'customer_id'      => 'nullable|exists:customers,id',
-            'customer_name'    => 'required_without:customer_id|nullable|string|max:255',
-            'customer_phone'   => 'required_without:customer_id|nullable|string|max:50',
-            'brand'            => 'nullable|string|max:100',
-            'model'            => 'nullable|string|max:100',
-            'status'           => 'required|in:in_workshop,in_progress,ready,delivered',
-            'condition_rating' => 'nullable|in:excellent,good,fair,poor',
-            'notes'            => 'nullable|string',
-            'delivered_at'     => 'nullable|date',
+            'customer_id'       => 'nullable|exists:customers,id',
+            'customer_name'     => 'required_without:customer_id|nullable|string|max:255',
+            'customer_phone'    => 'required_without:customer_id|nullable|string|max:50',
+            'category_id'       => 'nullable|exists:categories,id',
+            'status'            => 'required|in:in_workshop,in_progress,ready,delivered',
+            'notes'             => 'nullable|string',
+            'delivered_at'      => 'nullable|date',
+            'assigned_to'       => 'nullable|exists:users,id',
         ]);
 
         if (! empty($validated['customer_id'])) {
@@ -325,17 +314,16 @@ class MotorController extends Controller
         }
 
         $motor->update([
-            'brand'            => $validated['brand'] ?? null,
-            'model'            => $validated['model'] ?? null,
-            'status'           => $validated['status'],
-            'condition_rating' => $validated['condition_rating'] ?? null,
-            'notes'            => $validated['notes'] ?? null,
-            'received_at'      => $validated['received_at'] ?? $motor->received_at,
-            'delivered_at'     => $validated['delivered_at'] ?? null,
+            'category_id'       => $validated['category_id'] ?? null,
+            'status'            => $validated['status'],
+            'notes'             => $validated['notes'] ?? null,
+            'received_at'       => $validated['received_at'] ?? $motor->received_at,
+            'delivered_at'      => $validated['delivered_at'] ?? null,
+            'assigned_to'       => $validated['assigned_to'] ?? null,
         ]);
 
         return redirect()->route('motors.show', $motor)
-            ->with('success', 'تم تحديث بيانات الموتور');
+            ->with('success', 'تم تحديث البيانات');
     }
 
     public function destroy(Motor $motor): RedirectResponse
@@ -343,7 +331,7 @@ class MotorController extends Controller
         $motor->delete();
 
         return redirect()->route('motors.index')
-            ->with('success', 'تم أرشفة الموتور');
+            ->with('success', 'تم الأرشفة');
     }
 
     public function bulkDestroy(Request $request): RedirectResponse
@@ -357,7 +345,7 @@ class MotorController extends Controller
 
         $count = count($validated['ids']);
 
-        return back()->with('success', "تم أرشفة {$count} موتور بنجاح");
+        return back()->with('success', "تم أرشفة {$count} قيد استلام بنجاح");
     }
 
     public function updateStatus(Request $request, Motor $motor): RedirectResponse

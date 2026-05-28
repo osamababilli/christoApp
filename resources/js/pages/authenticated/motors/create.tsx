@@ -4,15 +4,16 @@ import { ProfileDropdown } from '@/components/profile-dropdown';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { Button } from '@/components/ui/button';
 import { type CustomerOption } from '@/features/motors/customer-combobox';
-import { MotorForm } from '@/features/motors/motor-form';
+import { MotorForm, type CategoryOption } from '@/features/motors/motor-form';
 import { Link } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
 
 interface Props {
     customers: CustomerOption[];
+    categories: CategoryOption[];
 }
 
-export default function MotorCreatePage({ customers }: Props) {
+export default function MotorCreatePage({ customers, categories }: Props) {
     return (
         <>
             <Header>
@@ -29,10 +30,11 @@ export default function MotorCreatePage({ customers }: Props) {
             </Header>
             <Main>
                 <MotorForm
-                    title="تسجيل موتور جديد"
+                    title="تسجيل قيد استلام جديد"
                     action="/motors"
                     method="post"
                     customers={customers}
+                    categories={categories}
                 />
             </Main>
         </>

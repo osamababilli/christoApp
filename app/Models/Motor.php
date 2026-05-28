@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Category;
+use App\Models\User;
 
 class Motor extends Model
 {
@@ -15,18 +17,17 @@ class Motor extends Model
     protected $fillable = [
         'reference_number',
         'customer_id',
-        'brand',
-        'model',
+        'category_id',
         'status',
-        'condition_rating',
         'notes',
         'received_at',
         'delivered_at',
+        'assigned_to',
     ];
 
     protected $casts = [
-        'received_at' => 'datetime',
-        'delivered_at' => 'datetime',
+        'received_at'       => 'datetime',
+        'delivered_at'      => 'datetime',
     ];
 
     protected static function booted(): void
@@ -54,6 +55,16 @@ class Motor extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function assignedToUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
     public function maintenanceOrders(): HasMany
     {
         return $this->hasMany(MaintenanceOrder::class);
@@ -75,14 +86,4 @@ class Motor extends Model
         };
     }
 
-    public static function conditionLabel(string $rating): string
-    {
-        return match($rating) {
-            'excellent' => 'ممتاز',
-            'good'      => 'جيد',
-            'fair'      => 'مقبول',
-            'poor'      => 'ضعيف',
-            default     => $rating,
-        };
-    }
 }

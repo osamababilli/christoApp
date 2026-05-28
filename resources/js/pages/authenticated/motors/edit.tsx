@@ -4,36 +4,35 @@ import { ProfileDropdown } from '@/components/profile-dropdown';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { Button } from '@/components/ui/button';
 import { type CustomerOption } from '@/features/motors/customer-combobox';
-import { MotorForm } from '@/features/motors/motor-form';
+import { MotorForm, type CategoryOption } from '@/features/motors/motor-form';
 import { Link } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
 
 interface Props {
     customers: CustomerOption[];
+    categories: CategoryOption[];
     motor: {
         id: number;
         reference_number: string;
         customer_id: number;
         customer_name: string;
         customer_phone: string;
-        brand: string | null;
-        model: string | null;
+        category_id: number | null;
         status: string;
-        condition_rating: string | null;
         notes: string | null;
         received_at: string;
         delivered_at: string | null;
     };
 }
 
-export default function MotorEditPage({ customers, motor }: Props) {
+export default function MotorEditPage({ customers, categories, motor }: Props) {
     return (
         <>
             <Header>
                 <Link href={`/motors/${motor.id}`}>
                     <Button variant="ghost" size="sm" className="gap-2">
                         <ArrowRight className="h-4 w-4" />
-                        العودة للموتور
+                        العودة لقيد الاستلام
                     </Button>
                 </Link>
                 <div className="ms-auto flex items-center gap-3">
@@ -48,16 +47,14 @@ export default function MotorEditPage({ customers, motor }: Props) {
                     method="put"
                     showDeliveredAt
                     customers={customers}
+                    categories={categories}
                     defaultValues={{
                         customer_id:      motor.customer_id,
                         customer_name:    motor.customer_name,
                         customer_phone:   motor.customer_phone,
-                        brand:            motor.brand ?? '',
-                        model:            motor.model ?? '',
+                        category_id:      motor.category_id,
                         status:           motor.status,
-                        condition_rating: motor.condition_rating ?? '',
                         notes:            motor.notes ?? '',
-                        received_at:      motor.received_at,
                         delivered_at:     motor.delivered_at ?? '',
                     }}
                 />

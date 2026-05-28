@@ -197,7 +197,7 @@ export function Maintenance({ orders, filters }: Props) {
                                             <TableCell>
                                                 <div className="flex items-center gap-1">
                                                     <Link href={`/motors/${order.motor_id}`}>
-                                                        <Button variant="ghost" size="icon" title="عرض الموتور">
+                                                        <Button variant="ghost" size="icon" title="عرض قيد الاستلام">
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
@@ -245,7 +245,7 @@ export function Maintenance({ orders, filters }: Props) {
                             <span className="font-bold text-foreground">
                                 مرحلة {deleteTarget?.stage}
                             </span>{' '}
-                            للموتور{' '}
+                            لقيد الاستلام{' '}
                             <span className="font-bold text-foreground">
                                 {deleteTarget?.reference_number}
                             </span>.

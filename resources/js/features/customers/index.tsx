@@ -76,7 +76,7 @@ export function Customers({ customers, filters }: Props) {
                                     <TableHead className="text-right">الاسم</TableHead>
                                     <TableHead className="text-right">الجوال</TableHead>
                                     <TableHead className="text-right">البريد الإلكتروني</TableHead>
-                                    <TableHead className="text-right">عدد الموتورات</TableHead>
+                                    <TableHead className="text-right">عدد قيود الاستلام</TableHead>
                                     <TableHead className="text-right">تاريخ التسجيل</TableHead>
                                     <TableHead></TableHead>
                                 </TableRow>
@@ -122,7 +122,7 @@ export function Customers({ customers, filters }: Props) {
                                                     </Link>
                                                     <Link href={`/motors?search=${c.phone}`}>
                                                         <Button variant="ghost" size="sm">
-                                                            الموتورات
+                                                            قيود الاستلام
                                                         </Button>
                                                     </Link>
                                                 </div>

@@ -12,8 +12,6 @@ import { ArrowRight, Phone, Star, User } from 'lucide-react';
 interface Motor {
     id: number;
     reference_number: string;
-    brand: string | null;
-    model: string | null;
     status: string;
     status_label: string;
     received_at: string | null;
@@ -118,7 +116,7 @@ export default function CustomerShow({ customer, motors, summary }: Props) {
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-muted-foreground">عدد الموتورات</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">عدد قيود الاستلام</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <p className="text-3xl font-bold text-right">{summary.total_motors}</p>
@@ -159,19 +157,18 @@ export default function CustomerShow({ customer, motors, summary }: Props) {
                 {/* Motors table */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>سجل الموتورات</CardTitle>
+                        <CardTitle>سجل قيود الاستلام</CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                         {motors.length === 0 ? (
                             <div className="py-12 text-center text-muted-foreground">
-                                لا توجد موتورات لهذا العميل
+                                لا توجد قيود استلام لهذا العميل
                             </div>
                         ) : (
                             <Table>
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="text-right">الرقم المرجعي</TableHead>
-                                        <TableHead className="text-right">الماركة / الموديل</TableHead>
                                         <TableHead className="text-right">الحالة</TableHead>
                                         <TableHead className="text-right">تاريخ الاستلام</TableHead>
                                         <TableHead className="text-right">إجمالي الفاتورة</TableHead>
@@ -190,11 +187,6 @@ export default function CustomerShow({ customer, motors, summary }: Props) {
                                                 >
                                                     {motor.reference_number}
                                                 </Link>
-                                            </TableCell>
-                                            <TableCell>
-                                                {motor.brand || motor.model
-                                                    ? `${motor.brand ?? ''} ${motor.model ?? ''}`.trim()
-                                                    : '—'}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge

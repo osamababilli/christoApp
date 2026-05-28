@@ -6,7 +6,7 @@ import { Search } from '@/components/search';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { Separator } from '@/components/ui/separator';
 import { SidebarNav } from '@/features/settings/components/sidebar-nav';
-import { Bell, Monitor, Palette, UserCog, Users, Wrench } from 'lucide-react';
+import { Bell, Monitor, Palette, Tag, UserCog, Users, Wrench } from 'lucide-react';
 
 const sidebarNavItems = [
     {
@@ -33,6 +33,11 @@ const sidebarNavItems = [
         title: 'Display',
         href: '/settings/display',
         icon: <Monitor size={18} />,
+    },
+    {
+        title: 'التصنيفات',
+        href: '/settings/categories',
+        icon: <Tag size={18} />,
     },
     {
         title: 'Users',

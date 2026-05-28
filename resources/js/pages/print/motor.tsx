@@ -31,10 +31,7 @@ interface Motor {
     id: number;
     reference_number: string;
     customer: { name: string; phone: string };
-    brand: string | null;
-    model: string | null;
     status_label: string;
-    condition_label: string | null;
     notes: string | null;
     received_at: string | null;
     delivered_at: string | null;
@@ -81,7 +78,7 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
 
                 {/* Header */}
                 <div style={{ textAlign: 'center', marginBottom: 28, paddingBottom: 20, borderBottom: '2px solid #111' }}>
-                    <h1 style={{ fontSize: 26, fontWeight: 900, margin: 0, letterSpacing: 1 }}>ورشة موتورات</h1>
+                    <h1 style={{ fontSize: 26, fontWeight: 900, margin: 0, letterSpacing: 1 }}>ورشة كريستين</h1>
                     <p style={{ fontSize: 13, color: '#555', margin: '4px 0 0' }}>فاتورة / ورقة استلام وتسليم</p>
                 </div>
 
@@ -104,10 +101,7 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
                         <Row label="الاسم" value={motor.customer.name} />
                         <Row label="الهاتف" value={motor.customer.phone} ltr />
                     </Section>
-                    <Section title="بيانات الموتور">
-                        {motor.brand   && <Row label="الماركة" value={motor.brand} />}
-                        {motor.model   && <Row label="الموديل" value={motor.model} />}
-                        {motor.condition_label && <Row label="الحالة الفنية" value={motor.condition_label} />}
+                    <Section title="بيانات قيد الاستلام">
                     </Section>
                 </div>
 

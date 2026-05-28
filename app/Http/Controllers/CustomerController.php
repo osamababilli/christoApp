@@ -55,8 +55,6 @@ class CustomerController extends Controller
                 return [
                     'id'               => $motor->id,
                     'reference_number' => $motor->reference_number,
-                    'brand'            => $motor->brand,
-                    'model'            => $motor->model,
                     'status'           => $motor->status,
                     'status_label'     => Motor::statusLabel($motor->status),
                     'received_at'      => $motor->received_at?->format('Y-m-d'),

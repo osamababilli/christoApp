@@ -10,10 +10,7 @@ interface Motor {
     id: number;
     reference_number: string;
     customer: { name: string; phone: string };
-    brand: string | null;
-    model: string | null;
     status_label: string;
-    condition_label: string | null;
     notes: string | null;
     received_at: string | null;
     delivered_at: string | null;
@@ -54,7 +51,7 @@ export default function DeliveryPrint({ motor }: { motor: Motor }) {
 
                 {/* Header */}
                 <div style={{ textAlign: 'center', marginBottom: 28, paddingBottom: 20, borderBottom: '3px double #111' }}>
-                    <h1 style={{ fontSize: 28, fontWeight: 900, margin: 0, letterSpacing: 1 }}>ورشة موتورات</h1>
+                    <h1 style={{ fontSize: 28, fontWeight: 900, margin: 0, letterSpacing: 1 }}>ورشة كريستين</h1>
                     <p style={{ fontSize: 16, fontWeight: 700, margin: '6px 0 0', color: '#333', letterSpacing: 2 }}>ورقة استلام وتسليم</p>
                     <p style={{ fontSize: 12, color: '#888', margin: '4px 0 0' }}>نسخة العميل</p>
                 </div>
@@ -82,10 +79,7 @@ export default function DeliveryPrint({ motor }: { motor: Motor }) {
                         <DeliveryRow label="الاسم" value={motor.customer.name} />
                         <DeliveryRow label="الجوال" value={motor.customer.phone} ltr />
                     </DeliverySection>
-                    <DeliverySection title="بيانات الموتور">
-                        {motor.brand    && <DeliveryRow label="الماركة" value={motor.brand} />}
-                        {motor.model    && <DeliveryRow label="الموديل" value={motor.model} />}
-                        {motor.condition_label && <DeliveryRow label="الحالة الفنية" value={motor.condition_label} />}
+                    <DeliverySection title="بيانات قيد الاستلام">
                     </DeliverySection>
                 </div>
 
@@ -157,7 +151,7 @@ export default function DeliveryPrint({ motor }: { motor: Motor }) {
                     <div style={{ textAlign: 'center' }}>
                         <div style={{ borderBottom: '1px solid #aaa', height: 48, marginBottom: 8 }} />
                         <p style={{ margin: 0, fontSize: 13, color: '#555' }}>توقيع الفني</p>
-                        <p style={{ margin: '4px 0 0', fontSize: 12, color: '#888' }}>ورشة الموتورات</p>
+                        <p style={{ margin: '4px 0 0', fontSize: 12, color: '#888' }}>ورشة كريستين</p>
                     </div>
                 </div>
 

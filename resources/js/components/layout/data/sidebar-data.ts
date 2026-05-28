@@ -24,7 +24,7 @@ export const sidebarData: SidebarData = {
     },
     teams: [
         {
-            name: 'ورشة موتورات',
+            name: 'ورشة كريستين',
             logo: Cog,
             plan: 'نظام إدارة الورشة',
         },
@@ -39,7 +39,7 @@ export const sidebarData: SidebarData = {
                     icon: LayoutDashboard,
                 },
                 {
-                    title: 'الموتورات',
+                    title: 'قيود الاستلام',
                     url: '/motors',
                     icon: Wrench,
                 },

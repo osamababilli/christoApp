@@ -218,7 +218,7 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
 
                 {/* ── Overview counts ── */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                    <StatCard icon={Wrench}       label="الموتورات"     value={totals.motors}      color="bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300" />
+                    <StatCard icon={Wrench}       label="قيود الاستلام"     value={totals.motors}      color="bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300" />
                     <StatCard icon={Users}         label="العملاء"       value={totals.customers}   color="bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300" />
                     <StatCard icon={Truck}         label="الموردون"      value={totals.suppliers}   color="bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300" />
                     <StatCard icon={ClipboardList} label="أوامر الصيانة" value={totals.maintenance} color="bg-yellow-100 text-yellow-700 dark:bg-yellow-950/60 dark:text-yellow-300" />
@@ -265,7 +265,7 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
 
                 {/* ── Status breakdowns ── */}
                 <div className="grid gap-6 lg:grid-cols-2">
-                    <StatusBreakdown title="الموتورات حسب الحالة"      data={motors_by_status}      config={motorStatusConfig} />
+                    <StatusBreakdown title="قيود الاستلام حسب الحالة"      data={motors_by_status}      config={motorStatusConfig} />
                     <StatusBreakdown title="أوامر الصيانة حسب الحالة" data={maintenance_by_status} config={maintenanceStatusConfig} />
                 </div>
 
@@ -305,12 +305,12 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
                         <CardHeader className="pb-3">
                             <CardTitle className="flex items-center gap-2 text-base">
                                 <Wrench className="h-4 w-4 text-muted-foreground" />
-                                {isFiltered ? 'الموتورات في الفترة المحددة' : 'آخر الموتورات المضافة'}
+                                {isFiltered ? 'قيود الاستلام في الفترة المحددة' : 'آخر قيود الاستلام المضافة'}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
                             {recent_motors.length === 0 ? (
-                                <p className="px-6 py-4 text-sm text-muted-foreground">لا توجد موتورات</p>
+                                <p className="px-6 py-4 text-sm text-muted-foreground">لا توجد قيود استلام</p>
                             ) : (
                                 <Table>
                                     <TableHeader>

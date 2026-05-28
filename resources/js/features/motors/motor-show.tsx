@@ -33,6 +33,7 @@ import {
     Phone,
     Plus,
     Printer,
+    Tag,
     Trash2,
     User,
     Wallet,
@@ -80,15 +81,13 @@ interface Motor {
     id: number;
     reference_number: string;
     customer: { id: number; name: string; phone: string };
-    brand: string | null;
-    model: string | null;
     status: string;
     status_label: string;
-    condition_rating: string | null;
-    condition_label: string | null;
     notes: string | null;
     received_at: string;
     delivered_at: string | null;
+    category_name: string | null;
+    assigned_to_name: string | null;
     transactions: Transaction[];
     maintenance_orders: MaintenanceOrder[];
 }
@@ -201,12 +200,7 @@ function MaintenanceStatusBar({ order }: { order: MaintenanceOrder }) {
     );
 }
 
-const conditionConfig: Record<string, string> = {
-    excellent: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    good:      'bg-blue-100 text-blue-700 border-blue-200',
-    fair:      'bg-amber-100 text-amber-700 border-amber-200',
-    poor:      'bg-red-100 text-red-700 border-red-200',
-};
+
 
 const statusSteps = [
     { value: 'in_workshop', label: 'في الورشة'     },
@@ -633,11 +627,6 @@ export function MotorShow({ motor, suppliers }: Props) {
                                     <span className={cn('me-1.5 inline-block h-2 w-2 rounded-full', cfg.dot)} />
                                     {motor.status_label}
                                 </Badge>
-                                {motor.condition_label && (
-                                    <Badge variant="outline" className={cn('text-sm', conditionConfig[motor.condition_rating ?? ''] ?? '')}>
-                                        {motor.condition_label}
-                                    </Badge>
-                                )}
                             </div>
 
                             <div className="flex flex-wrap gap-5 text-sm text-muted-foreground">
@@ -649,12 +638,6 @@ export function MotorShow({ motor, suppliers }: Props) {
                                     <Phone className="h-4 w-4" />
                                     {motor.customer.phone}
                                 </span>
-                                {(motor.brand || motor.model) && (
-                                    <span className="flex items-center gap-1.5">
-                                        <Car className="h-4 w-4" />
-                                        {[motor.brand, motor.model].filter(Boolean).join(' ')}
-                                    </span>
-                                )}
                                 <span className="flex items-center gap-1.5">
                                     <Calendar className="h-4 w-4" />
                                     استُلم: {motor.received_at}
@@ -700,7 +683,7 @@ export function MotorShow({ motor, suppliers }: Props) {
                         <div>
                             <p className="font-semibold text-green-800 dark:text-green-300">ملف مغلق</p>
                             <p className="text-sm text-green-700/80 dark:text-green-400/80">
-                                تم تسليم الموتور وسداد الفاتورة بالكامل — لا يمكن إجراء أي تعديلات.
+                                تم تسليم قيد الاستلام وسداد الفاتورة بالكامل — لا يمكن إجراء أي تعديلات.
                             </p>
                         </div>
                     </div>
@@ -710,7 +693,7 @@ export function MotorShow({ motor, suppliers }: Props) {
                 {!isLocked && (
                     <Card>
                         <CardHeader className="pb-3">
-                            <CardTitle className="text-base text-muted-foreground">تحديث حالة الموتور</CardTitle>
+                            <CardTitle className="text-base text-muted-foreground">تحديث الحالة</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <StatusUpdateBar motor={motor} />
@@ -726,15 +709,13 @@ export function MotorShow({ motor, suppliers }: Props) {
                         <CardHeader className="pb-3">
                             <CardTitle className="flex items-center gap-2 text-base">
                                 <Car className="h-4 w-4 text-muted-foreground" />
-                                بيانات الموتور
+                                بيانات قيد الاستلام
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <dl className="divide-y">
                                 {[
-                                    { label: 'الماركة',       value: motor.brand },
-                                    { label: 'الموديل',       value: motor.model },
-                                    { label: 'الحالة الفنية', value: motor.condition_label },
+                                    { label: 'التصنيف',       value: motor.category_name },
                                     { label: 'تاريخ الاستلام', value: motor.received_at },
                                     { label: 'تاريخ التسليم', value: motor.delivered_at },
                                 ].filter((r) => r.value).map((row) => (

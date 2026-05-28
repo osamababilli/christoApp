@@ -168,7 +168,7 @@ export function Parts({ parts, filters }: Props) {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="text-right">الموتور</TableHead>
+                                    <TableHead className="text-right">قيد الاستلام</TableHead>
                                     <TableHead className="text-right">العميل</TableHead>
                                     <TableHead className="text-right">م</TableHead>
                                     <TableHead className="text-right">القطعة</TableHead>
@@ -283,7 +283,7 @@ export function Parts({ parts, filters }: Props) {
                         <AlertDialogDescription>
                             سيتم حذف القطعة{' '}
                             <span className="font-bold text-foreground">"{deleteTarget?.part_name}"</span>{' '}
-                            من الموتور{' '}
+                            من قيد الاستلام{' '}
                             <span className="font-bold text-foreground">{deleteTarget?.reference_number}</span>.
                             <br />
                             هذا الإجراء لا يمكن التراجع عنه.

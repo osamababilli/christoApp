@@ -29,12 +29,9 @@ interface Motor {
     customer_id: number;
     customer_name: string;
     customer_phone: string;
-    brand: string | null;
-    model: string | null;
     status: string;
     status_label: string;
-    condition_rating: string | null;
-    condition_label: string | null;
+    category_name: string | null;
     received_at: string;
     delivered_at: string | null;
 }
@@ -60,18 +57,13 @@ const statusColors: Record<string, string> = {
     delivered: 'bg-gray-100 text-gray-700 border-gray-200',
 };
 
-const conditionColors: Record<string, string> = {
-    excellent: 'bg-emerald-100 text-emerald-700',
-    good: 'bg-blue-100 text-blue-700',
-    fair: 'bg-amber-100 text-amber-700',
-    poor: 'bg-red-100 text-red-700',
-};
 
 export function Motors({ motors, filters }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
     const allIds = motors.data.map((m) => m.id);
     const allChecked = allIds.length > 0 && allIds.every((id) => selected.has(id));
@@ -102,10 +94,15 @@ export function Motors({ motors, filters }: Props) {
         );
     }
 
-    function deleteMotor(id: number) {
-        if (confirm('هل أنت متأكد من أرشفة هذا الموتور؟')) {
-            router.delete(`/motors/${id}`);
+    function confirmDelete(id: number) {
+        setDeleteTarget(id);
+    }
+
+    function doDelete() {
+        if (deleteTarget !== null) {
+            router.delete(`/motors/${deleteTarget}`);
         }
+        setDeleteTarget(null);
     }
 
     function bulkDelete() {
@@ -161,13 +158,13 @@ export function Motors({ motors, filters }: Props) {
             <Main className="flex flex-1 flex-col gap-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">قائمة الموتورات</h2>
-                        <p className="text-muted-foreground">إجمالي: {motors.total} موتور</p>
+                        <h2 className="text-2xl font-bold tracking-tight">قيود الاستلام</h2>
+                        <p className="text-muted-foreground">إجمالي: {motors.total} قيد استلام</p>
                     </div>
                     <Link href="/motors/create">
                         <Button size="lg" className="min-h-12 gap-2 text-base">
                             <Plus className="h-5 w-5" />
-                            تسجيل موتور جديد
+                            تسجيل قيد استلام جديد
                         </Button>
                     </Link>
                 </div>
@@ -176,7 +173,7 @@ export function Motors({ motors, filters }: Props) {
                 {selected.size > 0 && (
                     <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-2.5">
                         <span className="text-sm font-medium">
-                            تم تحديد <span className="font-bold text-destructive">{selected.size}</span> موتور
+                            تم تحديد <span className="font-bold text-destructive">{selected.size}</span> قيد استلام
                         </span>
                         <Button
                             variant="destructive"
@@ -210,9 +207,8 @@ export function Motors({ motors, filters }: Props) {
                                     <TableHead className="text-right">الرقم المرجعي</TableHead>
                                     <TableHead className="text-right">العميل</TableHead>
                                     <TableHead className="text-right">الجوال</TableHead>
-                                    <TableHead className="text-right">الماركة / الموديل</TableHead>
                                     <TableHead className="text-right">الحالة</TableHead>
-                                    <TableHead className="text-right">الحالة الفنية</TableHead>
+                                    <TableHead className="text-right">التصنيف</TableHead>
                                     <TableHead className="text-right">تاريخ الاستلام</TableHead>
                                     <TableHead className="text-right">تاريخ التسليم</TableHead>
                                     <TableHead className="text-right">الإجراءات</TableHead>
@@ -221,8 +217,8 @@ export function Motors({ motors, filters }: Props) {
                             <TableBody>
                                 {motors.data.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={10} className="py-12 text-center text-muted-foreground text-lg">
-                                            لا توجد موتورات مطابقة للبحث
+                                        <TableCell colSpan={11} className="py-12 text-center text-muted-foreground text-lg">
+                                            لا توجد قيود استلام مطابقة للبحث
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -255,11 +251,6 @@ export function Motors({ motors, filters }: Props) {
                                                 {motor.customer_phone}
                                             </TableCell>
                                             <TableCell>
-                                                {motor.brand || motor.model
-                                                    ? `${motor.brand ?? ''} ${motor.model ?? ''}`.trim()
-                                                    : '—'}
-                                            </TableCell>
-                                            <TableCell>
                                                 <Badge
                                                     variant="outline"
                                                     className={`min-w-[100px] justify-center text-sm ${statusColors[motor.status] ?? ''}`}
@@ -267,17 +258,8 @@ export function Motors({ motors, filters }: Props) {
                                                     {motor.status_label}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell>
-                                                {motor.condition_label ? (
-                                                    <Badge
-                                                        variant="secondary"
-                                                        className={conditionColors[motor.condition_rating ?? ''] ?? ''}
-                                                    >
-                                                        {motor.condition_label}
-                                                    </Badge>
-                                                ) : (
-                                                    '—'
-                                                )}
+                                            <TableCell className="text-sm">
+                                                {motor.category_name ?? '—'}
                                             </TableCell>
                                             <TableCell>{motor.received_at}</TableCell>
                                             <TableCell>
@@ -304,7 +286,7 @@ export function Motors({ motors, filters }: Props) {
                                                         size="icon"
                                                         title="أرشفة"
                                                         className="text-destructive hover:text-destructive"
-                                                        onClick={() => deleteMotor(motor.id)}
+                                                        onClick={() => confirmDelete(motor.id)}
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
@@ -341,7 +323,7 @@ export function Motors({ motors, filters }: Props) {
                     <AlertDialogHeader>
                         <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
                         <AlertDialogDescription>
-                            سيتم أرشفة <span className="font-bold text-foreground">{selected.size}</span> موتور.
+                            سيتم أرشفة <span className="font-bold text-foreground">{selected.size}</span> قيد استلام.
                             هذا الإجراء لا يمكن التراجع عنه بسهولة. هل أنت متأكد؟
                         </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -352,6 +334,27 @@ export function Motors({ motors, filters }: Props) {
                             onClick={bulkDelete}
                         >
                             نعم، احذف المحدد
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Single delete confirmation */}
+            <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>تأكيد الأرشفة</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            هل أنت متأكد من أرشفة هذا القيد؟ لا يمكن التراجع عن هذا الإجراء بسهولة.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={doDelete}
+                        >
+                            نعم، أرشفة
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
