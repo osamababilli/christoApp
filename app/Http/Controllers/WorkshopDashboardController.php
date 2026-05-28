@@ -48,7 +48,7 @@ class WorkshopDashboardController extends Controller
         $top5Unpaid = array_slice($unpaidMotorsList, 0, 5);
         $top5Unpaid = array_map(fn($m) => array_merge($m, ['remaining' => number_format($m['remaining'], 2)]), $top5Unpaid);
 
-        $recentMotors = Motor::with(['customer', 'category'])
+        $recentMotors = Motor::with(['customer', 'category', 'receivedByEmployee'])
             ->latest()
             ->take(10)
             ->get()
@@ -62,6 +62,7 @@ class WorkshopDashboardController extends Controller
                 'status_label'     => Motor::statusLabel($m->status),
                 'received_at'      => $m->received_at?->format('Y-m-d'),
                 'category_name'    => $m->category?->name ?? null,
+                'received_by_name' => $m->receivedByEmployee?->full_name ?? null,
             ]);
 
         return Inertia::render('authenticated/workshop-dashboard', [

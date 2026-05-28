@@ -13,6 +13,7 @@ import {
     Truck,
     BarChart3,
     Cog,
+    UserCircle,
 } from 'lucide-react';
 import { type SidebarData } from '../types';
 
@@ -62,6 +63,11 @@ export const sidebarData: SidebarData = {
                     title: 'الموردون',
                     url: '/suppliers',
                     icon: Truck,
+                },
+                {
+                    title: 'الموظفون',
+                    url: '/employees',
+                    icon: UserCircle,
                 },
             ],
         },

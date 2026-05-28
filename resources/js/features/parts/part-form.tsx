@@ -30,8 +30,10 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
         type:           'part',
         quantity:       '1',
         unit_cost:      '',
+        unit_price:     '',
         is_paid:        false as boolean,
         supplier_id:    '' as string | number,
+        purchased_by:   'customer' as 'customer' | 'company',
     });
 
     const [showNewSupplier, setShowNewSupplier]   = useState(false);
@@ -98,9 +100,42 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
                 </div>
             </div>
 
-            {/* Name + Quantity + Unit cost */}
-            <div className="grid gap-3 sm:grid-cols-3">
-                <div className="space-y-1.5 sm:col-span-1">
+            {/* Purchased by */}
+            <div className="space-y-1.5">
+                <Label className="text-sm font-medium">جهة الشراء</Label>
+                <div className="grid grid-cols-2 gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setData('purchased_by', 'customer')}
+                        className={cn(
+                            'rounded-lg border px-3 py-2 text-sm font-semibold transition-all cursor-pointer',
+                            data.purchased_by === 'customer'
+                                ? 'border-blue-400 bg-blue-50 text-blue-700 ring-2 ring-blue-400 dark:bg-blue-950/40 dark:border-blue-700 dark:text-blue-300'
+                                : 'border-muted bg-muted/20 text-muted-foreground hover:bg-muted/50',
+                        )}
+                    >
+                        {data.purchased_by === 'customer' && <span className="me-1">✓</span>}
+                        العميل يشتري
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setData('purchased_by', 'company')}
+                        className={cn(
+                            'rounded-lg border px-3 py-2 text-sm font-semibold transition-all cursor-pointer',
+                            data.purchased_by === 'company'
+                                ? 'border-purple-400 bg-purple-50 text-purple-700 ring-2 ring-purple-400 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300'
+                                : 'border-muted bg-muted/20 text-muted-foreground hover:bg-muted/50',
+                        )}
+                    >
+                        {data.purchased_by === 'company' && <span className="me-1">✓</span>}
+                        الشركة تشتري
+                    </button>
+                </div>
+            </div>
+
+            {/* Name + Quantity + Prices */}
+            <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5 sm:col-span-2">
                     <Label htmlFor={`pf-name-${maintenanceId}`} className="text-sm font-medium">
                         الاسم <span className="text-destructive">*</span>
                     </Label>
@@ -131,7 +166,8 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
                 </div>
                 <div className="space-y-1.5">
                     <Label htmlFor={`pf-cost-${maintenanceId}`} className="text-sm font-medium">
-                        سعر الوحدة <span className="text-destructive">*</span>
+                        {data.purchased_by === 'company' ? 'سعر الشراء (داخلي)' : 'سعر الوحدة'}{' '}
+                        <span className="text-destructive">*</span>
                     </Label>
                     <Input
                         id={`pf-cost-${maintenanceId}`}
@@ -146,6 +182,34 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
                     {errors.unit_cost && <p className="text-xs text-destructive">{errors.unit_cost}</p>}
                 </div>
             </div>
+
+            {/* Selling price — only when company buys */}
+            {data.purchased_by === 'company' && (
+                <div className="rounded-lg border border-purple-200 bg-purple-50/50 p-3 dark:border-purple-900 dark:bg-purple-950/20">
+                    <div className="space-y-1.5">
+                        <Label htmlFor={`pf-price-${maintenanceId}`} className="text-sm font-medium text-purple-700 dark:text-purple-400">
+                            سعر البيع للعميل <span className="text-destructive">*</span>
+                            <span className="ms-2 text-xs font-normal text-muted-foreground">(يظهر في الفاتورة)</span>
+                        </Label>
+                        <Input
+                            id={`pf-price-${maintenanceId}`}
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            className="min-h-[40px] border-purple-300 bg-white dark:bg-background"
+                            value={data.unit_price}
+                            onChange={(e) => setData('unit_price', e.target.value)}
+                            placeholder="0.00"
+                        />
+                        {data.unit_cost && data.unit_price && Number(data.unit_price) > Number(data.unit_cost) && (
+                            <p className="text-xs text-purple-600 dark:text-purple-400">
+                                الربح: {(Number(data.unit_price) - Number(data.unit_cost)).toFixed(2)} لكل وحدة
+                            </p>
+                        )}
+                        {errors.unit_price && <p className="text-xs text-destructive">{errors.unit_price}</p>}
+                    </div>
+                </div>
+            )}
 
             {/* Supplier + Paid */}
             <div className="grid gap-3 sm:grid-cols-2">

@@ -34,6 +34,7 @@ interface Motor {
     category_name: string | null;
     received_at: string;
     delivered_at: string | null;
+    received_by_name: string | null;
 }
 
 interface PaginatedMotors {
@@ -209,6 +210,7 @@ export function Motors({ motors, filters }: Props) {
                                     <TableHead className="text-right">الجوال</TableHead>
                                     <TableHead className="text-right">الحالة</TableHead>
                                     <TableHead className="text-right">التصنيف</TableHead>
+                                    <TableHead className="text-right">المستلم</TableHead>
                                     <TableHead className="text-right">تاريخ الاستلام</TableHead>
                                     <TableHead className="text-right">تاريخ التسليم</TableHead>
                                     <TableHead className="text-right">الإجراءات</TableHead>
@@ -260,6 +262,18 @@ export function Motors({ motors, filters }: Props) {
                                             </TableCell>
                                             <TableCell className="text-sm">
                                                 {motor.category_name ?? '—'}
+                                            </TableCell>
+                                            <TableCell className="text-sm">
+                                                {motor.received_by_name ? (
+                                                    <span className="flex items-center gap-1.5">
+                                                        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+                                                            {motor.received_by_name.trim().split(/\s+/).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+                                                        </span>
+                                                        <span className="font-medium">{motor.received_by_name}</span>
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-muted-foreground">—</span>
+                                                )}
                                             </TableCell>
                                             <TableCell>{motor.received_at}</TableCell>
                                             <TableCell>

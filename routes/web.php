@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\MotorController;
@@ -65,6 +66,12 @@ Route::middleware('auth')->group(function () {
     // Customers
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
+
+    // Employees
+    Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
+    Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
+    Route::post('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+    Route::delete('/employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
 
     // Suppliers
     Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');

@@ -14,11 +14,11 @@ export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="ms-auto hidden h-8 lg:flex">
                     <MixerHorizontalIcon className="size-4" />
-                    View
+                    عرض
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[150px]">
-                <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                <DropdownMenuLabel>إظهار/إخفاء الأعمدة</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {table
                     .getAllColumns()
@@ -31,7 +31,7 @@ export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps
                                 checked={column.getIsVisible()}
                                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
                             >
-                                {column.id}
+                                {(column.columnDef.meta as any)?.label ?? column.id}
                             </DropdownMenuCheckboxItem>
                         );
                     })}

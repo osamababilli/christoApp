@@ -1,14 +1,21 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { useForm } from '@inertiajs/react';
-import { CalendarCheck, Check, Loader2, Plus, Save, Tag, User, X } from 'lucide-react';
+import { CalendarCheck, Check, ChevronsUpDown, Loader2, Plus, Save, Tag, User, UserCheck, X } from 'lucide-react';
 import { useState } from 'react';
 import { CustomerCombobox, type CustomerOption } from './customer-combobox';
+
+export interface EmployeeOption {
+    id: number;
+    full_name: string;
+}
 
 export interface CategoryOption {
     id: number;
@@ -19,6 +26,7 @@ export interface CategoryOption {
 interface Props {
     customers: CustomerOption[];
     categories: CategoryOption[];
+    employees: EmployeeOption[];
     defaultValues?: {
         customer_id?: number | null;
         customer_name?: string;
@@ -27,6 +35,7 @@ interface Props {
         status?: string;
         notes?: string;
         delivered_at?: string;
+        received_by?: number | null;
     };
     action: string;
     method?: 'post' | 'put';
@@ -67,7 +76,7 @@ const statusOptions = [
     { value: 'delivered',   label: 'تم التسليم',     color: 'border-gray-300 bg-gray-50 text-gray-600 dark:bg-gray-800/40 dark:border-gray-600 dark:text-gray-300',            active: 'ring-2 ring-gray-400'   },
 ];
 
-export function MotorForm({ customers, categories: initialCategories, defaultValues, action, method = 'post', title, showDeliveredAt }: Props) {
+export function MotorForm({ customers, categories: initialCategories, employees, defaultValues, action, method = 'post', title, showDeliveredAt }: Props) {
     const { data, setData, post, put, processing, errors } = useForm({
         customer_id:    defaultValues?.customer_id    ?? null as number | null,
         customer_name:  defaultValues?.customer_name  ?? '',
@@ -76,6 +85,7 @@ export function MotorForm({ customers, categories: initialCategories, defaultVal
         status:         defaultValues?.status         ?? 'in_workshop',
         notes:          defaultValues?.notes          ?? '',
         delivered_at:   defaultValues?.delivered_at   ?? '',
+        received_by:    defaultValues?.received_by    ?? null as number | null,
     });
 
     const [cats, setCats]               = useState<CategoryOption[]>(initialCategories);
@@ -84,6 +94,7 @@ export function MotorForm({ customers, categories: initialCategories, defaultVal
     const [newCatColor, setNewCatColor] = useState('blue');
     const [addingCat, setAddingCat]     = useState(false);
     const [addCatError, setAddCatError] = useState('');
+    const [empOpen, setEmpOpen]         = useState(false);
 
     async function handleAddCat() {
         if (!newCatName.trim()) return;
@@ -308,6 +319,101 @@ export function MotorForm({ customers, categories: initialCategories, defaultVal
                                     </div>
                                 </div>
                             )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Received by */}
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <UserCheck className="h-4 w-4 text-muted-foreground" />
+                                المستلم
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {/* Selected employee display */}
+                            {data.received_by !== null && (() => {
+                                const emp = employees.find(e => e.id === data.received_by);
+                                if (!emp) return null;
+                                const initials = emp.full_name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                                return (
+                                    <div className="flex items-center justify-between rounded-xl border bg-muted/40 px-3 py-2.5">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
+                                                {initials}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold leading-tight">{emp.full_name}</p>
+                                                <p className="text-xs text-muted-foreground">موظف مستلم</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('received_by', null)}
+                                            className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                        >
+                                            <X className="h-3.5 w-3.5" />
+                                        </button>
+                                    </div>
+                                );
+                            })()}
+
+                            {/* Combobox trigger */}
+                            <Popover open={empOpen} onOpenChange={setEmpOpen}>
+                                <PopoverTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className={cn(
+                                            'flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition-colors',
+                                            'hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring',
+                                            data.received_by !== null
+                                                ? 'border-dashed text-muted-foreground'
+                                                : 'text-muted-foreground',
+                                        )}
+                                    >
+                                        <span>{data.received_by !== null ? 'تغيير المستلم' : 'اختر موظفاً مستلماً...'}</span>
+                                        <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                                    </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[280px] p-0" align="start">
+                                    <Command>
+                                        <CommandInput placeholder="ابحث عن موظف..." />
+                                        <CommandList>
+                                            <CommandEmpty>لا يوجد موظف بهذا الاسم.</CommandEmpty>
+                                            <CommandGroup>
+                                                {employees.map((emp) => {
+                                                    const initials = emp.full_name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                                                    const isSelected = data.received_by === emp.id;
+                                                    return (
+                                                        <CommandItem
+                                                            key={emp.id}
+                                                            value={emp.full_name}
+                                                            onSelect={() => {
+                                                                setData('received_by', isSelected ? null : emp.id);
+                                                                setEmpOpen(false);
+                                                            }}
+                                                            className="gap-2.5"
+                                                        >
+                                                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+                                                                {initials}
+                                                            </div>
+                                                            <span className="flex-1 text-sm">{emp.full_name}</span>
+                                                            {isSelected && <Check className="h-4 w-4 text-primary" />}
+                                                        </CommandItem>
+                                                    );
+                                                })}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+
+                            {employees.length === 0 && (
+                                <p className="text-xs text-muted-foreground text-center py-1">
+                                    لا يوجد موظفون — أضف من قسم الموظفين أولاً
+                                </p>
+                            )}
+                            {errors.received_by && <p className="text-sm text-destructive">{errors.received_by}</p>}
                         </CardContent>
                     </Card>
 

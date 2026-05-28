@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Employee;
 use App\Models\MaintenanceOrder;
 use App\Models\Motor;
 use App\Models\Part;
@@ -17,7 +18,7 @@ class MotorController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = Motor::with(['customer', 'category'])
+        $query = Motor::with(['customer', 'category', 'receivedByEmployee'])
             ->when($request->search, function ($q, $search) {
                 $q->where('reference_number', 'like', "%{$search}%")
                     ->orWhereHas('customer', fn($q) => $q
@@ -41,11 +42,20 @@ class MotorController extends Controller
                 'status_label'     => Motor::statusLabel($m->status),
                 'received_at'      => $m->received_at?->format('Y-m-d'),
                 'delivered_at'     => $m->delivered_at?->format('Y-m-d'),
-                'category_id'      => $m->category_id,
-                'category_name'    => $m->category?->name ?? null,
+                'category_id'        => $m->category_id,
+                'category_name'      => $m->category?->name ?? null,
+                'received_by_name'   => $m->receivedByEmployee?->full_name ?? null,
             ]),
             'filters' => $request->only(['search', 'status']),
         ]);
+    }
+
+    private function employeesList(): array
+    {
+        return Employee::orderBy('full_name')
+            ->get(['id', 'full_name'])
+            ->map(fn($e) => ['id' => $e->id, 'full_name' => $e->full_name])
+            ->toArray();
     }
 
     private function customersList(): array
@@ -66,6 +76,7 @@ class MotorController extends Controller
         return Inertia::render('authenticated/motors/create', [
             'customers'  => $this->customersList(),
             'categories' => Category::orderBy('name')->get(['id', 'name', 'color', 'icon']),
+            'employees'  => $this->employeesList(),
         ]);
     }
 
@@ -78,6 +89,7 @@ class MotorController extends Controller
             'category_id'      => 'nullable|exists:categories,id',
             'status'           => 'required|in:in_workshop,in_progress,ready,delivered',
             'notes'            => 'nullable|string',
+            'received_by'      => 'nullable|exists:employees,id',
         ]);
 
         if (! empty($validated['customer_id'])) {
@@ -95,7 +107,8 @@ class MotorController extends Controller
             'category_id'      => $validated['category_id'] ?? null,
             'status'           => $validated['status'],
             'notes'            => $validated['notes'] ?? null,
-            'received_at'      => $validated['received_at'] ?? now(),
+            'received_at'      => now(),
+            'received_by'      => $validated['received_by'] ?? null,
         ]);
 
         return redirect()->route('motors.index')
@@ -108,6 +121,7 @@ class MotorController extends Controller
             'customer',
             'category',
             'assignedToUser',
+            'receivedByEmployee',
             'maintenanceOrders.parts.supplier',
             'transactions',
         ]);
@@ -135,6 +149,8 @@ class MotorController extends Controller
                 'category_name'             => $motor->category?->name ?? null,
                 'assigned_to'               => $motor->assigned_to,
                 'assigned_to_name'          => $motor->assignedToUser?->name ?? null,
+                'received_by'               => $motor->received_by,
+                'received_by_name'          => $motor->receivedByEmployee?->full_name ?? null,
                 'transactions' => $motor->transactions->sortByDesc('transaction_date')->values()->map(fn($t) => [
                     'id'               => $t->id,
                     'type'             => $t->type,
@@ -160,8 +176,10 @@ class MotorController extends Controller
                         'type_label'    => Part::typeLabel($p->type),
                         'quantity'      => $p->quantity,
                         'unit_cost'     => $p->unit_cost,
+                        'unit_price'    => $p->unit_price,
                         'total_cost'    => $p->total_cost,
                         'is_paid'       => $p->is_paid,
+                        'purchased_by'  => $p->purchased_by ?? 'customer',
                         'supplier_name' => $p->supplier?->name,
                     ]),
                 ]),
@@ -198,11 +216,12 @@ class MotorController extends Controller
                     'labor_cost'   => (float) $o->labor_cost,
                     'status_label' => MaintenanceOrder::statusLabel($o->status),
                     'parts'        => $o->parts->map(fn($p) => [
-                        'part_name'  => $p->part_name,
-                        'type_label' => Part::typeLabel($p->type),
-                        'quantity'   => (float) $p->quantity,
-                        'unit_cost'  => (float) $p->unit_cost,
-                        'total_cost' => (float) $p->total_cost,
+                        'part_name'    => $p->part_name,
+                        'type_label'   => Part::typeLabel($p->type),
+                        'quantity'     => (float) $p->quantity,
+                        // سعر الوحدة للعميل: سعر البيع إذا اشترتها الشركة، وإلا سعر التكلفة
+                        'unit_cost'    => $p->purchased_by === 'company' ? (float) $p->unit_price : (float) $p->unit_cost,
+                        'total_cost'   => (float) $p->total_cost,
                         'supplier_name' => $p->supplier?->name,
                     ]),
                 ]),
@@ -270,6 +289,7 @@ class MotorController extends Controller
         return Inertia::render('authenticated/motors/edit', [
             'customers'  => $this->customersList(),
             'categories' => Category::orderBy('name')->get(['id', 'name', 'color', 'icon']),
+            'employees'  => $this->employeesList(),
             'motor' => [
                 'id'                => $motor->id,
                 'reference_number'  => $motor->reference_number,
@@ -282,6 +302,7 @@ class MotorController extends Controller
                 'received_at'       => $motor->received_at?->format('Y-m-d'),
                 'delivered_at'      => $motor->delivered_at?->format('Y-m-d'),
                 'assigned_to'       => $motor->assigned_to,
+                'received_by'       => $motor->received_by,
             ],
         ]);
     }
@@ -302,6 +323,7 @@ class MotorController extends Controller
             'notes'             => 'nullable|string',
             'delivered_at'      => 'nullable|date',
             'assigned_to'       => 'nullable|exists:users,id',
+            'received_by'       => 'nullable|exists:employees,id',
         ]);
 
         if (! empty($validated['customer_id'])) {
@@ -320,6 +342,7 @@ class MotorController extends Controller
             'received_at'       => $validated['received_at'] ?? $motor->received_at,
             'delivered_at'      => $validated['delivered_at'] ?? null,
             'assigned_to'       => $validated['assigned_to'] ?? null,
+            'received_by'       => $validated['received_by'] ?? null,
         ]);
 
         return redirect()->route('motors.show', $motor)

@@ -19,15 +19,18 @@ class Part extends Model
         'supplier_id',
         'quantity',
         'unit_cost',
+        'unit_price',
         'total_cost',
         'is_paid',
         'type',
+        'purchased_by',
         'invoice_image',
     ];
 
     protected $casts = [
         'quantity'   => 'decimal:3',
         'unit_cost'  => 'decimal:2',
+        'unit_price' => 'decimal:2',
         'total_cost' => 'decimal:2',
         'is_paid'    => 'boolean',
     ];
@@ -35,7 +38,12 @@ class Part extends Model
     protected static function booted(): void
     {
         static::saving(function (Part $part) {
-            $part->total_cost = $part->quantity * $part->unit_cost;
+            // total_cost = what customer pays
+            if ($part->purchased_by === 'company' && $part->unit_price > 0) {
+                $part->total_cost = $part->quantity * $part->unit_price;
+            } else {
+                $part->total_cost = $part->quantity * $part->unit_cost;
+            }
         });
     }
 

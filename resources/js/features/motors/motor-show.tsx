@@ -59,8 +59,10 @@ interface Part {
     type_label: string;
     quantity: number;
     unit_cost: number;
+    unit_price: number;
     total_cost: number;
     is_paid: boolean;
+    purchased_by: 'customer' | 'company';
     supplier_name: string | null;
 }
 
@@ -88,6 +90,7 @@ interface Motor {
     delivered_at: string | null;
     category_name: string | null;
     assigned_to_name: string | null;
+    received_by_name: string | null;
     transactions: Transaction[];
     maintenance_orders: MaintenanceOrder[];
 }
@@ -284,15 +287,19 @@ function PartsSection({ order, suppliers, onDeletePart, isLocked }: { order: Mai
                             <TableRow className="bg-muted/40">
                                 <TableHead className="text-right text-xs">القطعة</TableHead>
                                 <TableHead className="text-right text-xs">النوع</TableHead>
+                                <TableHead className="text-right text-xs">جهة الشراء</TableHead>
                                 <TableHead className="text-right text-xs">الكمية</TableHead>
-                                <TableHead className="text-right text-xs">سعر الوحدة</TableHead>
+                                <TableHead className="text-right text-xs">سعر الشراء</TableHead>
+                                <TableHead className="text-right text-xs">سعر البيع</TableHead>
                                 <TableHead className="text-right text-xs">الإجمالي</TableHead>
                                 <TableHead className="text-right text-xs">مدفوع</TableHead>
                                 <TableHead className="w-8" />
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {order.parts.map((part) => (
+                            {order.parts.map((part) => {
+                                const isCompany = part.purchased_by === 'company';
+                                return (
                                 <TableRow key={part.id}>
                                     <TableCell className="text-sm font-medium">{part.part_name}</TableCell>
                                     <TableCell>
@@ -300,8 +307,22 @@ function PartsSection({ order, suppliers, onDeletePart, isLocked }: { order: Mai
                                             {part.type_label}
                                         </Badge>
                                     </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className={cn('text-xs', isCompany
+                                            ? 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300'
+                                            : 'border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:border-blue-700 dark:text-blue-300')}>
+                                            {isCompany ? 'الشركة' : 'العميل'}
+                                        </Badge>
+                                    </TableCell>
                                     <TableCell className="text-sm">{Number(part.quantity)}</TableCell>
-                                    <TableCell className="text-sm">{Number(part.unit_cost).toFixed(2)}</TableCell>
+                                    <TableCell className="text-sm text-muted-foreground">
+                                        {Number(part.unit_cost).toFixed(2)}
+                                    </TableCell>
+                                    <TableCell className="text-sm font-medium">
+                                        {isCompany
+                                            ? <span className="text-purple-700 dark:text-purple-400">{Number(part.unit_price).toFixed(2)}</span>
+                                            : <span className="text-muted-foreground">—</span>}
+                                    </TableCell>
                                     <TableCell className="text-sm font-semibold">{Number(part.total_cost).toFixed(2)}</TableCell>
                                     <TableCell>
                                         {part.is_paid
@@ -321,7 +342,8 @@ function PartsSection({ order, suppliers, onDeletePart, isLocked }: { order: Mai
                                         </TableCell>
                                     )}
                                 </TableRow>
-                            ))}
+                                );
+                            })}
                         </TableBody>
                     </Table>
                 </div>
@@ -718,6 +740,7 @@ export function MotorShow({ motor, suppliers }: Props) {
                                     { label: 'التصنيف',       value: motor.category_name },
                                     { label: 'تاريخ الاستلام', value: motor.received_at },
                                     { label: 'تاريخ التسليم', value: motor.delivered_at },
+                                    { label: 'المستلم',        value: motor.received_by_name },
                                 ].filter((r) => r.value).map((row) => (
                                     <div key={row.label} className="flex items-center justify-between py-2.5 text-sm">
                                         <dt className="text-muted-foreground">{row.label}</dt>

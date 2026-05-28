@@ -56,11 +56,27 @@ class PartController extends Controller
             'supplier_id'    => 'nullable|exists:suppliers,id',
             'quantity'       => 'required|numeric|min:0.001',
             'unit_cost'      => 'required|numeric|min:0',
+            'unit_price'     => 'nullable|numeric|min:0',
             'is_paid'        => 'boolean',
             'type'           => 'required|in:part,oil,transport,cleaning,other',
+            'purchased_by'   => 'nullable|in:customer,company',
         ]);
 
-        Part::create($validated);
+        $part = Part::create($validated);
+
+        // إذا كان إجمالي المدفوع يغطي الإجمالي الجديد (بما فيه هذه القطعة)، عَلِّمها مدفوعة
+        $part->load('maintenance.motor.maintenanceOrders.parts', 'maintenance.motor.transactions');
+        $motor      = $part->maintenance->motor;
+        $grandTotal = $motor->maintenanceOrders->sum('labor_cost')
+            + $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
+        $paid       = $motor->transactions->sum('amount');
+
+        if ($grandTotal > 0 && $paid >= ($grandTotal - 0.009)) {
+            // المبلغ المدفوع يغطي الإجمالي الكامل — عَلِّم جميع القطع غير المدفوعة
+            foreach ($motor->maintenanceOrders as $order) {
+                $order->parts()->where('is_paid', false)->update(['is_paid' => true]);
+            }
+        }
 
         return back()->with('success', 'تمت إضافة القطعة');
     }
@@ -68,12 +84,14 @@ class PartController extends Controller
     public function update(Request $request, Part $part): RedirectResponse
     {
         $validated = $request->validate([
-            'part_name'   => 'required|string|max:255',
-            'supplier_id' => 'nullable|exists:suppliers,id',
-            'quantity'    => 'required|numeric|min:0.001',
-            'unit_cost'   => 'required|numeric|min:0',
-            'is_paid'     => 'boolean',
-            'type'        => 'required|in:part,oil,transport,cleaning,other',
+            'part_name'    => 'required|string|max:255',
+            'supplier_id'  => 'nullable|exists:suppliers,id',
+            'quantity'     => 'required|numeric|min:0.001',
+            'unit_cost'    => 'required|numeric|min:0',
+            'unit_price'   => 'nullable|numeric|min:0',
+            'is_paid'      => 'boolean',
+            'type'         => 'required|in:part,oil,transport,cleaning,other',
+            'purchased_by' => 'nullable|in:customer,company',
         ]);
 
         $part->update($validated);

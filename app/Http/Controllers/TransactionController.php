@@ -26,6 +26,19 @@ class TransactionController extends Controller
             'transaction_date' => $validated['transaction_date'] ?? now(),
         ]);
 
+        // إذا أصبح كشف الحساب مسدداً بعد هذه الدفعة، علِّم جميع القطع غير المدفوعة كمدفوعة
+        $motor->load(['maintenanceOrders.parts', 'transactions']);
+
+        $grandTotal = $motor->maintenanceOrders->sum('labor_cost')
+            + $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
+        $paid = $motor->transactions->sum('amount');
+
+        if ($grandTotal > 0 && $paid >= ($grandTotal - 0.009)) {
+            foreach ($motor->maintenanceOrders as $order) {
+                $order->parts()->where('is_paid', false)->update(['is_paid' => true]);
+            }
+        }
+
         return back()->with('success', 'تم تسجيل الدفعة بنجاح');
     }
 

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Category;
+use App\Models\Employee;
 use App\Models\User;
 
 class Motor extends Model
@@ -23,6 +24,7 @@ class Motor extends Model
         'received_at',
         'delivered_at',
         'assigned_to',
+        'received_by',
     ];
 
     protected $casts = [
@@ -63,6 +65,11 @@ class Motor extends Model
     public function assignedToUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function receivedByEmployee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'received_by');
     }
 
     public function maintenanceOrders(): HasMany

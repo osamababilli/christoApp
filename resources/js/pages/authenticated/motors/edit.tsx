@@ -4,13 +4,14 @@ import { ProfileDropdown } from '@/components/profile-dropdown';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { Button } from '@/components/ui/button';
 import { type CustomerOption } from '@/features/motors/customer-combobox';
-import { MotorForm, type CategoryOption } from '@/features/motors/motor-form';
+import { MotorForm, type CategoryOption, type EmployeeOption } from '@/features/motors/motor-form';
 import { Link } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
 
 interface Props {
     customers: CustomerOption[];
     categories: CategoryOption[];
+    employees: EmployeeOption[];
     motor: {
         id: number;
         reference_number: string;
@@ -22,10 +23,11 @@ interface Props {
         notes: string | null;
         received_at: string;
         delivered_at: string | null;
+        received_by: number | null;
     };
 }
 
-export default function MotorEditPage({ customers, categories, motor }: Props) {
+export default function MotorEditPage({ customers, categories, employees, motor }: Props) {
     return (
         <>
             <Header>
@@ -48,6 +50,7 @@ export default function MotorEditPage({ customers, categories, motor }: Props) {
                     showDeliveredAt
                     customers={customers}
                     categories={categories}
+                    employees={employees}
                     defaultValues={{
                         customer_id:      motor.customer_id,
                         customer_name:    motor.customer_name,
@@ -56,6 +59,7 @@ export default function MotorEditPage({ customers, categories, motor }: Props) {
                         status:           motor.status,
                         notes:            motor.notes ?? '',
                         delivered_at:     motor.delivered_at ?? '',
+                        received_by:      motor.received_by,
                     }}
                 />
             </Main>
