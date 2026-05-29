@@ -24,8 +24,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { router, useForm } from '@inertiajs/react';
-import { Loader2, Package, Pencil, Plus, Save, Search, Trash2, Truck } from 'lucide-react';
+import { Link, router, useForm } from '@inertiajs/react';
+import { Eye, Loader2, Package, Pencil, Plus, Save, Search, Trash2, Truck } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Supplier {
@@ -282,6 +282,15 @@ export function Suppliers({ suppliers, filters }: Props) {
                                             <TableCell className="text-sm text-muted-foreground">{s.created_at}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1">
+                                                    <Link href={`/suppliers/${s.id}`}>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-primary hover:text-primary"
+                                                        >
+                                                            <Eye className="h-4 w-4" />
+                                                        </Button>
+                                                    </Link>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
