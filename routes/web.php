@@ -80,6 +80,8 @@ Route::middleware('auth')->group(function () {
     // Customers
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     Route::get('/customers/{customer}/statement', [CustomerController::class, 'statement'])->name('customers.statement');
+    Route::patch('/customers/{customer}/type', [CustomerController::class, 'updateType'])->name('customers.update-type');
+    Route::post('/customers/{customer}/transactions', [CustomerController::class, 'storeTransaction'])->name('customers.transactions.store');
     Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
 
     // Employees

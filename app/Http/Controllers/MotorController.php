@@ -136,9 +136,10 @@ class MotorController extends Controller
                 'id'               => $motor->id,
                 'reference_number' => $motor->reference_number,
                 'customer'         => [
-                    'id'    => $motor->customer->id,
-                    'name'  => $motor->customer->name,
-                    'phone' => $motor->customer->phone,
+                    'id'           => $motor->customer->id,
+                    'name'         => $motor->customer->name,
+                    'phone'        => $motor->customer->phone,
+                    'account_type' => $motor->customer->account_type ?? 'direct',
                 ],
                 'status'           => $motor->status,
                 'status_label'     => Motor::statusLabel($motor->status),

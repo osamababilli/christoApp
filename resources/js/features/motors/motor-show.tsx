@@ -39,6 +39,7 @@ import {
     Wallet,
     Wrench,
 } from 'lucide-react';
+
 import { useState } from 'react';
 import { MaintenanceOrderForm } from '../maintenance/maintenance-order-form';
 import { PartForm } from '../parts/part-form';
@@ -82,7 +83,7 @@ interface MaintenanceOrder {
 interface Motor {
     id: number;
     reference_number: string;
-    customer: { id: number; name: string; phone: string };
+    customer: { id: number; name: string; phone: string; account_type: 'direct' | 'account' };
     status: string;
     status_label: string;
     notes: string | null;
@@ -598,12 +599,13 @@ export function MotorShow({ motor, suppliers }: Props) {
     const [deleteMaintenanceTarget, setDeleteMaintenanceTarget] = useState<MaintenanceOrder | null>(null);
     const [deletePartTarget, setDeletePartTarget]       = useState<{ id: number; part_name: string } | null>(null);
 
+    const isAccountCustomer = motor.customer.account_type === 'account';
     const totalLabor    = motor.maintenance_orders.reduce((s, o) => s + Number(o.labor_cost), 0);
     const totalParts    = motor.maintenance_orders.flatMap((o) => o.parts).reduce((s, p) => s + Number(p.total_cost), 0);
     const grandTotal    = totalLabor + totalParts;
     const totalCredited = motor.transactions.reduce((s, t) => s + t.amount, 0);
     const remaining     = grandTotal - totalCredited;
-    const isLocked      = motor.status === 'delivered' && remaining <= 0.009;
+    const isLocked      = motor.status === 'delivered' && (isAccountCustomer || remaining <= 0.009);
 
     function deleteMaintenance(id: number) {
         const order = motor.maintenance_orders.find((o) => o.id === id);
@@ -801,7 +803,39 @@ export function MotorShow({ motor, suppliers }: Props) {
                 </div>
 
                 {/* ── Payments / Account ── */}
-                <PaymentsSection motor={motor} grandTotal={grandTotal} isLocked={isLocked} />
+                {isAccountCustomer ? (
+                    <Card className="border-blue-200 dark:border-blue-900">
+                        <CardContent className="flex items-start gap-4 py-5">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">
+                                <Wallet className="h-5 w-5" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="font-semibold text-blue-800 dark:text-blue-300">
+                                    الدفع عبر الحساب الجاري
+                                </p>
+                                <p className="mt-0.5 text-sm text-blue-700/80 dark:text-blue-400/80">
+                                    هذا العميل يملك حساباً جارياً — تُسجَّل الدفعات عبر صفحة العميل وتُحتسب على مجموع فواتيره.
+                                </p>
+                                <div className="mt-3 flex items-center gap-3">
+                                    <div className="rounded-lg bg-blue-50 px-4 py-2 dark:bg-blue-950/30">
+                                        <p className="text-xs text-blue-600 dark:text-blue-400">إجمالي هذه الفاتورة</p>
+                                        <p className="font-mono font-bold text-blue-800 dark:text-blue-200" dir="ltr">
+                                            $ {grandTotal.toFixed(2)}
+                                        </p>
+                                    </div>
+                                    <a href={`/customers/${motor.customer.id}`}>
+                                        <Button variant="outline" size="sm" className="gap-1.5 border-blue-300 text-blue-700 hover:bg-blue-50">
+                                            <Wallet className="h-3.5 w-3.5" />
+                                            صفحة الحساب الجاري
+                                        </Button>
+                                    </a>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <PaymentsSection motor={motor} grandTotal={grandTotal} isLocked={isLocked} />
+                )}
 
                 {/* ── Maintenance orders ── */}
                 <div className="space-y-4">

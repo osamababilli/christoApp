@@ -4,9 +4,10 @@ interface Props {
     stats: {
         inWorkshop: number;
         readyCount: number;
-        overdueCount: number;
         unpaidTotal: string;
         unpaidCount: number;
+        accountOutstanding: string;
+        accountCount: number;
         receivedToday: number;
         deliveredToday: number;
     };

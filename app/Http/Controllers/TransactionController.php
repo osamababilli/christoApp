@@ -11,6 +11,11 @@ class TransactionController extends Controller
 {
     public function store(Request $request, Motor $motor): RedirectResponse
     {
+        $motor->load('customer');
+        if ($motor->customer?->account_type === 'account') {
+            return back()->withErrors(['type' => 'هذا العميل يملك حساباً جارياً — الدفع يتم عبر صفحة العميل']);
+        }
+
         $validated = $request->validate([
             'type'             => 'required|in:payment,discount',
             'amount'           => 'required|numeric|min:0.01',
@@ -44,8 +49,11 @@ class TransactionController extends Controller
 
     public function destroy(Transaction $transaction): RedirectResponse
     {
+        // Remove linked accounting entry if it exists
+        $transaction->accountEntry?->delete();
+
         $transaction->delete();
 
-        return back()->with('success', 'تم حذف الدفعة');
+        return back()->with('success', 'تم حذف الدفعة وإزالتها من الصندوق');
     }
 }

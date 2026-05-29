@@ -88,6 +88,11 @@ class Motor extends Model
             return false;
         }
 
+        $this->loadMissing('customer');
+        if ($this->customer?->account_type === 'account') {
+            return true;
+        }
+
         $this->loadMissing('maintenanceOrders.parts', 'transactions');
 
         $grandTotal = $this->maintenanceOrders->sum('labor_cost')

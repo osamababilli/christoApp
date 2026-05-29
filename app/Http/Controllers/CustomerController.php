@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountEntry;
 use App\Models\Customer;
 use App\Models\MaintenanceOrder;
 use App\Models\Motor;
 use App\Models\Part;
+use App\Models\Transaction;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\Transaction;
 
 class CustomerController extends Controller
 {
@@ -32,25 +34,75 @@ class CustomerController extends Controller
                 'email'        => $c->email,
                 'motors_count' => $c->motors_count,
                 'is_loyal'     => $c->motors_count >= 3,
+                'account_type' => $c->account_type ?? 'direct',
                 'created_at'   => $c->created_at->format('Y-m-d'),
             ]),
             'filters' => $request->only(['search']),
         ]);
     }
 
+    public function updateType(Request $request, Customer $customer): RedirectResponse
+    {
+        $validated = $request->validate([
+            'account_type' => 'required|in:direct,account',
+        ]);
+
+        $customer->update(['account_type' => $validated['account_type']]);
+
+        return back()->with('success', 'تم تحديث نوع الحساب بنجاح');
+    }
+
+    public function storeTransaction(Request $request, Customer $customer): RedirectResponse
+    {
+        if ($customer->account_type !== 'account') {
+            return back()->withErrors(['type' => 'هذا العميل لا يملك حساباً جارياً']);
+        }
+
+        $validated = $request->validate([
+            'type'             => 'required|in:payment,discount',
+            'amount'           => 'required|numeric|min:0.01',
+            'notes'            => 'nullable|string|max:255',
+            'transaction_date' => 'nullable|date',
+        ]);
+
+        $transaction = Transaction::create([
+            'customer_id'      => $customer->id,
+            'motor_id'         => null,
+            'type'             => $validated['type'],
+            'amount'           => $validated['amount'],
+            'notes'            => $validated['notes'] ?? null,
+            'transaction_date' => $validated['transaction_date'] ?? now(),
+        ]);
+
+        // Sync payment to treasury (income); discounts are write-offs, not cash in
+        if ($validated['type'] === 'payment') {
+            AccountEntry::create([
+                'type'           => 'income',
+                'amount'         => $validated['amount'],
+                'description'    => "دفعة حساب جاري — {$customer->name}",
+                'entry_date'     => $validated['transaction_date'] ?? today(),
+                'notes'          => $validated['notes'] ?? null,
+                'transaction_id' => $transaction->id,
+            ]);
+        }
+
+        return back()->with('success', 'تم تسجيل الدفعة وإضافتها للصندوق');
+    }
+
     public function statement(Customer $customer): Response
     {
         $customer->loadCount('motors');
+        $isAccount = $customer->account_type === 'account';
 
         $motors = $customer->motors()
-            ->with(['maintenanceOrders.parts.supplier', 'transactions', 'category', 'receivedByEmployee'])
+            ->with(['maintenanceOrders.parts.supplier', 'transactions', 'category'])
             ->latest('received_at')
             ->get()
-            ->map(function ($motor) {
-                $labor     = $motor->maintenanceOrders->sum('labor_cost');
-                $parts     = $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
+            ->map(function ($motor) use ($isAccount) {
+                $labor      = $motor->maintenanceOrders->sum('labor_cost');
+                $parts      = $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
                 $grandTotal = $labor + $parts;
-                $paid      = $motor->transactions->sum('amount');
+                $paid       = $isAccount ? 0 : (float) $motor->transactions->sum('amount');
 
                 return [
                     'id'               => $motor->id,
@@ -81,52 +133,79 @@ class CustomerController extends Controller
                             'supplier_name' => $p->supplier?->name,
                         ]),
                     ]),
-                    'transactions' => $motor->transactions->map(fn($t) => [
+                    // For direct customers only; account customers have no per-motor transactions
+                    'transactions' => $isAccount ? [] : $motor->transactions->map(fn($t) => [
                         'type_label'       => $t->type === 'payment' ? 'دفعة' : 'خصم',
                         'amount'           => (float) $t->amount,
                         'notes'            => $t->notes,
                         'transaction_date' => $t->transaction_date,
-                    ]),
+                    ])->toArray(),
                 ];
             });
 
+        // Customer-level transactions for account type
+        $customerTransactions = $isAccount
+            ? $customer->transactions()
+                ->whereNull('motor_id')
+                ->orderBy('transaction_date')
+                ->orderBy('id')
+                ->get()
+                ->map(fn($t) => [
+                    'type'             => $t->type,
+                    'type_label'       => $t->type === 'payment' ? 'دفعة' : 'خصم',
+                    'amount'           => (float) $t->amount,
+                    'notes'            => $t->notes,
+                    'transaction_date' => $t->transaction_date instanceof \Carbon\Carbon
+                        ? $t->transaction_date->format('Y-m-d')
+                        : $t->transaction_date,
+                ])
+            : collect();
+
+        $totalInvoiced = (float) $motors->sum('grand_total');
+        $totalPaid     = $isAccount
+            ? (float) $customerTransactions->sum('amount')
+            : (float) $motors->sum('total_paid');
+
         $summary = [
             'total_motors'    => $motors->count(),
-            'total_invoiced'  => (float) $motors->sum('grand_total'),
-            'total_paid'      => (float) $motors->sum('total_paid'),
-            'total_remaining' => (float) $motors->sum('remaining'),
+            'total_invoiced'  => $totalInvoiced,
+            'total_paid'      => $totalPaid,
+            'total_remaining' => $totalInvoiced - $totalPaid,
         ];
 
         return Inertia::render('print/customer-statement', [
             'customer' => [
-                'id'         => $customer->id,
-                'name'       => $customer->name,
-                'phone'      => $customer->phone,
-                'email'      => $customer->email,
-                'notes'      => $customer->notes,
-                'is_loyal'   => $customer->motors_count >= 3,
-                'created_at' => $customer->created_at->format('Y-m-d'),
+                'id'           => $customer->id,
+                'name'         => $customer->name,
+                'phone'        => $customer->phone,
+                'email'        => $customer->email,
+                'notes'        => $customer->notes,
+                'is_loyal'     => $customer->motors_count >= 3,
+                'account_type' => $customer->account_type ?? 'direct',
+                'created_at'   => $customer->created_at->format('Y-m-d'),
             ],
-            'motors'  => $motors,
-            'summary' => $summary,
-            'printed_at' => now()->format('Y-m-d H:i'),
+            'motors'               => $motors,
+            'customer_transactions' => $customerTransactions->values(),
+            'summary'              => $summary,
+            'printed_at'           => now()->format('Y-m-d H:i'),
         ]);
     }
 
     public function show(Customer $customer): Response
     {
         $customer->loadCount('motors');
+        $isAccount = $customer->account_type === 'account';
 
         $motors = $customer->motors()
             ->with(['maintenanceOrders.parts', 'transactions'])
             ->latest('received_at')
             ->get()
-            ->map(function ($motor) {
+            ->map(function ($motor) use ($isAccount) {
                 $labor      = $motor->maintenanceOrders->sum('labor_cost');
                 $parts      = $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
                 $grandTotal = $labor + $parts;
-                $paid       = $motor->transactions->sum('amount');
-                $remaining  = $grandTotal - $paid;
+                $paid       = $isAccount ? 0 : (float) $motor->transactions->sum('amount');
+                $remaining  = $isAccount ? $grandTotal : $grandTotal - $paid;
 
                 return [
                     'id'               => $motor->id,
@@ -143,6 +222,29 @@ class CustomerController extends Controller
                 ];
             });
 
+        $totalInvoiced = (float) $motors->sum('grand_total');
+
+        // For account customers, payments are at customer level
+        $customerTransactions = $isAccount
+            ? $customer->transactions()
+                ->whereNull('motor_id')
+                ->orderByDesc('transaction_date')
+                ->get()
+                ->map(fn($t) => [
+                    'id'               => $t->id,
+                    'type'             => $t->type,
+                    'type_label'       => $t->type === 'payment' ? 'دفعة' : 'خصم',
+                    'amount'           => (float) $t->amount,
+                    'notes'            => $t->notes,
+                    'transaction_date' => $t->transaction_date instanceof \Carbon\Carbon
+                        ? $t->transaction_date->format('Y-m-d')
+                        : $t->transaction_date,
+                ])
+            : collect();
+
+        $totalPaid      = $isAccount ? (float) $customerTransactions->sum('amount') : (float) $motors->sum('total_paid');
+        $totalRemaining = $totalInvoiced - $totalPaid;
+
         return Inertia::render('authenticated/customers/show', [
             'customer' => [
                 'id'           => $customer->id,
@@ -152,14 +254,16 @@ class CustomerController extends Controller
                 'notes'        => $customer->notes,
                 'motors_count' => $customer->motors_count,
                 'is_loyal'     => $customer->motors_count >= 3,
+                'account_type' => $customer->account_type ?? 'direct',
                 'created_at'   => $customer->created_at->format('Y-m-d'),
             ],
-            'motors'  => $motors,
+            'motors'               => $motors,
+            'customer_transactions' => $customerTransactions->values(),
             'summary' => [
                 'total_motors'    => $motors->count(),
-                'total_invoiced'  => (float) $motors->sum('grand_total'),
-                'total_paid'      => (float) $motors->sum('total_paid'),
-                'total_remaining' => (float) $motors->sum('remaining'),
+                'total_invoiced'  => $totalInvoiced,
+                'total_paid'      => $totalPaid,
+                'total_remaining' => $totalRemaining,
             ],
         ]);
     }

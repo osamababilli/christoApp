@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AccountEntry extends Model
@@ -11,7 +12,12 @@ class AccountEntry extends Model
 
     protected $table = 'accounting_entries';
 
-    protected $fillable = ['type', 'amount', 'description', 'entry_date', 'notes'];
+    protected $fillable = ['type', 'amount', 'description', 'entry_date', 'notes', 'transaction_id'];
+
+    public function transaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class);
+    }
 
     protected $casts = [
         'amount'     => 'decimal:2',

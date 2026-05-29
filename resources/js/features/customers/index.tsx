@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { router, Link } from '@inertiajs/react';
-import { Search, Star } from 'lucide-react';
+import { Search, Star, Wallet } from 'lucide-react';
 import { useState } from 'react';
 
 interface Customer {
@@ -18,6 +18,7 @@ interface Customer {
     email: string | null;
     motors_count: number;
     is_loyal: boolean;
+    account_type: 'direct' | 'account';
     created_at: string;
 }
 
@@ -103,6 +104,12 @@ export function Customers({ customers, filters }: Props) {
                                                         <Badge className="gap-1 bg-amber-100 text-amber-800 border-amber-300 text-xs px-1.5 py-0.5">
                                                             <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                                                             دائم
+                                                        </Badge>
+                                                    )}
+                                                    {c.account_type === 'account' && (
+                                                        <Badge className="gap-1 bg-blue-100 text-blue-800 border-blue-300 text-xs px-1.5 py-0.5">
+                                                            <Wallet className="h-3 w-3" />
+                                                            حساب جاري
                                                         </Badge>
                                                     )}
                                                 </div>

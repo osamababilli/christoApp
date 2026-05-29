@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Link } from '@inertiajs/react';
-import { AlertCircle, CheckCircle2, Clock, DollarSign, PackageCheck, PackagePlus, Plus, Wrench } from 'lucide-react';
+import { AlertCircle, CheckCircle2, DollarSign, PackageCheck, PackagePlus, Plus, Wallet, Wrench } from 'lucide-react';
 
 interface Motor {
     id: number;
@@ -36,9 +36,10 @@ interface UnpaidMotor {
 interface Stats {
     inWorkshop: number;
     readyCount: number;
-    overdueCount: number;
     unpaidTotal: string;
     unpaidCount: number;
+    accountOutstanding: string;
+    accountCount: number;
     receivedToday: number;
     deliveredToday: number;
 }
@@ -154,33 +155,33 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                         </CardContent>
                     </Card>
 
-                    <Card className="border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/30">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium text-orange-700 dark:text-orange-400">
-                                متأخرة
-                            </CardTitle>
-                            <Clock className="h-5 w-5 text-orange-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-4xl font-bold text-orange-700 dark:text-orange-400">
-                                {stats.overdueCount}
-                            </div>
-                            <p className="mt-1 text-xs text-orange-600/70">أكثر من 7 أيام</p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30">
+<Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium text-red-700 dark:text-red-400">
-                                فواتير غير مدفوعة
+                                مستحق (دفع مباشر)
                             </CardTitle>
                             <DollarSign className="h-5 w-5 text-red-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold text-red-700 dark:text-red-400">
-                                {stats.unpaidTotal}
+                            <div className="text-3xl font-bold text-red-700 dark:text-red-400 font-mono" dir="ltr">
+                                $ {stats.unpaidTotal}
                             </div>
-                            <p className="mt-1 text-xs text-red-600/70">{stats.unpaidCount} طلب — إجمالي المستحق</p>
+                            <p className="mt-1 text-xs text-red-600/70">{stats.unpaidCount} فاتورة غير مسددة</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-400">
+                                مستحق (حساب جاري)
+                            </CardTitle>
+                            <Wallet className="h-5 w-5 text-blue-500" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-3xl font-bold text-blue-700 dark:text-blue-400 font-mono" dir="ltr">
+                                $ {stats.accountOutstanding}
+                            </div>
+                            <p className="mt-1 text-xs text-blue-600/70">{stats.accountCount} عميل بحساب جاري</p>
                         </CardContent>
                     </Card>
                 </div>

@@ -12,17 +12,41 @@ class WorkshopDashboardController extends Controller
     {
         $inWorkshop = Motor::whereIn('status', ['in_workshop', 'in_progress'])->count();
         $readyCount = Motor::where('status', 'ready')->count();
-        $overdueCount = Motor::whereIn('status', ['in_workshop', 'in_progress'])
-            ->where('received_at', '<', now()->subDays(7))
-            ->count();
         $receivedToday      = Motor::whereDate('received_at', today())->count();
         $deliveredToday     = Motor::whereDate('delivered_at', today())->count();
         $allMotors = Motor::with(['customer', 'maintenanceOrders.parts', 'transactions'])->get();
 
-        $unpaidTotal = 0;
+        $unpaidTotal      = 0;
         $unpaidMotorsList = [];
 
+        // Account customers: outstanding balance = total invoiced - customer-level payments
+        $accountCustomerIds = $allMotors
+            ->filter(fn($m) => ($m->customer->account_type ?? 'direct') === 'account')
+            ->pluck('customer_id')
+            ->unique();
+
+        $accountOutstanding = 0;
+        if ($accountCustomerIds->isNotEmpty()) {
+            $accountInvoiced = $allMotors
+                ->filter(fn($m) => $accountCustomerIds->contains($m->customer_id))
+                ->sum(function ($motor) {
+                    return $motor->maintenanceOrders->sum('labor_cost')
+                        + $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
+                });
+
+            $accountPaid = \App\Models\Transaction::whereIn('customer_id', $accountCustomerIds)
+                ->whereNull('motor_id')
+                ->sum('amount');
+
+            $accountOutstanding = max(0, $accountInvoiced - $accountPaid);
+        }
+
         foreach ($allMotors as $motor) {
+            // Skip account-type customers — their balance is tracked at customer level
+            if (($motor->customer->account_type ?? 'direct') === 'account') {
+                continue;
+            }
+
             $labor      = $motor->maintenanceOrders->sum('labor_cost');
             $parts      = $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
             $grandTotal = $labor + $parts;
@@ -67,13 +91,14 @@ class WorkshopDashboardController extends Controller
 
         return Inertia::render('authenticated/workshop-dashboard', [
             'stats' => [
-                'inWorkshop'         => $inWorkshop,
-                'readyCount'         => $readyCount,
-                'overdueCount'       => $overdueCount,
-                'unpaidTotal'        => number_format((float) $unpaidTotal, 2),
-                'unpaidCount'        => count($unpaidMotorsList),
-                'receivedToday'      => $receivedToday,
-                'deliveredToday'     => $deliveredToday,
+                'inWorkshop'          => $inWorkshop,
+                'readyCount'          => $readyCount,
+                'unpaidTotal'         => number_format((float) $unpaidTotal, 2),
+                'unpaidCount'         => count($unpaidMotorsList),
+                'accountOutstanding'  => number_format((float) $accountOutstanding, 2),
+                'accountCount'        => $accountCustomerIds->count(),
+                'receivedToday'       => $receivedToday,
+                'deliveredToday'      => $deliveredToday,
             ],
             'recentMotors' => $recentMotors,
             'unpaidMotors' => $top5Unpaid,
