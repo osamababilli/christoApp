@@ -316,18 +316,26 @@ function PartsSection({ order, suppliers, onDeletePart, isLocked }: { order: Mai
                                     </TableCell>
                                     <TableCell className="text-sm">{Number(part.quantity)}</TableCell>
                                     <TableCell className="text-sm text-muted-foreground">
-                                        {Number(part.unit_cost).toFixed(2)}
+                                        {isCompany
+                                            ? Number(part.unit_cost).toFixed(2)
+                                            : <span className="text-muted-foreground">—</span>}
                                     </TableCell>
                                     <TableCell className="text-sm font-medium">
                                         {isCompany
                                             ? <span className="text-purple-700 dark:text-purple-400">{Number(part.unit_price).toFixed(2)}</span>
                                             : <span className="text-muted-foreground">—</span>}
                                     </TableCell>
-                                    <TableCell className="text-sm font-semibold">{Number(part.total_cost).toFixed(2)}</TableCell>
+                                    <TableCell className="text-sm font-semibold">
+                                        {isCompany
+                                            ? Number(part.total_cost).toFixed(2)
+                                            : <span className="text-muted-foreground">—</span>}
+                                    </TableCell>
                                     <TableCell>
-                                        {part.is_paid
-                                            ? <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                            : <Clock className="h-4 w-4 text-orange-500" />}
+                                        {part.purchased_by === 'customer'
+                                            ? <span className="text-xs font-medium text-blue-600 dark:text-blue-400">العميل يجلبها</span>
+                                            : part.is_paid
+                                                ? <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                                : <Clock className="h-4 w-4 text-orange-500" />}
                                     </TableCell>
                                     {!isLocked && (
                                         <TableCell>

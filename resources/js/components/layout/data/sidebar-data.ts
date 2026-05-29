@@ -14,6 +14,8 @@ import {
     BarChart3,
     Cog,
     UserCircle,
+    Vault,
+    FolderOpen,
 } from 'lucide-react';
 import { type SidebarData } from '../types';
 
@@ -69,11 +71,21 @@ export const sidebarData: SidebarData = {
                     url: '/employees',
                     icon: UserCircle,
                 },
+                {
+                    title: 'وثائق المحل',
+                    url: '/documents',
+                    icon: FolderOpen,
+                },
             ],
         },
         {
             title: 'المالية',
             items: [
+                {
+                    title: 'المحاسبة والخزنة',
+                    url: '/accounting',
+                    icon: Vault,
+                },
                 {
                     title: 'التقارير',
                     url: '/reports',

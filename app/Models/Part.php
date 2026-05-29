@@ -38,8 +38,13 @@ class Part extends Model
     protected static function booted(): void
     {
         static::saving(function (Part $part) {
-            // total_cost = what customer pays
-            if ($part->purchased_by === 'company' && $part->unit_price > 0) {
+            if ($part->purchased_by === 'customer') {
+                // العميل يشتري القطعة بنفسه — لا تدخل في الحسبة المالية
+                $part->unit_cost  = $part->unit_cost  ?? 0;
+                $part->unit_price = 0;
+                $part->total_cost = 0;
+                $part->is_paid    = true;
+            } elseif ($part->purchased_by === 'company' && $part->unit_price > 0) {
                 $part->total_cost = $part->quantity * $part->unit_price;
             } else {
                 $part->total_cost = $part->quantity * $part->unit_cost;

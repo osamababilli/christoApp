@@ -106,7 +106,7 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
                 <div className="grid grid-cols-2 gap-2">
                     <button
                         type="button"
-                        onClick={() => setData('purchased_by', 'customer')}
+                        onClick={() => { setData('purchased_by', 'customer'); setData('is_paid', true); setShowNewSupplier(false); }}
                         className={cn(
                             'rounded-lg border px-3 py-2 text-sm font-semibold transition-all cursor-pointer',
                             data.purchased_by === 'customer'
@@ -119,7 +119,7 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
                     </button>
                     <button
                         type="button"
-                        onClick={() => setData('purchased_by', 'company')}
+                        onClick={() => { setData('purchased_by', 'company'); setData('is_paid', false); }}
                         className={cn(
                             'rounded-lg border px-3 py-2 text-sm font-semibold transition-all cursor-pointer',
                             data.purchased_by === 'company'
@@ -149,7 +149,7 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
                     />
                     {errors.part_name && <p className="text-xs text-destructive">{errors.part_name}</p>}
                 </div>
-                <div className="space-y-1.5">
+                <div className={data.purchased_by === 'customer' ? 'space-y-1.5 sm:col-span-2' : 'space-y-1.5'}>
                     <Label htmlFor={`pf-qty-${maintenanceId}`} className="text-sm font-medium">
                         الكمية <span className="text-destructive">*</span>
                     </Label>
@@ -164,23 +164,25 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
                     />
                     {errors.quantity && <p className="text-xs text-destructive">{errors.quantity}</p>}
                 </div>
-                <div className="space-y-1.5">
-                    <Label htmlFor={`pf-cost-${maintenanceId}`} className="text-sm font-medium">
-                        {data.purchased_by === 'company' ? 'سعر الشراء (داخلي)' : 'سعر الوحدة'}{' '}
-                        <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                        id={`pf-cost-${maintenanceId}`}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        className="min-h-[40px]"
-                        value={data.unit_cost}
-                        onChange={(e) => setData('unit_cost', e.target.value)}
-                        placeholder="0.00"
-                    />
-                    {errors.unit_cost && <p className="text-xs text-destructive">{errors.unit_cost}</p>}
-                </div>
+                {data.purchased_by === 'company' && (
+                    <div className="space-y-1.5">
+                        <Label htmlFor={`pf-cost-${maintenanceId}`} className="text-sm font-medium">
+                            سعر الشراء (داخلي){' '}
+                            <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                            id={`pf-cost-${maintenanceId}`}
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            className="min-h-[40px]"
+                            value={data.unit_cost}
+                            onChange={(e) => setData('unit_cost', e.target.value)}
+                            placeholder="0.00"
+                        />
+                        {errors.unit_cost && <p className="text-xs text-destructive">{errors.unit_cost}</p>}
+                    </div>
+                )}
             </div>
 
             {/* Selling price — only when company buys */}
@@ -211,56 +213,58 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
                 </div>
             )}
 
-            {/* Supplier + Paid */}
-            <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                    <Label className="text-sm font-medium">المورد</Label>
-                    <div className="flex gap-2">
-                        <Select
-                            value={data.supplier_id === '' ? '__none__' : String(data.supplier_id)}
-                            onValueChange={(v) => setData('supplier_id', v === '__none__' ? '' : Number(v))}
-                        >
-                            <SelectTrigger className="min-h-[40px] flex-1">
-                                <SelectValue placeholder="— بدون مورد —" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="__none__">— بدون مورد —</SelectItem>
-                                {suppliers.map((s) => (
-                                    <SelectItem key={s.id} value={String(s.id)}>
-                                        {s.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Button
+            {/* Supplier + Paid — hidden when customer buys */}
+            {data.purchased_by === 'company' && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                        <Label className="text-sm font-medium">المورد</Label>
+                        <div className="flex gap-2">
+                            <Select
+                                value={data.supplier_id === '' ? '__none__' : String(data.supplier_id)}
+                                onValueChange={(v) => setData('supplier_id', v === '__none__' ? '' : Number(v))}
+                            >
+                                <SelectTrigger className="min-h-[40px] flex-1">
+                                    <SelectValue placeholder="— بدون مورد —" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="__none__">— بدون مورد —</SelectItem>
+                                    {suppliers.map((s) => (
+                                        <SelectItem key={s.id} value={String(s.id)}>
+                                            {s.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-10 w-10 shrink-0"
+                                title="إضافة مورد جديد"
+                                onClick={() => setShowNewSupplier(!showNewSupplier)}
+                            >
+                                <Plus className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <Label className="text-sm font-medium">حالة الدفع</Label>
+                        <button
                             type="button"
-                            variant="outline"
-                            size="icon"
-                            className="h-10 w-10 shrink-0"
-                            title="إضافة مورد جديد"
-                            onClick={() => setShowNewSupplier(!showNewSupplier)}
+                            onClick={() => setData('is_paid', !data.is_paid)}
+                            className={cn(
+                                'flex w-full items-center justify-center gap-2 rounded-lg border px-3 min-h-[40px] text-sm font-semibold transition-all cursor-pointer',
+                                data.is_paid
+                                    ? 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300 ring-2 ring-green-400'
+                                    : 'border-orange-300 bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:border-orange-700 dark:text-orange-300',
+                            )}
                         >
-                            <Plus className="h-4 w-4" />
-                        </Button>
+                            {data.is_paid ? '✓ تم الدفع' : '⏳ لم يُدفع بعد'}
+                        </button>
                     </div>
                 </div>
-
-                <div className="space-y-1.5">
-                    <Label className="text-sm font-medium">حالة الدفع</Label>
-                    <button
-                        type="button"
-                        onClick={() => setData('is_paid', !data.is_paid)}
-                        className={cn(
-                            'flex w-full items-center justify-center gap-2 rounded-lg border px-3 min-h-[40px] text-sm font-semibold transition-all cursor-pointer',
-                            data.is_paid
-                                ? 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300 ring-2 ring-green-400'
-                                : 'border-orange-300 bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:border-orange-700 dark:text-orange-300',
-                        )}
-                    >
-                        {data.is_paid ? '✓ تم الدفع' : '⏳ لم يُدفع بعد'}
-                    </button>
-                </div>
-            </div>
+            )}
 
             {/* Inline new supplier */}
             {showNewSupplier && (

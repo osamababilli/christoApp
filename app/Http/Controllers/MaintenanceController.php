@@ -13,7 +13,7 @@ class MaintenanceController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = MaintenanceOrder::with('motor.customer')
+        $query = MaintenanceOrder::with(['motor.customer', 'motor.maintenanceOrders.parts', 'motor.transactions'])
             ->whereHas('motor')
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->when($request->search, function ($q, $search) {
@@ -45,6 +45,7 @@ class MaintenanceController extends Controller
                 'status'           => $o->status,
                 'status_label'     => MaintenanceOrder::statusLabel($o->status),
                 'stop_reason'      => $o->stop_reason,
+                'is_locked'        => $o->motor->isLocked(),
             ]),
             'filters' => $request->only(['search', 'status']),
         ]);
@@ -110,6 +111,12 @@ class MaintenanceController extends Controller
 
     public function destroy(MaintenanceOrder $maintenance): RedirectResponse
     {
+        $maintenance->load('motor.maintenanceOrders.parts', 'motor.transactions');
+
+        if ($maintenance->motor->isLocked()) {
+            return back()->with('error', 'لا يمكن الحذف — القيد مغلق.');
+        }
+
         $maintenance->delete();
 
         return back()->with('success', 'تم حذف أمر الصيانة');

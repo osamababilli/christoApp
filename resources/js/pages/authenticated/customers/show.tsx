@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Link } from '@inertiajs/react';
-import { ArrowRight, Phone, Star, User } from 'lucide-react';
+import { ArrowRight, FileText, Phone, Star, User } from 'lucide-react';
 
 interface Motor {
     id: number;
@@ -79,6 +79,12 @@ export default function CustomerShow({ customer, motors, summary }: Props) {
                     )}
                 </div>
                 <div className="ms-auto flex items-center gap-3">
+                    <a href={`/customers/${customer.id}/statement`} target="_blank" rel="noreferrer">
+                        <Button variant="outline" size="sm" className="gap-2">
+                            <FileText className="h-4 w-4" />
+                            كشف حساب PDF
+                        </Button>
+                    </a>
                     <ThemeSwitch />
                     <ProfileDropdown />
                 </div>

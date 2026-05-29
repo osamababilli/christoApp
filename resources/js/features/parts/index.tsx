@@ -27,10 +27,12 @@ interface Part {
     part_name: string;
     type: string;
     type_label: string;
+    purchased_by: 'customer' | 'company';
     quantity: number;
     unit_cost: number;
     total_cost: number;
     is_paid: boolean;
+    is_locked: boolean;
     supplier_name: string | null;
     motor_id: number;
     reference_number: string;
@@ -240,14 +242,16 @@ export function Parts({ parts, filters }: Props) {
                                                     {part.supplier_name ?? '—'}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-destructive hover:text-destructive"
-                                                        onClick={() => setDeleteTarget(part)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    {!part.is_locked && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-destructive hover:text-destructive"
+                                                            onClick={() => setDeleteTarget(part)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                 </TableCell>
                                             </TableRow>
                                         );

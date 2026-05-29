@@ -82,6 +82,22 @@ class Motor extends Model
         return $this->hasMany(Transaction::class);
     }
 
+    public function isLocked(): bool
+    {
+        if ($this->status !== 'delivered') {
+            return false;
+        }
+
+        $this->loadMissing('maintenanceOrders.parts', 'transactions');
+
+        $grandTotal = $this->maintenanceOrders->sum('labor_cost')
+            + $this->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
+
+        $paid = $this->transactions->sum('amount');
+
+        return $grandTotal - $paid <= 0.009;
+    }
+
     public static function statusLabel(string $status): string
     {
         return match($status) {

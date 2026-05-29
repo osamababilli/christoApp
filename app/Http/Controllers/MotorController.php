@@ -379,6 +379,10 @@ class MotorController extends Controller
 
         if ($validated['status'] === 'delivered') {
             $motor->update(['status' => 'delivered', 'delivered_at' => now()]);
+
+            $motor->maintenanceOrders()
+                ->where('status', '!=', 'completed')
+                ->update(['status' => 'completed', 'completed_at' => now()]);
         } else {
             $motor->update(['status' => $validated['status']]);
         }

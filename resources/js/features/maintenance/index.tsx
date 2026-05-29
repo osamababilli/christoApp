@@ -37,6 +37,7 @@ interface Order {
     status: string;
     status_label: string;
     stop_reason: string | null;
+    is_locked: boolean;
 }
 
 interface PaginatedOrders {
@@ -201,15 +202,17 @@ export function Maintenance({ orders, filters }: Props) {
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        title="حذف"
-                                                        className="text-destructive hover:text-destructive"
-                                                        onClick={() => confirmDelete(order)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    {!order.is_locked && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            title="حذف"
+                                                            className="text-destructive hover:text-destructive"
+                                                            onClick={() => confirmDelete(order)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>

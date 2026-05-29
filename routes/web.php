@@ -12,6 +12,8 @@ use App\Http\Controllers\PartController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\AccountingController;
+use App\Http\Controllers\ShopDocumentController;
 use App\Http\Controllers\WorkshopDashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -60,11 +62,24 @@ Route::middleware('auth')->group(function () {
     Route::post('/motors/{motor}/transactions', [TransactionController::class, 'store'])->name('transactions.store');
     Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
 
+    // Shop Documents
+    Route::get('/documents', [ShopDocumentController::class, 'index'])->name('documents.index');
+    Route::post('/documents', [ShopDocumentController::class, 'store'])->name('documents.store');
+    Route::get('/documents/{document}/download', [ShopDocumentController::class, 'download'])->name('documents.download');
+    Route::delete('/documents/{document}', [ShopDocumentController::class, 'destroy'])->name('documents.destroy');
+
+    // Accounting
+    Route::get('/accounting', [AccountingController::class, 'index'])->name('accounting.index');
+    Route::post('/accounting', [AccountingController::class, 'store'])->name('accounting.store');
+    Route::delete('/accounting/{accounting}', [AccountingController::class, 'destroy'])->name('accounting.destroy');
+    Route::get('/accounting/print', [AccountingController::class, 'printStatement'])->name('accounting.print');
+
     // Reports
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
     // Customers
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+    Route::get('/customers/{customer}/statement', [CustomerController::class, 'statement'])->name('customers.statement');
     Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
 
     // Employees
