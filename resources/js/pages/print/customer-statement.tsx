@@ -60,12 +60,15 @@ interface Customer {
     notes: string | null;
     is_loyal: boolean;
     account_type: 'direct' | 'account';
+    opening_balance: number;
+    opening_balance_notes: string | null;
     created_at: string;
 }
 
 interface Summary {
     total_motors: number;
     total_invoiced: number;
+    opening_balance: number;
     total_paid: number;
     total_remaining: number;
 }
@@ -164,15 +167,21 @@ export default function CustomerStatement({ customer, motors, summary, customer_
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, flex: 1 }}>
                         <SumBox label="عدد القيود"      value={String(summary.total_motors)}         color="#111"     bg="#f4f4f5" border="#e4e4e7" />
                         <SumBox label="إجمالي الفواتير" value={`$${f(summary.total_invoiced)}`}      color="#111"     bg="#f4f4f5" border="#e4e4e7" mono />
-                        <SumBox label="إجمالي المدفوع"  value={`$${f(summary.total_paid)}`}          color="#16a34a"  bg="#f0fdf4" border="#bbf7d0" mono />
-                        <SumBox
-                            label="المتبقي"
-                            value={fullyPaid ? '✓ مسدد بالكامل' : `$${f(summary.total_remaining)}`}
-                            color={fullyPaid ? '#16a34a' : '#dc2626'}
-                            bg={fullyPaid ? '#f0fdf4' : '#fff1f2'}
-                            border={fullyPaid ? '#bbf7d0' : '#fecaca'}
-                            mono={!fullyPaid}
-                        />
+                        {summary.opening_balance > 0
+                            ? <SumBox label="رصيد مرحّل"  value={`$${f(summary.opening_balance)}`}   color="#92400e"  bg="#fffbeb" border="#fde68a" mono />
+                            : <SumBox label="إجمالي المدفوع" value={`$${f(summary.total_paid)}`}     color="#16a34a"  bg="#f0fdf4" border="#bbf7d0" mono />
+                        }
+                        {summary.opening_balance > 0
+                            ? <SumBox label="إجمالي المدفوع" value={`$${f(summary.total_paid)}`}     color="#16a34a"  bg="#f0fdf4" border="#bbf7d0" mono />
+                            : <SumBox
+                                label="المتبقي"
+                                value={fullyPaid ? '✓ مسدد بالكامل' : `$${f(summary.total_remaining)}`}
+                                color={fullyPaid ? '#16a34a' : '#dc2626'}
+                                bg={fullyPaid ? '#f0fdf4' : '#fff1f2'}
+                                border={fullyPaid ? '#bbf7d0' : '#fecaca'}
+                                mono={!fullyPaid}
+                              />
+                        }
                     </div>
                 </div>
 
@@ -218,7 +227,7 @@ export default function CustomerStatement({ customer, motors, summary, customer_
 
                         {/* Payments list */}
                         <SectionTitle>سجل الدفعات</SectionTitle>
-                        {customer_transactions.length === 0 ? (
+                        {customer_transactions.length === 0 && summary.opening_balance <= 0 ? (
                             <p style={{ fontSize: 13, color: '#a1a1aa', marginBottom: 28, textAlign: 'center', padding: '20px', border: '1px dashed #e4e4e7', borderRadius: 8 }}>
                                 لا توجد دفعات مسجلة
                             </p>
@@ -235,8 +244,23 @@ export default function CustomerStatement({ customer, motors, summary, customer_
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {/* Opening balance row */}
+                                    {summary.opening_balance > 0 && (
+                                        <tr style={{ background: '#fffbeb', borderBottom: '1px solid #fde68a' }}>
+                                            <Td align="center">—</Td>
+                                            <Td ltr>—</Td>
+                                            <Td>
+                                                <span style={{ display: 'inline-block', background: '#fef3c7', color: '#92400e', borderRadius: 12, padding: '1px 8px', fontSize: 11, fontWeight: 700 }}>
+                                                    رصيد مرحّل
+                                                </span>
+                                            </Td>
+                                            <Td>{customer.opening_balance_notes ?? '—'}</Td>
+                                            <Td align="center" mono bold style={{ color: '#92400e' }}>${f(summary.opening_balance)}</Td>
+                                            <Td align="center" mono bold style={{ color: '#dc2626' }}>${f(summary.total_invoiced + summary.opening_balance)}</Td>
+                                        </tr>
+                                    )}
                                     {(() => {
-                                        let running = summary.total_invoiced;
+                                        let running = summary.total_invoiced + summary.opening_balance;
                                         return customer_transactions.map((t, i) => {
                                             running -= t.amount;
                                             const rem = running;

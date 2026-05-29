@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountEntry;
 use App\Models\Part;
 use App\Models\Supplier;
+use App\Models\SupplierPayment;
+use App\Models\SupplierPurchase;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -39,6 +42,7 @@ class SupplierController extends Controller
 
     public function show(Supplier $supplier): Response
     {
+        // Parts linked to motor orders
         $parts = $supplier->parts()
             ->with(['maintenance.motor'])
             ->latest()
@@ -58,21 +62,59 @@ class SupplierController extends Controller
                 'created_at'       => $p->created_at->format('Y-m-d'),
             ]);
 
+        // Direct purchases (not linked to motors)
+        $purchases = $supplier->purchases()
+            ->orderByDesc('purchase_date')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn($p) => [
+                'id'            => $p->id,
+                'part_name'     => $p->part_name,
+                'part_type'     => $p->part_type,
+                'quantity'      => (float) $p->quantity,
+                'unit_cost'     => (float) $p->unit_cost,
+                'total_cost'    => (float) $p->total_cost,
+                'purchase_date' => $p->purchase_date->format('Y-m-d'),
+                'notes'         => $p->notes,
+            ]);
+
+        // Payments to supplier
+        $payments = $supplier->payments()
+            ->orderByDesc('payment_date')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn($p) => [
+                'id'           => $p->id,
+                'amount'       => (float) $p->amount,
+                'payment_date' => $p->payment_date->format('Y-m-d'),
+                'notes'        => $p->notes,
+            ]);
+
+        // Balance: (motor parts cost + direct purchases) - payments
+        $motorPartsCost   = (float) $parts->sum('total_cost');
+        $directCost       = (float) $purchases->sum('total_cost');
+        $totalOwed        = $motorPartsCost + $directCost;
+        $totalPaid        = (float) $payments->sum('amount');
+        $remaining        = $totalOwed - $totalPaid;
+
         return Inertia::render('authenticated/suppliers/show', [
             'supplier' => [
-                'id'          => $supplier->id,
-                'name'        => $supplier->name,
-                'phone'       => $supplier->phone,
-                'email'       => $supplier->email,
-                'notes'       => $supplier->notes,
-                'created_at'  => $supplier->created_at->format('Y-m-d'),
+                'id'         => $supplier->id,
+                'name'       => $supplier->name,
+                'phone'      => $supplier->phone,
+                'email'      => $supplier->email,
+                'notes'      => $supplier->notes,
+                'created_at' => $supplier->created_at->format('Y-m-d'),
             ],
-            'parts'   => $parts,
-            'summary' => [
-                'total_parts'  => $parts->count(),
-                'total_cost'   => (float) $parts->sum('total_cost'),
-                'paid_cost'    => (float) $parts->where('is_paid', true)->sum('total_cost'),
-                'unpaid_cost'  => (float) $parts->where('is_paid', false)->sum('total_cost'),
+            'parts'     => $parts,
+            'purchases' => $purchases,
+            'payments'  => $payments,
+            'summary'   => [
+                'motor_parts_cost' => $motorPartsCost,
+                'direct_cost'      => $directCost,
+                'total_owed'       => $totalOwed,
+                'total_paid'       => $totalPaid,
+                'remaining'        => $remaining,
             ],
         ]);
     }
@@ -110,5 +152,73 @@ class SupplierController extends Controller
         $supplier->delete();
 
         return back()->with('success', 'تم حذف المورد');
+    }
+
+    // ── Direct purchases ──────────────────────────────
+
+    public function storePurchase(Request $request, Supplier $supplier): RedirectResponse
+    {
+        $validated = $request->validate([
+            'part_name'     => 'required|string|max:255',
+            'part_type'     => 'required|in:part,oil,transport,cleaning,other',
+            'quantity'      => 'required|numeric|min:0.001',
+            'unit_cost'     => 'required|numeric|min:0',
+            'purchase_date' => 'required|date',
+            'notes'         => 'nullable|string|max:500',
+        ]);
+
+        $validated['total_cost'] = $validated['quantity'] * $validated['unit_cost'];
+
+        $supplier->purchases()->create($validated);
+
+        return back()->with('success', 'تم تسجيل المشتريات');
+    }
+
+    public function destroyPurchase(SupplierPurchase $purchase): RedirectResponse
+    {
+        $purchase->delete();
+
+        return back()->with('success', 'تم حذف المشترى');
+    }
+
+    // ── Payments to supplier ──────────────────────────
+
+    public function storePayment(Request $request, Supplier $supplier): RedirectResponse
+    {
+        $validated = $request->validate([
+            'amount'       => 'required|numeric|min:0.01',
+            'payment_date' => 'required|date',
+            'notes'        => 'nullable|string|max:500',
+        ]);
+
+        // Record as expense in treasury
+        $entry = AccountEntry::create([
+            'type'        => 'expense',
+            'amount'      => $validated['amount'],
+            'description' => "دفعة للمورد — {$supplier->name}",
+            'entry_date'  => $validated['payment_date'],
+            'notes'       => $validated['notes'] ?? null,
+        ]);
+
+        $supplier->payments()->create([
+            'amount'              => $validated['amount'],
+            'payment_date'        => $validated['payment_date'],
+            'notes'               => $validated['notes'] ?? null,
+            'accounting_entry_id' => $entry->id,
+        ]);
+
+        return back()->with('success', 'تم تسجيل الدفعة وخصمها من الصندوق');
+    }
+
+    public function destroyPayment(SupplierPayment $payment): RedirectResponse
+    {
+        // Remove from treasury
+        if ($payment->accounting_entry_id) {
+            AccountEntry::find($payment->accounting_entry_id)?->delete();
+        }
+
+        $payment->delete();
+
+        return back()->with('success', 'تم حذف الدفعة وإعادتها للصندوق');
     }
 }

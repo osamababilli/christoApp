@@ -28,15 +28,17 @@ class CustomerController extends Controller
 
         return Inertia::render('authenticated/customers', [
             'customers' => $customers->through(fn($c) => [
-                'id'           => $c->id,
-                'name'         => $c->name,
-                'phone'        => $c->phone,
-                'email'        => $c->email,
-                'notes'        => $c->notes,
-                'motors_count' => $c->motors_count,
-                'is_loyal'     => $c->motors_count >= 3,
-                'account_type' => $c->account_type ?? 'direct',
-                'created_at'   => $c->created_at->format('Y-m-d'),
+                'id'                    => $c->id,
+                'name'                  => $c->name,
+                'phone'                 => $c->phone,
+                'email'                 => $c->email,
+                'notes'                 => $c->notes,
+                'motors_count'          => $c->motors_count,
+                'is_loyal'              => $c->motors_count >= 3,
+                'account_type'          => $c->account_type ?? 'direct',
+                'opening_balance'       => (float) ($c->opening_balance ?? 0),
+                'opening_balance_notes' => $c->opening_balance_notes,
+                'created_at'            => $c->created_at->format('Y-m-d'),
             ]),
             'filters' => $request->only(['search']),
         ]);
@@ -45,11 +47,13 @@ class CustomerController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name'         => 'required|string|max:255',
-            'phone'        => 'required|string|max:50|unique:customers,phone',
-            'email'        => 'nullable|email|max:255',
-            'notes'        => 'nullable|string|max:1000',
-            'account_type' => 'required|in:direct,account',
+            'name'                  => 'required|string|max:255',
+            'phone'                 => 'required|string|max:50|unique:customers,phone',
+            'email'                 => 'nullable|email|max:255',
+            'notes'                 => 'nullable|string|max:1000',
+            'account_type'          => 'required|in:direct,account',
+            'opening_balance'       => 'nullable|numeric|min:0',
+            'opening_balance_notes' => 'nullable|string|max:500',
         ]);
 
         Customer::create($validated);
@@ -60,11 +64,13 @@ class CustomerController extends Controller
     public function update(Request $request, Customer $customer): RedirectResponse
     {
         $validated = $request->validate([
-            'name'         => 'required|string|max:255',
-            'phone'        => 'required|string|max:50|unique:customers,phone,' . $customer->id,
-            'email'        => 'nullable|email|max:255',
-            'notes'        => 'nullable|string|max:1000',
-            'account_type' => 'required|in:direct,account',
+            'name'                  => 'required|string|max:255',
+            'phone'                 => 'required|string|max:50|unique:customers,phone,' . $customer->id,
+            'email'                 => 'nullable|email|max:255',
+            'notes'                 => 'nullable|string|max:1000',
+            'account_type'          => 'required|in:direct,account',
+            'opening_balance'       => 'nullable|numeric|min:0',
+            'opening_balance_notes' => 'nullable|string|max:500',
         ]);
 
         $customer->update($validated);
@@ -203,28 +209,32 @@ class CustomerController extends Controller
                 ])
             : collect();
 
-        $totalInvoiced = (float) $motors->sum('grand_total');
-        $totalPaid     = $isAccount
+        $openingBalance = (float) ($customer->opening_balance ?? 0);
+        $totalInvoiced  = (float) $motors->sum('grand_total');
+        $totalPaid      = $isAccount
             ? (float) $customerTransactions->sum('amount')
             : (float) $motors->sum('total_paid');
 
         $summary = [
             'total_motors'    => $motors->count(),
             'total_invoiced'  => $totalInvoiced,
+            'opening_balance' => $openingBalance,
             'total_paid'      => $totalPaid,
-            'total_remaining' => $totalInvoiced - $totalPaid,
+            'total_remaining' => $totalInvoiced + $openingBalance - $totalPaid,
         ];
 
         return Inertia::render('print/customer-statement', [
             'customer' => [
-                'id'           => $customer->id,
-                'name'         => $customer->name,
-                'phone'        => $customer->phone,
-                'email'        => $customer->email,
-                'notes'        => $customer->notes,
-                'is_loyal'     => $customer->motors_count >= 3,
-                'account_type' => $customer->account_type ?? 'direct',
-                'created_at'   => $customer->created_at->format('Y-m-d'),
+                'id'                    => $customer->id,
+                'name'                  => $customer->name,
+                'phone'                 => $customer->phone,
+                'email'                 => $customer->email,
+                'notes'                 => $customer->notes,
+                'is_loyal'              => $customer->motors_count >= 3,
+                'account_type'          => $customer->account_type ?? 'direct',
+                'opening_balance'       => $openingBalance,
+                'opening_balance_notes' => $customer->opening_balance_notes,
+                'created_at'            => $customer->created_at->format('Y-m-d'),
             ],
             'motors'               => $motors,
             'customer_transactions' => $customerTransactions->values(),
@@ -284,26 +294,30 @@ class CustomerController extends Controller
                 ])
             : collect();
 
+        $openingBalance = (float) ($customer->opening_balance ?? 0);
         $totalPaid      = $isAccount ? (float) $customerTransactions->sum('amount') : (float) $motors->sum('total_paid');
-        $totalRemaining = $totalInvoiced - $totalPaid;
+        $totalRemaining = $totalInvoiced + $openingBalance - $totalPaid;
 
         return Inertia::render('authenticated/customers/show', [
             'customer' => [
-                'id'           => $customer->id,
-                'name'         => $customer->name,
-                'phone'        => $customer->phone,
-                'email'        => $customer->email,
-                'notes'        => $customer->notes,
-                'motors_count' => $customer->motors_count,
-                'is_loyal'     => $customer->motors_count >= 3,
-                'account_type' => $customer->account_type ?? 'direct',
-                'created_at'   => $customer->created_at->format('Y-m-d'),
+                'id'                    => $customer->id,
+                'name'                  => $customer->name,
+                'phone'                 => $customer->phone,
+                'email'                 => $customer->email,
+                'notes'                 => $customer->notes,
+                'motors_count'          => $customer->motors_count,
+                'is_loyal'              => $customer->motors_count >= 3,
+                'account_type'          => $customer->account_type ?? 'direct',
+                'opening_balance'       => $openingBalance,
+                'opening_balance_notes' => $customer->opening_balance_notes,
+                'created_at'            => $customer->created_at->format('Y-m-d'),
             ],
             'motors'               => $motors,
             'customer_transactions' => $customerTransactions->values(),
             'summary' => [
                 'total_motors'    => $motors->count(),
                 'total_invoiced'  => $totalInvoiced,
+                'opening_balance' => $openingBalance,
                 'total_paid'      => $totalPaid,
                 'total_remaining' => $totalRemaining,
             ],

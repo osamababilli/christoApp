@@ -95,10 +95,14 @@ Route::middleware('auth')->group(function () {
 
     // Suppliers
     Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
-    Route::get('/suppliers/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show');
     Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
     Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
     Route::delete('/suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
+    Route::post('/suppliers/{supplier}/purchases', [SupplierController::class, 'storePurchase'])->name('suppliers.purchases.store');
+    Route::delete('/supplier-purchases/{purchase}', [SupplierController::class, 'destroyPurchase'])->name('suppliers.purchases.destroy');
+    Route::post('/suppliers/{supplier}/payments', [SupplierController::class, 'storePayment'])->name('suppliers.payments.store');
+    Route::delete('/supplier-payments/{payment}', [SupplierController::class, 'destroyPayment'])->name('suppliers.payments.destroy');
+    Route::get('/suppliers/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show');
 
     // Settings
     Route::prefix('settings')->name('settings.')->group(function () {

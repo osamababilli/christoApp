@@ -11,7 +11,9 @@ class Customer extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'phone', 'email', 'notes', 'account_type'];
+    protected $fillable = ['name', 'phone', 'email', 'notes', 'account_type', 'opening_balance', 'opening_balance_notes'];
+
+    protected $casts = ['opening_balance' => 'decimal:2'];
 
     public function motors(): HasMany
     {

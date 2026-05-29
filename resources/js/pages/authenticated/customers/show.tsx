@@ -53,12 +53,15 @@ interface Customer {
     motors_count: number;
     is_loyal: boolean;
     account_type: 'direct' | 'account';
+    opening_balance: number;
+    opening_balance_notes: string | null;
     created_at: string;
 }
 
 interface Summary {
     total_motors: number;
     total_invoiced: number;
+    opening_balance: number;
     total_paid: number;
     total_remaining: number;
 }
@@ -425,8 +428,23 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                     </div>
                 </div>
 
+                {/* Opening balance notice */}
+                {customer.opening_balance > 0 && (
+                    <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 dark:border-amber-800 dark:bg-amber-950/20">
+                        <span className="mt-0.5 text-amber-600 dark:text-amber-400">↩</span>
+                        <div>
+                            <p className="font-semibold text-amber-800 dark:text-amber-300">
+                                رصيد مرحّل: <span className="font-mono" dir="ltr">$ {fmt(customer.opening_balance)}</span>
+                            </p>
+                            {customer.opening_balance_notes && (
+                                <p className="text-sm text-amber-700/80 dark:text-amber-400/80">{customer.opening_balance_notes}</p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* Summary cards */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className={`grid gap-4 sm:grid-cols-2 ${summary.opening_balance > 0 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
                     <Card>
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm text-muted-foreground">عدد قيود الاستلام</CardTitle>
@@ -443,6 +461,18 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                             <p className="text-2xl font-bold text-right font-mono" dir="ltr">$ {fmt(summary.total_invoiced)}</p>
                         </CardContent>
                     </Card>
+                    {summary.opening_balance > 0 && (
+                        <Card className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm text-amber-700 dark:text-amber-400">رصيد مرحّل</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-2xl font-bold text-right text-amber-700 dark:text-amber-400 font-mono" dir="ltr">
+                                    $ {fmt(summary.opening_balance)}
+                                </p>
+                            </CardContent>
+                        </Card>
+                    )}
                     <Card className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm text-green-700 dark:text-green-400">
@@ -460,7 +490,7 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                         : 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30'}>
                         <CardHeader className="pb-2">
                             <CardTitle className={`text-sm ${summary.total_remaining > 0.009 ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>
-                                المتبقي
+                                المتبقي الكلي
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -477,7 +507,7 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                     <AccountTransactionsSection
                         customerId={customer.id}
                         transactions={customer_transactions}
-                        totalInvoiced={summary.total_invoiced}
+                        totalInvoiced={summary.total_invoiced + summary.opening_balance}
                     />
                 )}
 

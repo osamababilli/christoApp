@@ -17,4 +17,14 @@ class Supplier extends Model
     {
         return $this->hasMany(Part::class);
     }
+
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(SupplierPurchase::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(SupplierPayment::class);
+    }
 }

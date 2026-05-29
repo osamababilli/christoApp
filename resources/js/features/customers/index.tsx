@@ -37,6 +37,8 @@ interface Customer {
     motors_count: number;
     is_loyal: boolean;
     account_type: 'direct' | 'account';
+    opening_balance: number;
+    opening_balance_notes: string | null;
     created_at: string;
 }
 
@@ -55,11 +57,13 @@ interface Props {
 /* ── Create Dialog ── */
 function CreateCustomerDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
     const { data, setData, post, processing, errors, reset } = useForm({
-        name:         '',
-        phone:        '',
-        email:        '',
-        notes:        '',
-        account_type: 'direct' as 'direct' | 'account',
+        name:                  '',
+        phone:                 '',
+        email:                 '',
+        notes:                 '',
+        account_type:          'direct' as 'direct' | 'account',
+        opening_balance:       '',
+        opening_balance_notes: '',
     });
 
     function submit(e: React.FormEvent) {
@@ -93,21 +97,25 @@ function CreateCustomerDialog({ open, onClose }: { open: boolean; onClose: () =>
 /* ── Edit Dialog ── */
 function EditCustomerDialog({ customer, onClose }: { customer: Customer | null; onClose: () => void }) {
     const { data, setData, put, processing, errors, reset } = useForm({
-        name:         '',
-        phone:        '',
-        email:        '',
-        notes:        '',
-        account_type: 'direct' as 'direct' | 'account',
+        name:                  '',
+        phone:                 '',
+        email:                 '',
+        notes:                 '',
+        account_type:          'direct' as 'direct' | 'account',
+        opening_balance:       '',
+        opening_balance_notes: '',
     });
 
     useEffect(() => {
         if (customer) {
             setData({
-                name:         customer.name,
-                phone:        customer.phone,
-                email:        customer.email ?? '',
-                notes:        customer.notes ?? '',
-                account_type: customer.account_type,
+                name:                  customer.name,
+                phone:                 customer.phone,
+                email:                 customer.email ?? '',
+                notes:                 customer.notes ?? '',
+                account_type:          customer.account_type,
+                opening_balance:       customer.opening_balance > 0 ? String(customer.opening_balance) : '',
+                opening_balance_notes: customer.opening_balance_notes ?? '',
             });
         }
     }, [customer?.id]);
@@ -211,6 +219,36 @@ function CustomerForm({ data, setData, errors, processing, onSubmit, onCancel, s
                         ? 'الدفعات تُسجَّل على مستوى حساب العميل وتُضاف للصندوق تلقائياً'
                         : 'كل فاتورة تُسدَّد بشكل مستقل'}
                 </p>
+            </div>
+
+            {/* Opening balance */}
+            <div className="rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20 p-3 space-y-3">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-amber-800 dark:text-amber-300">رصيد مرحّل</span>
+                    <span className="text-xs text-amber-600 dark:text-amber-400">(اختياري — لترحيل ديون سابقة بدون فواتير)</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">المبلغ المرحّل</label>
+                        <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            dir="ltr"
+                            value={data.opening_balance}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData('opening_balance', e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">ملاحظة</label>
+                        <Input
+                            placeholder="مثال: رصيد 2024"
+                            value={data.opening_balance_notes}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData('opening_balance_notes', e.target.value)}
+                        />
+                    </div>
+                </div>
             </div>
 
             <div className="space-y-1">
