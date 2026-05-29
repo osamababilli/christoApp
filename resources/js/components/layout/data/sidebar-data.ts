@@ -27,7 +27,7 @@ export const sidebarData: SidebarData = {
     },
     teams: [
         {
-            name: 'ورشة كريستين',
+            name: 'ورشة غسان متري',
             logo: Cog,
             plan: 'نظام إدارة الورشة',
         },

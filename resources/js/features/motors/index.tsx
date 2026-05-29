@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { router, Link } from '@inertiajs/react';
-import { Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { ArchiveRestore, Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 interface Motor {
@@ -35,6 +35,7 @@ interface Motor {
     received_at: string;
     delivered_at: string | null;
     received_by_name: string | null;
+    deleted_at: string | null;
 }
 
 interface PaginatedMotors {
@@ -48,7 +49,8 @@ interface PaginatedMotors {
 
 interface Props {
     motors: PaginatedMotors;
-    filters: { search?: string; status?: string };
+    filters: { search?: string; status?: string; archived?: string; per_page?: string };
+    per_page: number;
 }
 
 const statusColors: Record<string, string> = {
@@ -59,10 +61,12 @@ const statusColors: Record<string, string> = {
 };
 
 
-export function Motors({ motors, filters }: Props) {
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [status, setStatus] = useState(filters.status ?? '');
-    const [selected, setSelected] = useState<Set<number>>(new Set());
+export function Motors({ motors, filters, per_page }: Props) {
+    const [search, setSearch]   = useState(filters.search ?? '');
+    const [status, setStatus]   = useState(filters.status ?? '');
+    const [perPage, setPerPage] = useState(per_page ?? 15);
+    const archived               = filters.archived === '1' || filters.archived === 'true';
+    const [selected, setSelected]     = useState<Set<number>>(new Set());
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
@@ -86,13 +90,36 @@ export function Motors({ motors, filters }: Props) {
         });
     }
 
-    function applyFilters(newSearch?: string, newStatus?: string) {
+    function applyFilters(newSearch?: string, newStatus?: string, newPerPage?: number) {
         setSelected(new Set());
         router.get(
             '/motors',
-            { search: newSearch ?? search, status: newStatus ?? status },
+            {
+                search:   newSearch   ?? search,
+                status:   newStatus   ?? status,
+                archived: archived ? '1' : '',
+                per_page: newPerPage  ?? perPage,
+            },
             { preserveState: true, replace: true },
         );
+    }
+
+    function changePerPage(value: number) {
+        setPerPage(value);
+        applyFilters(undefined, undefined, value);
+    }
+
+    function toggleArchived() {
+        setSelected(new Set());
+        router.get(
+            '/motors',
+            { search: '', status: '', archived: archived ? '' : '1', per_page: perPage },
+            { preserveState: false, replace: true },
+        );
+    }
+
+    function restoreMotor(id: number) {
+        router.patch(`/motors/${id}/restore`, {}, { preserveScroll: true });
     }
 
     function confirmDelete(id: number) {
@@ -128,26 +155,36 @@ export function Motors({ motors, filters }: Props) {
                             onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                         />
                     </div>
-                    <Select
-                        value={status}
-                        onValueChange={(v) => {
-                            setStatus(v === 'all' ? '' : v);
-                            applyFilters(undefined, v === 'all' ? '' : v);
-                        }}
-                    >
-                        <SelectTrigger className="w-44 min-h-[44px] text-base">
-                            <SelectValue placeholder="كل الحالات" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">كل الحالات</SelectItem>
-                            <SelectItem value="in_workshop">في الورشة</SelectItem>
-                            <SelectItem value="in_progress">قيد الإصلاح</SelectItem>
-                            <SelectItem value="ready">جاهز للاستلام</SelectItem>
-                            <SelectItem value="delivered">تم التسليم</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    {!archived && (
+                        <Select
+                            value={status}
+                            onValueChange={(v) => {
+                                setStatus(v === 'all' ? '' : v);
+                                applyFilters(undefined, v === 'all' ? '' : v);
+                            }}
+                        >
+                            <SelectTrigger className="w-44 min-h-[44px] text-base">
+                                <SelectValue placeholder="كل الحالات" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">كل الحالات</SelectItem>
+                                <SelectItem value="in_workshop">في الورشة</SelectItem>
+                                <SelectItem value="in_progress">قيد الإصلاح</SelectItem>
+                                <SelectItem value="ready">جاهز للاستلام</SelectItem>
+                                <SelectItem value="delivered">تم التسليم</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )}
                     <Button onClick={() => applyFilters()} variant="outline" className="min-h-[44px]">
                         بحث
+                    </Button>
+                    <Button
+                        onClick={toggleArchived}
+                        variant={archived ? 'default' : 'outline'}
+                        className="min-h-[44px] gap-2"
+                    >
+                        <ArchiveRestore className="h-4 w-4" />
+                        {archived ? 'العودة للقيود' : 'الأرشيف'}
                     </Button>
                 </div>
                 <div className="ms-auto flex items-center gap-3">
@@ -159,19 +196,30 @@ export function Motors({ motors, filters }: Props) {
             <Main className="flex flex-1 flex-col gap-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">قيود الاستلام</h2>
-                        <p className="text-muted-foreground">إجمالي: {motors.total} قيد استلام</p>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-2xl font-bold tracking-tight">
+                                {archived ? 'الأرشيف' : 'قيود الاستلام'}
+                            </h2>
+                            {archived && (
+                                <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                                    محذوفة
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-muted-foreground">إجمالي: {motors.total} قيد</p>
                     </div>
-                    <Link href="/motors/create">
-                        <Button size="lg" className="min-h-12 gap-2 text-base">
-                            <Plus className="h-5 w-5" />
-                            تسجيل قيد استلام جديد
-                        </Button>
-                    </Link>
+                    {!archived && (
+                        <Link href="/motors/create">
+                            <Button size="lg" className="min-h-12 gap-2 text-base">
+                                <Plus className="h-5 w-5" />
+                                تسجيل قيد استلام جديد
+                            </Button>
+                        </Link>
+                    )}
                 </div>
 
                 {/* Bulk action bar */}
-                {selected.size > 0 && (
+                {!archived && selected.size > 0 && (
                     <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-2.5">
                         <span className="text-sm font-medium">
                             تم تحديد <span className="font-bold text-destructive">{selected.size}</span> قيد استلام
@@ -220,7 +268,7 @@ export function Motors({ motors, filters }: Props) {
                                 {motors.data.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={11} className="py-12 text-center text-muted-foreground text-lg">
-                                            لا توجد قيود استلام مطابقة للبحث
+                                            {archived ? 'لا توجد قيود في الأرشيف' : 'لا توجد قيود استلام مطابقة للبحث'}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -228,24 +276,29 @@ export function Motors({ motors, filters }: Props) {
                                         <TableRow
                                             key={motor.id}
                                             data-selected={selected.has(motor.id)}
-                                            className="data-[selected=true]:bg-muted/50"
+                                            className={`data-[selected=true]:bg-muted/50 ${archived ? 'opacity-60' : ''}`}
                                         >
                                             <TableCell className="text-center">
-                                                <Checkbox
-                                                    checked={selected.has(motor.id)}
-                                                    onCheckedChange={() => toggleOne(motor.id)}
-                                                />
+                                                {!archived && (
+                                                    <Checkbox
+                                                        checked={selected.has(motor.id)}
+                                                        onCheckedChange={() => toggleOne(motor.id)}
+                                                    />
+                                                )}
                                             </TableCell>
                                             <TableCell>
-                                                <Link
-                                                    href={`/motors/${motor.id}`}
-                                                    className="font-mono font-semibold text-primary hover:underline underline-offset-4"
-                                                >
-                                                    {motor.reference_number}
-                                                </Link>
+                                                {archived ? (
+                                                    <span className="font-mono font-semibold text-muted-foreground line-through">
+                                                        {motor.reference_number}
+                                                    </span>
+                                                ) : (
+                                                    <Link href={`/motors/${motor.id}`} className="font-mono font-semibold text-primary hover:underline underline-offset-2">
+                                                        {motor.reference_number}
+                                                    </Link>
+                                                )}
                                             </TableCell>
                                             <TableCell className="font-medium">
-                                                <Link href={`/customers/${motor.customer_id}`} className="hover:underline underline-offset-4 text-primary">
+                                                <Link href={`/customers/${motor.customer_id}`} className="hover:text-primary hover:underline underline-offset-2 transition-colors">
                                                     {motor.customer_name}
                                                 </Link>
                                             </TableCell>
@@ -255,7 +308,7 @@ export function Motors({ motors, filters }: Props) {
                                             <TableCell>
                                                 <Badge
                                                     variant="outline"
-                                                    className={`min-w-[100px] justify-center text-sm ${statusColors[motor.status] ?? ''}`}
+                                                    className={`min-w-[100px] justify-center text-sm ${archived ? 'border-muted text-muted-foreground' : (statusColors[motor.status] ?? '')}`}
                                                 >
                                                     {motor.status_label}
                                                 </Badge>
@@ -277,7 +330,11 @@ export function Motors({ motors, filters }: Props) {
                                             </TableCell>
                                             <TableCell>{motor.received_at}</TableCell>
                                             <TableCell>
-                                                {motor.delivered_at ? (
+                                                {archived ? (
+                                                    <span className="text-xs text-amber-600 dark:text-amber-400">
+                                                        أُرشف {motor.deleted_at}
+                                                    </span>
+                                                ) : motor.delivered_at ? (
                                                     motor.delivered_at
                                                 ) : (
                                                     <span className="text-muted-foreground text-sm">لم يتم التسليم بعد</span>
@@ -285,25 +342,39 @@ export function Motors({ motors, filters }: Props) {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1">
-                                                    <Link href={`/motors/${motor.id}`}>
-                                                        <Button variant="ghost" size="icon" title="عرض">
-                                                            <Eye className="h-4 w-4" />
+                                                    {archived ? (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="gap-1.5 text-green-700 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-800 dark:hover:bg-green-950/30"
+                                                            onClick={() => restoreMotor(motor.id)}
+                                                        >
+                                                            <ArchiveRestore className="h-3.5 w-3.5" />
+                                                            استعادة
                                                         </Button>
-                                                    </Link>
-                                                    <Link href={`/motors/${motor.id}/edit`}>
-                                                        <Button variant="ghost" size="icon" title="تعديل">
-                                                            <Pencil className="h-4 w-4" />
-                                                        </Button>
-                                                    </Link>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        title="أرشفة"
-                                                        className="text-destructive hover:text-destructive"
-                                                        onClick={() => confirmDelete(motor.id)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    ) : (
+                                                        <>
+                                                            <Link href={`/motors/${motor.id}`}>
+                                                                <Button variant="ghost" size="icon" title="عرض">
+                                                                    <Eye className="h-4 w-4" />
+                                                                </Button>
+                                                            </Link>
+                                                            <Link href={`/motors/${motor.id}/edit`}>
+                                                                <Button variant="ghost" size="icon" title="تعديل">
+                                                                    <Pencil className="h-4 w-4" />
+                                                                </Button>
+                                                            </Link>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                title="أرشفة"
+                                                                className="text-destructive hover:text-destructive"
+                                                                onClick={() => confirmDelete(motor.id)}
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -315,20 +386,51 @@ export function Motors({ motors, filters }: Props) {
                 </Card>
 
                 {/* Pagination */}
-                {motors.last_page > 1 && (
-                    <div className="flex items-center justify-center gap-2">
-                        {motors.links.map((link, i) => (
-                            <Button
-                                key={i}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="sm"
-                                disabled={!link.url}
-                                onClick={() => link.url && router.visit(link.url)}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <p className="text-sm text-muted-foreground">
+                            صفحة <span className="font-semibold text-foreground">{motors.current_page}</span> من{' '}
+                            <span className="font-semibold text-foreground">{motors.last_page}</span>
+                            {' '}—{' '}إجمالي{' '}
+                            <span className="font-semibold text-foreground">{motors.total}</span> قيد
+                        </p>
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <span className="whitespace-nowrap">عدد الصفوف:</span>
+                            <Select value={String(perPage)} onValueChange={(v) => changePerPage(Number(v))}>
+                                <SelectTrigger className="h-8 w-16 text-xs">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="15">15</SelectItem>
+                                    <SelectItem value="25">25</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                    <SelectItem value="100">100</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
-                )}
+                    {motors.last_page > 1 && (
+                        <div className="flex items-center gap-1.5">
+                            {motors.links.map((link, i) => {
+                                const isPrev = link.label.includes('previous') || link.label.includes('Previous') || link.label === '&laquo; Previous';
+                                const isNext = link.label.includes('next') || link.label.includes('Next') || link.label === 'Next &raquo;';
+                                const displayLabel = isPrev ? '&raquo; السابق' : isNext ? 'التالي &laquo;' : link.label;
+                                return (
+                                    <Button
+                                        key={i}
+                                        variant={link.active ? 'default' : 'outline'}
+                                        size="sm"
+                                        className="min-w-[36px]"
+                                        disabled={!link.url}
+                                        onClick={() => link.url && router.visit(link.url)}
+                                        dangerouslySetInnerHTML={{ __html: displayLabel }}
+                                    />
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             </Main>
 
             {/* Bulk delete confirmation dialog */}

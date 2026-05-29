@@ -1,140 +1,126 @@
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { showSubmittedData } from '@/lib/show-submitted-data';
-import { cn } from '@/lib/utils';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Link } from '@inertiajs/react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { z } from 'zod';
-
-const profileFormSchema = z.object({
-    username: z
-        .string('Please enter your username.')
-        .min(2, 'Username must be at least 2 characters.')
-        .max(30, 'Username must not be longer than 30 characters.'),
-    email: z.email({
-        error: (iss) => (iss.input === undefined ? 'Please select an email to display.' : undefined),
-    }),
-    bio: z.string().max(160).min(4),
-    urls: z
-        .array(
-            z.object({
-                value: z.url('Please enter a valid URL.'),
-            }),
-        )
-        .optional(),
-});
-
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
-
-// This can come from your database or API.
-const defaultValues: Partial<ProfileFormValues> = {
-    bio: 'I own a computer.',
-    urls: [{ value: 'https://shadcn.com' }, { value: 'http://twitter.com/shadcn' }],
-};
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import type { SharedData } from '@/types';
+import { useForm, usePage } from '@inertiajs/react';
+import { Loader2, Save } from 'lucide-react';
 
 export function ProfileForm() {
-    const form = useForm<ProfileFormValues>({
-        resolver: zodResolver(profileFormSchema),
-        defaultValues,
-        mode: 'onChange',
+    const { auth } = usePage<SharedData>().props;
+    const user = auth?.user;
+
+    const { data, setData, put, processing, errors, reset } = useForm({
+        name: user?.name ?? '',
+        email: user?.email ?? '',
+        phone: (user?.phone as string) ?? '',
+        current_password: '',
+        password: '',
+        password_confirmation: '',
     });
 
-    const { fields, append } = useFieldArray({
-        name: 'urls',
-        control: form.control,
-    });
+    function submit(e: React.FormEvent) {
+        e.preventDefault();
+        put('/settings/profile', {
+            preserveScroll: true,
+            onSuccess: () => reset('current_password', 'password', 'password_confirmation'),
+        });
+    }
 
     return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit((data) => showSubmittedData(data))} className="space-y-8">
-                <FormField
-                    control={form.control}
-                    name="username"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Username</FormLabel>
-                            <FormControl>
-                                <Input placeholder="shadcn" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                                This is your public display name. It can be your real name or a pseudonym. You can only change this once every 30
-                                days.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a verified email to display" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="m@example.com">m@example.com</SelectItem>
-                                    <SelectItem value="m@google.com">m@google.com</SelectItem>
-                                    <SelectItem value="m@support.com">m@support.com</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormDescription>
-                                You can manage verified email addresses in your <Link href="/settings">email settings</Link>.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="bio"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Bio</FormLabel>
-                            <FormControl>
-                                <Textarea placeholder="Tell us a little bit about yourself" className="resize-none" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                                You can <span>@mention</span> other users and organizations to link to them.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <div>
-                    {fields.map((field, index) => (
-                        <FormField
-                            control={form.control}
-                            key={field.id}
-                            name={`urls.${index}.value`}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className={cn(index !== 0 && 'sr-only')}>URLs</FormLabel>
-                                    <FormDescription className={cn(index !== 0 && 'sr-only')}>
-                                        Add links to your website, blog, or social media profiles.
-                                    </FormDescription>
-                                    <FormControl className={cn(index !== 0 && 'mt-1.5')}>
-                                        <Input {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    ))}
-                    <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({ value: '' })}>
-                        Add URL
-                    </Button>
+        <form onSubmit={submit} className="space-y-6 max-w-lg">
+            {/* Personal info */}
+            <div className="space-y-4">
+                <div className="space-y-1.5">
+                    <Label htmlFor="prof-name">
+                        الاسم <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                        id="prof-name"
+                        value={data.name}
+                        onChange={(e) => setData('name', e.target.value)}
+                        placeholder="الاسم الكامل"
+                    />
+                    {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                 </div>
-                <Button type="submit">Update profile</Button>
-            </form>
-        </Form>
+
+                <div className="space-y-1.5">
+                    <Label htmlFor="prof-email">
+                        البريد الإلكتروني <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                        id="prof-email"
+                        type="email"
+                        dir="ltr"
+                        value={data.email}
+                        onChange={(e) => setData('email', e.target.value)}
+                        placeholder="email@example.com"
+                    />
+                    {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+                </div>
+
+                <div className="space-y-1.5">
+                    <Label htmlFor="prof-phone">رقم الجوال</Label>
+                    <Input
+                        id="prof-phone"
+                        dir="ltr"
+                        value={data.phone}
+                        onChange={(e) => setData('phone', e.target.value)}
+                        placeholder="05xxxxxxxx"
+                    />
+                    {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+                </div>
+            </div>
+
+            <Separator />
+
+            {/* Password change */}
+            <div className="space-y-4">
+                <div>
+                    <h3 className="text-sm font-semibold">تغيير كلمة المرور</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">اتركها فارغة إذا لم ترغب بتغيير كلمة المرور.</p>
+                </div>
+
+                <div className="space-y-1.5">
+                    <Label htmlFor="prof-current-pw">كلمة المرور الحالية</Label>
+                    <Input
+                        id="prof-current-pw"
+                        type="password"
+                        value={data.current_password}
+                        onChange={(e) => setData('current_password', e.target.value)}
+                        autoComplete="current-password"
+                    />
+                    {errors.current_password && <p className="text-xs text-destructive">{errors.current_password}</p>}
+                </div>
+
+                <div className="space-y-1.5">
+                    <Label htmlFor="prof-new-pw">كلمة المرور الجديدة</Label>
+                    <Input
+                        id="prof-new-pw"
+                        type="password"
+                        value={data.password}
+                        onChange={(e) => setData('password', e.target.value)}
+                        autoComplete="new-password"
+                    />
+                    {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+                </div>
+
+                <div className="space-y-1.5">
+                    <Label htmlFor="prof-confirm-pw">تأكيد كلمة المرور الجديدة</Label>
+                    <Input
+                        id="prof-confirm-pw"
+                        type="password"
+                        value={data.password_confirmation}
+                        onChange={(e) => setData('password_confirmation', e.target.value)}
+                        autoComplete="new-password"
+                    />
+                </div>
+            </div>
+
+            <Button type="submit" disabled={processing} className="gap-2">
+                {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {processing ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+            </Button>
+        </form>
     );
 }

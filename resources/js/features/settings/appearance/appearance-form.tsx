@@ -4,11 +4,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { fonts } from '@/config/fonts';
 import { useFont } from '@/context/font-provider';
 import { useTheme } from '@/context/theme-provider';
-import { showSubmittedData } from '@/lib/show-submitted-data';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 const appearanceFormSchema = z.object({
@@ -22,7 +22,6 @@ export function AppearanceForm() {
     const { font, setFont } = useFont();
     const { theme, setTheme } = useTheme();
 
-    // This can come from your database or API.
     const defaultValues: Partial<AppearanceFormValues> = {
         theme: theme as 'light' | 'dark',
         font,
@@ -34,21 +33,20 @@ export function AppearanceForm() {
     });
 
     function onSubmit(data: AppearanceFormValues) {
-        if (data.font != font) setFont(data.font);
-        if (data.theme != theme) setTheme(data.theme);
-
-        showSubmittedData(data);
+        if (data.font !== font) setFont(data.font);
+        if (data.theme !== theme) setTheme(data.theme);
+        toast.success('تم حفظ إعدادات المظهر.');
     }
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-lg">
                 <FormField
                     control={form.control}
                     name="font"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Font</FormLabel>
+                            <FormLabel>الخط</FormLabel>
                             <div className="relative w-max">
                                 <FormControl>
                                     <select
@@ -59,29 +57,34 @@ export function AppearanceForm() {
                                         )}
                                         {...field}
                                     >
-                                        {fonts.map((font) => (
-                                            <option key={font} value={font}>
-                                                {font}
+                                        {fonts.map((f) => (
+                                            <option key={f} value={f}>
+                                                {f}
                                             </option>
                                         ))}
                                     </select>
                                 </FormControl>
                                 <ChevronDownIcon className="absolute end-3 top-2.5 h-4 w-4 opacity-50" />
                             </div>
-                            <FormDescription className="font-manrope">Set the font you want to use in the dashboard.</FormDescription>
+                            <FormDescription>اختر الخط المستخدم في واجهة النظام.</FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
+
                 <FormField
                     control={form.control}
                     name="theme"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Theme</FormLabel>
-                            <FormDescription>Select the theme for the dashboard.</FormDescription>
+                            <FormLabel>المظهر</FormLabel>
+                            <FormDescription>اختر بين الوضع الفاتح والداكن.</FormDescription>
                             <FormMessage />
-                            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid max-w-md grid-cols-2 gap-8 pt-2">
+                            <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="grid max-w-md grid-cols-2 gap-8 pt-2"
+                            >
                                 <FormItem>
                                     <FormLabel className="[&:has([data-state=checked])>div]:border-primary">
                                         <FormControl>
@@ -97,13 +100,9 @@ export function AppearanceForm() {
                                                     <div className="h-4 w-4 rounded-full bg-[#ecedef]" />
                                                     <div className="h-2 w-[100px] rounded-lg bg-[#ecedef]" />
                                                 </div>
-                                                <div className="flex items-center space-x-2 rounded-md bg-white p-2 shadow-xs">
-                                                    <div className="h-4 w-4 rounded-full bg-[#ecedef]" />
-                                                    <div className="h-2 w-[100px] rounded-lg bg-[#ecedef]" />
-                                                </div>
                                             </div>
                                         </div>
-                                        <span className="block w-full p-2 text-center font-normal">Light</span>
+                                        <span className="block w-full p-2 text-center font-normal">فاتح</span>
                                     </FormLabel>
                                 </FormItem>
                                 <FormItem>
@@ -121,13 +120,9 @@ export function AppearanceForm() {
                                                     <div className="h-4 w-4 rounded-full bg-slate-400" />
                                                     <div className="h-2 w-[100px] rounded-lg bg-slate-400" />
                                                 </div>
-                                                <div className="flex items-center space-x-2 rounded-md bg-slate-800 p-2 shadow-xs">
-                                                    <div className="h-4 w-4 rounded-full bg-slate-400" />
-                                                    <div className="h-2 w-[100px] rounded-lg bg-slate-400" />
-                                                </div>
                                             </div>
                                         </div>
-                                        <span className="block w-full p-2 text-center font-normal">Dark</span>
+                                        <span className="block w-full p-2 text-center font-normal">داكن</span>
                                     </FormLabel>
                                 </FormItem>
                             </RadioGroup>
@@ -135,7 +130,7 @@ export function AppearanceForm() {
                     )}
                 />
 
-                <Button type="submit">Update preferences</Button>
+                <Button type="submit">حفظ التفضيلات</Button>
             </form>
         </Form>
     );

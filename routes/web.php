@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
 
     // Motors
     Route::resource('motors', MotorController::class);
+    Route::patch('motors/{id}/restore', [MotorController::class, 'restore'])->name('motors.restore');
     Route::get('motors/{motor}/print', [MotorController::class, 'printView'])->name('motors.print');
     Route::get('motors/{motor}/print/delivery', [MotorController::class, 'printDelivery'])->name('motors.print-delivery');
     Route::patch('motors/{motor}/status', [MotorController::class, 'updateStatus'])->name('motors.update-status');
@@ -112,6 +113,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/appearance', fn() => Inertia::render('authenticated/settings/appearance'))->name('appearance');
         Route::get('/notifications', fn() => Inertia::render('authenticated/settings/notifications'))->name('notifications');
         Route::get('/display', fn() => Inertia::render('authenticated/settings/display'))->name('display');
+
+        // Profile update
+        Route::put('/profile', [UserController::class, 'updateProfile'])->name('settings.profile.update');
 
         // Users management
         Route::get('/users', [UserController::class, 'index'])->name('users');

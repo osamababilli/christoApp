@@ -78,7 +78,7 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
 
                 {/* Header */}
                 <div style={{ textAlign: 'center', marginBottom: 28, paddingBottom: 20, borderBottom: '2px solid #111' }}>
-                    <h1 style={{ fontSize: 26, fontWeight: 900, margin: 0, letterSpacing: 1 }}>ورشة كريستين</h1>
+                    <h1 style={{ fontSize: 26, fontWeight: 900, margin: 0, letterSpacing: 1 }}>ورشة غسان متري</h1>
                     <p style={{ fontSize: 13, color: '#555', margin: '4px 0 0' }}>فاتورة / ورقة استلام وتسليم</p>
                 </div>
 

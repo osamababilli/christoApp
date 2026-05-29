@@ -110,7 +110,7 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, paddingBottom: 20, borderBottom: '3px solid #111' }}>
                     <div>
-                        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, letterSpacing: 0.5 }}>ورشة كريستين</h1>
+                        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, letterSpacing: 0.5 }}>ورشة غسان متري</h1>
                         <p style={{ margin: '3px 0 0', fontSize: 13, color: '#71717a' }}>كشف حساب — المحاسبة والخزنة</p>
                     </div>
                     <div style={{ textAlign: 'left' }}>
@@ -241,7 +241,7 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
 
                 {/* Footer */}
                 <div style={{ marginTop: 40, paddingTop: 14, borderTop: '1px solid #e4e4e7', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#a1a1aa' }}>
-                    <span>ورشة كريستين — كشف حساب رسمي</span>
+                    <span>ورشة غسان متري — كشف حساب رسمي</span>
                     <span>طُبع بتاريخ: {printedAt}</span>
                 </div>
             </div>

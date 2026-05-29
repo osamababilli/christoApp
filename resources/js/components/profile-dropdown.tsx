@@ -8,12 +8,12 @@ import {
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
-    DropdownMenuShortcut,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import useDialogState from '@/hooks/use-dialog-state';
 import type { SharedData } from '@/types';
-import { usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
+import { LogOut, Settings, UserCog } from 'lucide-react';
 
 export function ProfileDropdown() {
     const [open, setOpen] = useDialogState();
@@ -50,22 +50,26 @@ export function ProfileDropdown() {
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
                         <DropdownMenuItem asChild>
-                            <a href="/settings/profile">
-                                Profile
-                                <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                            </a>
+                            <Link href="/settings" className="flex items-center gap-2">
+                                <UserCog className="h-4 w-4" />
+                                الملف الشخصي
+                            </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                            <a href="/settings">
-                                Settings
-                                <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-                            </a>
+                            <Link href="/settings/appearance" className="flex items-center gap-2">
+                                <Settings className="h-4 w-4" />
+                                الإعدادات
+                            </Link>
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" onClick={() => setOpen(true)}>
-                        Sign out
-                        <DropdownMenuShortcut className="text-current">⇧⌘Q</DropdownMenuShortcut>
+                    <DropdownMenuItem
+                        variant="destructive"
+                        className="flex items-center gap-2"
+                        onClick={() => setOpen(true)}
+                    >
+                        <LogOut className="h-4 w-4" />
+                        تسجيل الخروج
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

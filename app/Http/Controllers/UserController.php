@@ -67,4 +67,32 @@ class UserController extends Controller
 
         return back()->with('success', 'User deleted successfully.');
     }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $rules = [
+            'name'  => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'phone' => ['nullable', 'string', 'max:30'],
+        ];
+
+        if ($request->filled('password')) {
+            $rules['current_password'] = ['required', 'current_password'];
+            $rules['password']         = ['required', 'string', 'min:8', 'confirmed'];
+        }
+
+        $data = $request->validate($rules);
+
+        unset($data['current_password']);
+
+        if (empty($data['password'])) {
+            unset($data['password']);
+        }
+
+        $user->update($data);
+
+        return back()->with('success', 'تم تحديث الملف الشخصي بنجاح.');
+    }
 }

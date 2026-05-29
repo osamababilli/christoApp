@@ -234,87 +234,79 @@ export function Suppliers({ suppliers, filters }: Props) {
                     </Button>
                 </div>
 
-                <Card>
-                    <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
+                <Card className="overflow-hidden">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-muted/40 hover:bg-muted/40">
+                                <TableHead className="text-right font-semibold w-48">الاسم</TableHead>
+                                <TableHead className="text-right font-semibold w-36">الجوال</TableHead>
+                                <TableHead className="text-right font-semibold w-52">البريد الإلكتروني</TableHead>
+                                <TableHead className="text-right font-semibold w-28">عدد القطع</TableHead>
+                                <TableHead className="text-right font-semibold">ملاحظات</TableHead>
+                                <TableHead className="text-right font-semibold w-28">تاريخ الإضافة</TableHead>
+                                <TableHead className="w-28 text-center font-semibold">إجراءات</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {suppliers.data.length === 0 ? (
                                 <TableRow>
-                                    <TableHead className="text-right">الاسم</TableHead>
-                                    <TableHead className="text-right">الجوال</TableHead>
-                                    <TableHead className="text-right">البريد الإلكتروني</TableHead>
-                                    <TableHead className="text-right">عدد القطع</TableHead>
-                                    <TableHead className="text-right">ملاحظات</TableHead>
-                                    <TableHead className="text-right">تاريخ الإضافة</TableHead>
-                                    <TableHead />
+                                    <TableCell colSpan={7} className="py-16 text-center">
+                                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                            <Truck className="h-10 w-10 opacity-30" />
+                                            <p className="text-lg">لا يوجد موردون</p>
+                                            <Button variant="outline" size="sm" className="mt-1 gap-2" onClick={openCreate}>
+                                                <Plus className="h-4 w-4" />
+                                                إضافة أول مورد
+                                            </Button>
+                                        </div>
+                                    </TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {suppliers.data.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="py-16 text-center">
-                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                                <Truck className="h-10 w-10 opacity-30" />
-                                                <p className="text-lg">لا يوجد موردون</p>
-                                                <Button variant="outline" size="sm" className="mt-1 gap-2" onClick={openCreate}>
-                                                    <Plus className="h-4 w-4" />
-                                                    إضافة أول مورد
+                            ) : (
+                                suppliers.data.map((s) => (
+                                    <TableRow key={s.id} className="hover:bg-muted/30 transition-colors">
+                                        <TableCell>
+                                            <Link href={`/suppliers/${s.id}`} className="font-semibold hover:text-primary transition-colors">
+                                                {s.name}
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell dir="ltr" className="text-right text-sm text-muted-foreground">
+                                            {s.phone ?? <span className="text-muted-foreground/40">—</span>}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {s.email ?? <span className="text-muted-foreground/40">—</span>}
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">
+                                                <Package className="h-3 w-3" />
+                                                {s.parts_count}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
+                                            {s.notes ?? <span className="text-muted-foreground/40">—</span>}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground" dir="ltr">
+                                            {s.created_at}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center justify-center gap-0.5">
+                                                <Link href={`/suppliers/${s.id}`}>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10">
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" onClick={() => openEdit(s)}>
+                                                    <Pencil className="h-3.5 w-3.5" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => setDeleteTarget(s)}>
+                                                    <Trash2 className="h-3.5 w-3.5" />
                                                 </Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
-                                ) : (
-                                    suppliers.data.map((s) => (
-                                        <TableRow key={s.id} className="hover:bg-muted/40">
-                                            <TableCell className="font-semibold">{s.name}</TableCell>
-                                            <TableCell dir="ltr" className="text-right text-sm">
-                                                {s.phone ?? '—'}
-                                            </TableCell>
-                                            <TableCell className="text-sm">{s.email ?? '—'}</TableCell>
-                                            <TableCell>
-                                                <span className="flex items-center gap-1.5 text-sm">
-                                                    <Package className="h-3.5 w-3.5 text-muted-foreground" />
-                                                    {s.parts_count}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
-                                                {s.notes ?? '—'}
-                                            </TableCell>
-                                            <TableCell className="text-sm text-muted-foreground">{s.created_at}</TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-1">
-                                                    <Link href={`/suppliers/${s.id}`}>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 text-primary hover:text-primary"
-                                                        >
-                                                            <Eye className="h-4 w-4" />
-                                                        </Button>
-                                                    </Link>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8"
-                                                        onClick={() => openEdit(s)}
-                                                    >
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-destructive hover:text-destructive"
-                                                        onClick={() => setDeleteTarget(s)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
                 </Card>
 
                 {suppliers.last_page > 1 && (

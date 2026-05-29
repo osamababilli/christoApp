@@ -128,7 +128,7 @@ export default function CustomerStatement({ customer, motors, summary, customer_
                 {/* ── Header ── */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, paddingBottom: 20, borderBottom: '3px solid #111' }}>
                     <div>
-                        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 900, letterSpacing: 0.3 }}>ورشة كريستين</h1>
+                        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 900, letterSpacing: 0.3 }}>ورشة غسان متري</h1>
                         <p style={{ margin: '4px 0 0', fontSize: 13, color: '#71717a' }}>
                             {isAccount ? 'كشف الحساب الجاري' : 'كشف الحساب المالي الشامل'}
                         </p>
@@ -473,7 +473,7 @@ export default function CustomerStatement({ customer, motors, summary, customer_
 
                 {/* ── Footer ── */}
                 <div style={{ marginTop: 32, paddingTop: 14, borderTop: '1px solid #e4e4e7', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#a1a1aa' }}>
-                    <span>ورشة كريستين — {isAccount ? 'كشف الحساب الجاري' : 'كشف الحساب المالي'}</span>
+                    <span>ورشة غسان متري — {isAccount ? 'كشف الحساب الجاري' : 'كشف الحساب المالي'}</span>
                     <span>طُبع بتاريخ: {printedDate}</span>
                 </div>
             </div>

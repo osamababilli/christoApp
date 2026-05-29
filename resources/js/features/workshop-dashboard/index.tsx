@@ -63,7 +63,7 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
             <Header>
                 <div className="flex items-center gap-2">
                     <Wrench className="h-5 w-5" />
-                    <span className="text-lg font-semibold">ورشة كريستين</span>
+                    <span className="text-lg font-semibold">ورشة غسان متري</span>
                 </div>
                 <div className="ms-auto flex items-center gap-3">
                     <ThemeSwitch />

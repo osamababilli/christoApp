@@ -18,7 +18,10 @@ class MotorController extends Controller
 {
     public function index(Request $request): Response
     {
+        $archived = (bool) $request->boolean('archived');
+
         $query = Motor::with(['customer', 'category', 'receivedByEmployee'])
+            ->when($archived, fn($q) => $q->onlyTrashed())
             ->when($request->search, function ($q, $search) {
                 $q->where('reference_number', 'like', "%{$search}%")
                     ->orWhereHas('customer', fn($q) => $q
@@ -26,10 +29,11 @@ class MotorController extends Controller
                         ->orWhere('phone', 'like', "%{$search}%")
                     );
             })
-            ->when($request->status, fn($q, $s) => $q->where('status', $s))
+            ->when(! $archived && $request->status, fn($q, $s) => $q->where('status', $s))
             ->latest();
 
-        $motors = $query->paginate(15)->withQueryString();
+        $perPage = in_array((int) $request->per_page, [10, 15, 25, 50, 100]) ? (int) $request->per_page : 15;
+        $motors  = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('authenticated/motors', [
             'motors' => $motors->through(fn($m) => [
@@ -42,12 +46,22 @@ class MotorController extends Controller
                 'status_label'     => Motor::statusLabel($m->status),
                 'received_at'      => $m->received_at?->format('Y-m-d'),
                 'delivered_at'     => $m->delivered_at?->format('Y-m-d'),
-                'category_id'        => $m->category_id,
-                'category_name'      => $m->category?->name ?? null,
-                'received_by_name'   => $m->receivedByEmployee?->full_name ?? null,
+                'category_id'      => $m->category_id,
+                'category_name'    => $m->category?->name ?? null,
+                'received_by_name' => $m->receivedByEmployee?->full_name ?? null,
+                'deleted_at'       => $m->deleted_at?->format('Y-m-d'),
             ]),
-            'filters' => $request->only(['search', 'status']),
+            'filters'  => $request->only(['search', 'status', 'archived', 'per_page']),
+            'per_page' => $perPage,
         ]);
+    }
+
+    public function restore(int $id): RedirectResponse
+    {
+        $motor = Motor::onlyTrashed()->findOrFail($id);
+        $motor->restore();
+
+        return back()->with('success', 'تم استعادة القيد بنجاح');
     }
 
     private function employeesList(): array
