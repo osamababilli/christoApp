@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountEntry;
 use App\Models\Motor;
 use App\Models\Transaction;
 use Illuminate\Http\RedirectResponse;
@@ -23,13 +24,25 @@ class TransactionController extends Controller
             'transaction_date' => 'nullable|date',
         ]);
 
-        $motor->transactions()->create([
+        $transaction = $motor->transactions()->create([
             'customer_id'      => $motor->customer_id,
             'type'             => $validated['type'],
             'amount'           => $validated['amount'],
             'notes'            => $validated['notes'] ?? null,
             'transaction_date' => $validated['transaction_date'] ?? now(),
         ]);
+
+        // Sync payment to treasury — only cash payments, not discounts
+        if ($validated['type'] === 'payment') {
+            AccountEntry::create([
+                'type'           => 'income',
+                'amount'         => $validated['amount'],
+                'description'    => "دفعة — {$motor->customer->name} ({$motor->reference_number})",
+                'entry_date'     => $validated['transaction_date'] ?? today(),
+                'notes'          => $validated['notes'] ?? null,
+                'transaction_id' => $transaction->id,
+            ]);
+        }
 
         // إذا أصبح كشف الحساب مسدداً بعد هذه الدفعة، علِّم جميع القطع غير المدفوعة كمدفوعة
         $motor->load(['maintenanceOrders.parts', 'transactions']);
@@ -44,7 +57,7 @@ class TransactionController extends Controller
             }
         }
 
-        return back()->with('success', 'تم تسجيل الدفعة بنجاح');
+        return back()->with('success', 'تم تسجيل الدفعة وإضافتها للصندوق');
     }
 
     public function destroy(Transaction $transaction): RedirectResponse

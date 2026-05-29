@@ -32,6 +32,7 @@ class CustomerController extends Controller
                 'name'         => $c->name,
                 'phone'        => $c->phone,
                 'email'        => $c->email,
+                'notes'        => $c->notes,
                 'motors_count' => $c->motors_count,
                 'is_loyal'     => $c->motors_count >= 3,
                 'account_type' => $c->account_type ?? 'direct',
@@ -39,6 +40,47 @@ class CustomerController extends Controller
             ]),
             'filters' => $request->only(['search']),
         ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name'         => 'required|string|max:255',
+            'phone'        => 'required|string|max:50|unique:customers,phone',
+            'email'        => 'nullable|email|max:255',
+            'notes'        => 'nullable|string|max:1000',
+            'account_type' => 'required|in:direct,account',
+        ]);
+
+        Customer::create($validated);
+
+        return back()->with('success', 'تم إضافة العميل بنجاح');
+    }
+
+    public function update(Request $request, Customer $customer): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name'         => 'required|string|max:255',
+            'phone'        => 'required|string|max:50|unique:customers,phone,' . $customer->id,
+            'email'        => 'nullable|email|max:255',
+            'notes'        => 'nullable|string|max:1000',
+            'account_type' => 'required|in:direct,account',
+        ]);
+
+        $customer->update($validated);
+
+        return back()->with('success', 'تم تحديث بيانات العميل');
+    }
+
+    public function destroy(Customer $customer): RedirectResponse
+    {
+        if ($customer->motors()->exists()) {
+            return back()->with('error', "لا يمكن حذف العميل \"{$customer->name}\" لوجود قيود استلام مرتبطة به — احذف القيود أولاً أو قم بنقلها لعميل آخر");
+        }
+
+        $customer->delete();
+
+        return redirect()->route('customers.index')->with('success', 'تم حذف العميل بنجاح');
     }
 
     public function updateType(Request $request, Customer $customer): RedirectResponse
