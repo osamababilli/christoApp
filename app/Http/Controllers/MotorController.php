@@ -250,6 +250,42 @@ class MotorController extends Controller
         ]);
     }
 
+    public function printQuotation(Motor $motor): Response
+    {
+        $motor->load([
+            'customer',
+            'category',
+            'maintenanceOrders.parts',
+        ]);
+
+        return Inertia::render('print/quotation', [
+            'motor' => [
+                'id'               => $motor->id,
+                'reference_number' => $motor->reference_number,
+                'customer'         => [
+                    'name'  => $motor->customer->name,
+                    'phone' => $motor->customer->phone,
+                ],
+                'notes'            => $motor->notes,
+                'received_at'      => $motor->received_at?->format('Y-m-d'),
+                'category_name'    => $motor->category?->name ?? null,
+                'maintenance_orders' => $motor->maintenanceOrders->map(fn($o) => [
+                    'stage'       => $o->stage,
+                    'description' => $o->description,
+                    'labor_cost'  => (float) $o->labor_cost,
+                    'status_label' => MaintenanceOrder::statusLabel($o->status),
+                    'parts'       => $o->parts->map(fn($p) => [
+                        'part_name'   => $p->part_name,
+                        'type_label'  => Part::typeLabel($p->type),
+                        'quantity'    => (float) $p->quantity,
+                        'unit_price'  => $p->purchased_by === 'company' ? (float) $p->unit_price : (float) $p->unit_cost,
+                        'total_price' => (float) $p->total_cost,
+                    ]),
+                ]),
+            ],
+        ]);
+    }
+
     public function printDelivery(Motor $motor): Response
     {
         $motor->load(['customer', 'maintenanceOrders.parts', 'transactions']);

@@ -1,5 +1,6 @@
 import {
     Bug,
+    ClipboardSignature,
     Construction,
     FileX,
     LayoutDashboard,
@@ -45,6 +46,11 @@ export const sidebarData: SidebarData = {
                     title: 'قيود الاستلام',
                     url: '/motors',
                     icon: Wrench,
+                },
+                {
+                    title: 'عروض الأسعار',
+                    url: '/quotations',
+                    icon: ClipboardSignature,
                 },
                 {
                     title: 'الصيانة',
