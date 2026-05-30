@@ -380,10 +380,11 @@ class MotorController extends Controller
         if (! empty($validated['customer_id'])) {
             $motor->update(['customer_id' => $validated['customer_id']]);
         } else {
-            $motor->customer->update([
-                'name'  => $validated['customer_name'],
-                'phone' => $validated['customer_phone'],
-            ]);
+            $customer = Customer::firstOrCreate(
+                ['phone' => $validated['customer_phone']],
+                ['name'  => $validated['customer_name']]
+            );
+            $motor->update(['customer_id' => $customer->id]);
         }
 
         $motor->update([

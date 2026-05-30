@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Quotation extends Model
 {
@@ -34,9 +35,14 @@ class Quotation extends Model
 
     public static function generateReference(): string
     {
-        $year  = now()->year;
-        $count = static::withTrashed()->whereYear('created_at', $year)->count() + 1;
-        return 'QUO-' . $year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+        return DB::transaction(function () {
+            $year  = now()->year;
+            $count = static::withTrashed()
+                ->whereYear('created_at', $year)
+                ->lockForUpdate()
+                ->count() + 1;
+            return 'QUO-' . $year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+        });
     }
 
     public function customer(): BelongsTo

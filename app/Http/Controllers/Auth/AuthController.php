@@ -28,20 +28,9 @@ class AuthController extends Controller
         return redirect()->intended(route('dashboard'));
     }
 
-    public function register(Request $request)
+    public function register(): never
     {
-        $data = $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:7', 'confirmed'],
-        ]);
-
-        $user = User::create($data);
-
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        return redirect()->route('dashboard');
+        abort(403, 'التسجيل معطَّل.');
     }
 
     public function logout(Request $request)

@@ -13,7 +13,7 @@ class PartController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = Part::with(['maintenance.motor.customer', 'maintenance.motor.maintenanceOrders.parts', 'maintenance.motor.transactions', 'supplier'])
+        $query = Part::with(['maintenance.motor.customer', 'supplier'])
             ->whereHas('maintenance.motor')
             ->when($request->search, function ($q, $search) {
                 $q->where('part_name', 'like', "%{$search}%")

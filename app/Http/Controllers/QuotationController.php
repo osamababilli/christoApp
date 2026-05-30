@@ -11,6 +11,7 @@ use App\Models\Quotation;
 use App\Models\QuotationItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -58,7 +59,7 @@ class QuotationController extends Controller
             'customer_name'            => 'required_without:customer_id|nullable|string|max:255',
             'customer_phone'           => 'required_without:customer_id|nullable|string|max:50',
             'notes'                    => 'nullable|string',
-            'valid_days'               => 'integer|min:1|max:365',
+            'valid_days'               => 'integer|min:1|max:255',
             'services'                 => 'array',
             'services.*.description'   => 'required|string|max:500',
             'services.*.labor_cost'    => 'required|numeric|min:0',
@@ -75,7 +76,7 @@ class QuotationController extends Controller
             'customer_id'    => $customerData['id'],
             'customer_name'  => $customerData['name'],
             'customer_phone' => $customerData['phone'],
-            'status'         => $request->input('status', 'draft'),
+            'status'         => in_array($request->input('status'), ['draft', 'sent']) ? $request->input('status') : 'draft',
             'notes'          => $validated['notes'] ?? null,
             'valid_days'     => $validated['valid_days'] ?? 15,
         ]);
@@ -138,7 +139,7 @@ class QuotationController extends Controller
             'customer_name'            => 'required_without:customer_id|nullable|string|max:255',
             'customer_phone'           => 'required_without:customer_id|nullable|string|max:50',
             'notes'                    => 'nullable|string',
-            'valid_days'               => 'integer|min:1|max:365',
+            'valid_days'               => 'integer|min:1|max:255',
             'services'                 => 'array',
             'services.*.description'   => 'required|string|max:500',
             'services.*.labor_cost'    => 'required|numeric|min:0',
@@ -232,57 +233,63 @@ class QuotationController extends Controller
 
     public function convert(Request $request, Quotation $quotation): RedirectResponse
     {
-        if ($quotation->status !== 'accepted') {
-            return back()->with('error', 'يمكن تحويل العروض المقبولة فقط');
-        }
-
         $validated = $request->validate([
             'category_id' => 'nullable|exists:categories,id',
             'notes'       => 'nullable|string',
             'received_by' => 'nullable|exists:employees,id',
         ]);
 
-        if (! empty($quotation->customer_id)) {
-            $customer = Customer::findOrFail($quotation->customer_id);
-        } else {
-            $customer = Customer::firstOrCreate(
-                ['phone' => $quotation->customer_phone],
-                ['name'  => $quotation->customer_name]
-            );
-            $customer->update(['name' => $quotation->customer_name]);
-        }
+        return DB::transaction(function () use ($validated, $quotation) {
+            $locked = Quotation::where('id', $quotation->id)
+                ->where('status', 'accepted')
+                ->lockForUpdate()
+                ->first();
 
-        $motor = Motor::create([
-            'customer_id' => $customer->id,
-            'category_id' => $validated['category_id'] ?? null,
-            'status'      => 'in_workshop',
-            'notes'       => $validated['notes'] ?? $quotation->notes,
-            'received_at' => now(),
-            'received_by' => $validated['received_by'] ?? null,
-        ]);
+            if (! $locked) {
+                return back()->with('error', 'يمكن تحويل العروض المقبولة فقط');
+            }
 
-        $quotation->load('items');
-        $serviceItems = $quotation->items->where('type', 'service')->values();
+            if (! empty($locked->customer_id)) {
+                $customer = Customer::findOrFail($locked->customer_id);
+            } else {
+                $customer = Customer::firstOrCreate(
+                    ['phone' => $locked->customer_phone],
+                    ['name'  => $locked->customer_name]
+                );
+            }
 
-        $stage = 1;
-        foreach ($serviceItems as $item) {
-            MaintenanceOrder::create([
-                'motor_id'    => $motor->id,
-                'stage'       => $stage++,
-                'description' => $item->description,
-                'labor_cost'  => $item->unit_price,
-                'status'      => 'in_progress',
-                'started_at'  => now(),
+            $motor = Motor::create([
+                'customer_id' => $customer->id,
+                'category_id' => $validated['category_id'] ?? null,
+                'status'      => 'in_workshop',
+                'notes'       => $validated['notes'] ?? $locked->notes,
+                'received_at' => now(),
+                'received_by' => $validated['received_by'] ?? null,
             ]);
-        }
 
-        $quotation->update([
-            'status'                => 'converted',
-            'converted_to_motor_id' => $motor->id,
-        ]);
+            $locked->load('items');
+            $serviceItems = $locked->items->where('type', 'service')->values();
 
-        return redirect()->route('motors.show', $motor)
-            ->with('success', 'تم تحويل عرض السعر إلى قيد استلام بنجاح');
+            $stage = 1;
+            foreach ($serviceItems as $item) {
+                MaintenanceOrder::create([
+                    'motor_id'    => $motor->id,
+                    'stage'       => $stage++,
+                    'description' => $item->description,
+                    'labor_cost'  => $item->unit_price,
+                    'status'      => 'in_progress',
+                    'started_at'  => now(),
+                ]);
+            }
+
+            $locked->update([
+                'status'                => 'converted',
+                'converted_to_motor_id' => $motor->id,
+            ]);
+
+            return redirect()->route('motors.show', $motor)
+                ->with('success', 'تم تحويل عرض السعر إلى قيد استلام بنجاح');
+        });
     }
 
     private function customersList(): array

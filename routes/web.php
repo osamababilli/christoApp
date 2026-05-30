@@ -22,12 +22,9 @@ use Inertia\Inertia;
 // Guest-only auth routes
 Route::middleware('guest')->group(function () {
     Route::get('/sign-in', fn() => Inertia::render('auth/sign-in'))->name('auth.sign-in');
-    Route::get('/sign-up', fn() => Inertia::render('auth/sign-up'))->name('auth.sign-up');
     Route::get('/forgot-password', fn() => Inertia::render('auth/forgot-password'))->name('auth.forgot-password');
-    Route::get('/otp', fn() => Inertia::render('auth/otp'))->name('auth.otp');
 
     Route::post('/login', [AuthController::class, 'login'])->name('auth.login');
-    Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->name('password.email');
 });
 

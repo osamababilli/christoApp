@@ -149,6 +149,15 @@ class SupplierController extends Controller
 
     public function destroy(Supplier $supplier): RedirectResponse
     {
+        $totalOwed = (float) $supplier->parts()->sum('total_cost')
+                   + (float) $supplier->purchases()->sum('total_cost');
+        $totalPaid = (float) $supplier->payments()->sum('amount');
+        $balance   = $totalOwed - $totalPaid;
+
+        if ($balance > 0.01) {
+            return back()->with('error', 'لا يمكن حذف المورد — يوجد رصيد مستحق بقيمة ' . number_format($balance, 2));
+        }
+
         $supplier->delete();
 
         return back()->with('success', 'تم حذف المورد');

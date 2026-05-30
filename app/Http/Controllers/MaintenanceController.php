@@ -6,6 +6,7 @@ use App\Models\MaintenanceOrder;
 use App\Models\Motor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -13,7 +14,7 @@ class MaintenanceController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = MaintenanceOrder::with(['motor.customer', 'motor.maintenanceOrders.parts', 'motor.transactions'])
+        $query = MaintenanceOrder::with(['motor.customer'])
             ->whereHas('motor')
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->when($request->search, function ($q, $search) {
@@ -62,16 +63,20 @@ class MaintenanceController extends Controller
             'started_at'  => 'nullable|date',
         ]);
 
-        $stage = MaintenanceOrder::where('motor_id', $validated['motor_id'])->max('stage') + 1;
+        return DB::transaction(function () use ($validated) {
+            $stage = MaintenanceOrder::where('motor_id', $validated['motor_id'])
+                ->lockForUpdate()
+                ->max('stage') + 1;
 
-        MaintenanceOrder::create([
-            ...$validated,
-            'stage'      => $stage,
-            'labor_cost' => $validated['labor_cost'] ?? 0,
-            'started_at' => $validated['started_at'] ?? now(),
-        ]);
+            MaintenanceOrder::create([
+                ...$validated,
+                'stage'      => $stage,
+                'labor_cost' => $validated['labor_cost'] ?? 0,
+                'started_at' => $validated['started_at'] ?? now(),
+            ]);
 
-        return back()->with('success', 'تمت إضافة أمر الصيانة');
+            return back()->with('success', 'تمت إضافة أمر الصيانة');
+        });
     }
 
     public function updateStatus(Request $request, MaintenanceOrder $maintenance): RedirectResponse
@@ -92,6 +97,12 @@ class MaintenanceController extends Controller
 
     public function update(Request $request, MaintenanceOrder $maintenance): RedirectResponse
     {
+        $maintenance->load('motor.maintenanceOrders.parts', 'motor.transactions');
+
+        if ($maintenance->motor->isLocked()) {
+            return back()->with('error', 'لا يمكن التعديل — القيد مغلق.');
+        }
+
         $validated = $request->validate([
             'description'  => 'required|string',
             'labor_cost'   => 'nullable|numeric|min:0',

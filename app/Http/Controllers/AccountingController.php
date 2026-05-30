@@ -81,7 +81,7 @@ class AccountingController extends Controller
             ->orderBy('entry_date')
             ->orderBy('id');
 
-        $entries = $query->get()->map(fn($e) => [
+        $entries = $query->take(5000)->get()->map(fn($e) => [
             'id'          => $e->id,
             'type'        => $e->type,
             'type_label'  => AccountEntry::typeLabel($e->type),

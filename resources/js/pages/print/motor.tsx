@@ -96,12 +96,10 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
                 </div>
 
                 {/* Customer + Motor details */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+                <div style={{ marginBottom: 24 }}>
                     <Section title="بيانات العميل">
                         <Row label="الاسم" value={motor.customer.name} />
                         <Row label="الهاتف" value={motor.customer.phone} ltr />
-                    </Section>
-                    <Section title="بيانات قيد الاستلام">
                     </Section>
                 </div>
 
@@ -176,7 +174,8 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
                         <SummaryRow label="إجمالي العمالة" value={totalLabor.toFixed(2)} />
                         <SummaryRow label="إجمالي القطع والمستلزمات" value={totalParts.toFixed(2)} />
                         <SummaryRow label="إجمالي الفاتورة" value={grandTotal.toFixed(2)} bold border />
-                        <SummaryRow label="المدفوع" value={(totalPaid + totalDisc).toFixed(2)} color="#16a34a" />
+                        <SummaryRow label="المدفوع نقداً" value={totalPaid.toFixed(2)} color="#16a34a" />
+                        {totalDisc > 0 && <SummaryRow label="الخصم المُمنوح" value={totalDisc.toFixed(2)} color="#16a34a" />}
                         <SummaryRow
                             label="المتبقي"
                             value={remaining <= 0 ? '✓ مسدد بالكامل' : remaining.toFixed(2)}

@@ -62,6 +62,8 @@ class TransactionController extends Controller
 
     public function destroy(Transaction $transaction): RedirectResponse
     {
+        abort_if(! $transaction->motor_id, 404);
+
         // Remove linked accounting entry if it exists
         $transaction->accountEntry?->delete();
 

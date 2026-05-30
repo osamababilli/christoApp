@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Category;
 use App\Models\Employee;
+use App\Models\Part;
 use App\Models\User;
 
 class Motor extends Model
@@ -93,14 +94,14 @@ class Motor extends Model
             return true;
         }
 
-        $this->loadMissing('maintenanceOrders.parts', 'transactions');
+        // Use aggregate queries to avoid loading entire relation trees
+        $labor = $this->maintenanceOrders()->sum('labor_cost');
+        $parts = Part::join('maintenance_orders', 'parts.maintenance_order_id', '=', 'maintenance_orders.id')
+            ->where('maintenance_orders.motor_id', $this->id)
+            ->sum('parts.total_cost');
+        $paid = $this->transactions()->sum('amount');
 
-        $grandTotal = $this->maintenanceOrders->sum('labor_cost')
-            + $this->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
-
-        $paid = $this->transactions->sum('amount');
-
-        return $grandTotal - $paid <= 0.009;
+        return ($labor + $parts - $paid) <= 0.009;
     }
 
     public static function statusLabel(string $status): string

@@ -45,7 +45,7 @@ class ShopDocumentController extends Controller
         $validated = $request->validate([
             'name'                 => 'required|string|max:255',
             'description'          => 'nullable|string|max:1000',
-            'file'                 => 'required|file|max:20480',
+            'file'                 => 'required|file|max:20480|mimes:pdf,doc,docx,xls,xlsx,csv,png,jpg,jpeg,gif,webp',
             'renewal_date'         => 'nullable|date',
             'reminder_days_before' => 'nullable|integer|min:1|max:365',
         ]);
