@@ -70,7 +70,7 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
     let running = 0;
 
     return (
-        <div dir="rtl" style={{ fontFamily: "'IBM Plex Sans Arabic', sans-serif", background: '#fff', color: '#111', minHeight: '100vh' }}>
+        <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", background: '#fff', color: '#111', minHeight: '100vh' }}>
 
             {/* ── Toolbar (no-print) ── */}
             <div className="no-print" style={{

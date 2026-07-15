@@ -85,7 +85,7 @@ interface Props {
 const f = (n: number) => n.toFixed(2);
 
 const S: Record<string, React.CSSProperties> = {
-    page:    { fontFamily: "'IBM Plex Sans Arabic', sans-serif", background: '#fff', color: '#111', minHeight: '100vh', direction: 'rtl' },
+    page:    { fontFamily: "'Cairo', sans-serif", background: '#fff', color: '#111', minHeight: '100vh', direction: 'rtl' },
     toolbar: { position: 'sticky' as const, top: 0, zIndex: 10, display: 'flex', gap: 10, alignItems: 'center', padding: '10px 24px', background: '#18181b', borderBottom: '1px solid #3f3f46' },
     doc:     { maxWidth: 860, margin: '0 auto', padding: '36px 44px' },
     mono:    { fontFamily: "'IBM Plex Mono', 'Courier New', monospace" },

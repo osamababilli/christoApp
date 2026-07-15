@@ -63,10 +63,10 @@ class DemoSeeder extends Seeder
 
         // ── 3. Employees ─────────────────────────────────────────
         $empData = [
-            ['full_name' => 'محمد علي حسن',   'id_number' => '1082345671', 'nationality' => 'سعودي',   'blood_type' => 'O+',  'emergency_phone' => '0501111111'],
-            ['full_name' => 'يوسف إبراهيم',    'id_number' => '1092345672', 'nationality' => 'يمني',    'blood_type' => 'A+',  'emergency_phone' => '0502222222'],
-            ['full_name' => 'عبدالله الحربي',  'id_number' => '1102345673', 'nationality' => 'سعودي',   'blood_type' => 'B+',  'emergency_phone' => '0503333333'],
-            ['full_name' => 'فهد الرشيدي',     'id_number' => '1112345674', 'nationality' => 'سعودي',   'blood_type' => 'AB-', 'emergency_phone' => '0504444444'],
+            ['full_name' => 'محمد علي حسن',   'id_number' => '1082345671', 'document_type' => 'هوية',        'nationality' => 'سعودي',   'blood_type' => 'O+',  'emergency_phone' => '0501111111', 'emergency_contact_name' => 'أحمد علي حسن',    'emergency_contact_relationship' => 'أخ'],
+            ['full_name' => 'يوسف إبراهيم',    'id_number' => '1092345672', 'document_type' => 'باسبور',      'nationality' => 'يمني',    'blood_type' => 'A+',  'emergency_phone' => '0502222222', 'emergency_contact_name' => 'مريم إبراهيم',     'emergency_contact_relationship' => 'زوجة'],
+            ['full_name' => 'عبدالله الحربي',  'id_number' => '1102345673', 'document_type' => 'دفتر سواقة',  'nationality' => 'سعودي',   'blood_type' => 'B+',  'emergency_phone' => '0503333333', 'emergency_contact_name' => 'سعيد الحربي',      'emergency_contact_relationship' => 'والد'],
+            ['full_name' => 'فهد الرشيدي',     'id_number' => '1112345674', 'document_type' => 'بطاقة لاجئ',  'nationality' => 'سعودي',   'blood_type' => 'AB-', 'emergency_phone' => '0504444444', 'emergency_contact_name' => 'نورة الرشيدي',     'emergency_contact_relationship' => 'أخت'],
         ];
 
         $employees = [];
@@ -99,11 +99,11 @@ class DemoSeeder extends Seeder
 
         // ── 5. Suppliers ─────────────────────────────────────────
         $supplierData = [
-            ['name' => 'مستودع الخليج للقطع',  'phone' => '0112345001', 'email' => 'gulf@parts.sa',   'notes' => 'مورد رئيسي لقطع المحركات'],
-            ['name' => 'شركة النجمة للزيوت',    'phone' => '0112345002', 'email' => null,              'notes' => 'متخصص في الزيوت ومواد التشحيم'],
-            ['name' => 'معرض الأمين للقطع',     'phone' => '0112345003', 'email' => 'ameen@shop.sa',   'notes' => null],
-            ['name' => 'مركز السرعة للإلكترونيات', 'phone' => '0112345004', 'email' => null,           'notes' => 'قطع كهربائية وإلكترونية'],
-            ['name' => 'الوطنية لقطع الغيار',   'phone' => '0112345005', 'email' => 'watania@gp.sa',   'notes' => 'توريد بالجملة'],
+            ['name' => 'مستودع الخليج للقطع',  'address' => 'الرياض، حي الصناعية',  'phone' => '0112345001', 'shop_phone' => '0112345101', 'email' => 'gulf@parts.sa',   'specialty' => 'قطع مرسيدس وBMW', 'notes' => 'مورد رئيسي لقطع المحركات'],
+            ['name' => 'شركة النجمة للزيوت',    'address' => 'جدة، طريق المطار',     'phone' => '0112345002', 'shop_phone' => null,          'email' => null,              'specialty' => 'زيوت ومواد تشحيم', 'notes' => 'متخصص في الزيوت ومواد التشحيم'],
+            ['name' => 'معرض الأمين للقطع',     'address' => null,                    'phone' => '0112345003', 'shop_phone' => '0112345103', 'email' => 'ameen@shop.sa',   'specialty' => 'قطع يابانية عامة', 'notes' => null],
+            ['name' => 'مركز السرعة للإلكترونيات', 'address' => 'الدمام، الشارع العام', 'phone' => '0112345004', 'shop_phone' => null,        'email' => null,              'specialty' => 'قطع كهربائية وإلكترونية', 'notes' => 'قطع كهربائية وإلكترونية'],
+            ['name' => 'الوطنية لقطع الغيار',   'address' => null,                    'phone' => '0112345005', 'shop_phone' => '0112345105', 'email' => 'watania@gp.sa',   'specialty' => 'توريد بالجملة',   'notes' => 'توريد بالجملة'],
         ];
 
         $suppliers = [];

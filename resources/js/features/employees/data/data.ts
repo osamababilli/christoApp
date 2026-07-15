@@ -1,3 +1,10 @@
+export const documentTypes = [
+    { label: 'هوية', value: 'هوية' },
+    { label: 'باسبور', value: 'باسبور' },
+    { label: 'دفتر سواقة', value: 'دفتر سواقة' },
+    { label: 'بطاقة لاجئ', value: 'بطاقة لاجئ' },
+] as const;
+
 export const bloodTypes = [
     { label: 'A+', value: 'A+' },
     { label: 'A-', value: 'A-' },

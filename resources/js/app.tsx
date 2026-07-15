@@ -9,7 +9,6 @@ import { SettingsLayout } from './components/layout/settings-layout';
 import { NavigationProgress } from './components/navigation-progress';
 import { Toaster } from './components/ui/sonner';
 import { DirectionProvider } from './context/direction-provider';
-import { FontProvider } from './context/font-provider';
 import { ThemeProvider } from './context/theme-provider';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
@@ -47,13 +46,11 @@ createInertiaApp({
 
         root.render(
             <ThemeProvider>
-                <FontProvider>
-                    <DirectionProvider>
-                        <NavigationProgress />
-                        <Toaster duration={5000} />
-                        <App {...props} />
-                    </DirectionProvider>
-                </FontProvider>
+                <DirectionProvider>
+                    <NavigationProgress />
+                    <Toaster duration={5000} />
+                    <App {...props} />
+                </DirectionProvider>
             </ThemeProvider>,
         );
     },

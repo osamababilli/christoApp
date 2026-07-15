@@ -31,8 +31,11 @@ import { useEffect, useState } from 'react';
 interface Supplier {
     id: number;
     name: string;
+    address: string | null;
     phone: string | null;
+    shop_phone: string | null;
     email: string | null;
+    specialty: string | null;
     notes: string | null;
     parts_count: number;
     created_at: string;
@@ -50,7 +53,15 @@ interface Props {
     filters: { search?: string };
 }
 
-type FormData = { name: string; phone: string; email: string; notes: string };
+type FormData = {
+    name: string;
+    address: string;
+    phone: string;
+    shop_phone: string;
+    email: string;
+    specialty: string;
+    notes: string;
+};
 
 function SupplierDialog({
     open,
@@ -63,20 +74,26 @@ function SupplierDialog({
 }) {
     const isEdit = !!supplier;
     const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm<FormData>({
-        name:  '',
-        phone: '',
-        email: '',
-        notes: '',
+        name:       '',
+        address:    '',
+        phone:      '',
+        shop_phone: '',
+        email:      '',
+        specialty:  '',
+        notes:      '',
     });
 
     useEffect(() => {
         if (open) {
             if (supplier) {
                 setData({
-                    name:  supplier.name,
-                    phone: supplier.phone ?? '',
-                    email: supplier.email ?? '',
-                    notes: supplier.notes ?? '',
+                    name:       supplier.name,
+                    address:    supplier.address ?? '',
+                    phone:      supplier.phone ?? '',
+                    shop_phone: supplier.shop_phone ?? '',
+                    email:      supplier.email ?? '',
+                    specialty:  supplier.specialty ?? '',
+                    notes:      supplier.notes ?? '',
                 });
             } else {
                 reset();
@@ -102,7 +119,7 @@ function SupplierDialog({
 
     return (
         <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="max-h-[95vh] overflow-y-auto sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>{isEdit ? 'تعديل المورد' : 'إضافة مورد جديد'}</DialogTitle>
                 </DialogHeader>
@@ -121,9 +138,42 @@ function SupplierDialog({
                         {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                     </div>
 
+                    <div className="space-y-1.5">
+                        <Label htmlFor="sup-specialty">تخصص المورد</Label>
+                        <Input
+                            id="sup-specialty"
+                            value={data.specialty}
+                            onChange={(e) => setData('specialty', e.target.value)}
+                            placeholder="مثال: قطع مرسيدس"
+                        />
+                        {errors.specialty && <p className="text-xs text-destructive">{errors.specialty}</p>}
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <Label htmlFor="sup-address">العنوان</Label>
+                        <Input
+                            id="sup-address"
+                            value={data.address}
+                            onChange={(e) => setData('address', e.target.value)}
+                            placeholder="عنوان المحل..."
+                        />
+                        {errors.address && <p className="text-xs text-destructive">{errors.address}</p>}
+                    </div>
+
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                            <Label htmlFor="sup-phone">الجوال</Label>
+                            <Label htmlFor="sup-shop-phone">رقم المحل</Label>
+                            <Input
+                                id="sup-shop-phone"
+                                dir="ltr"
+                                value={data.shop_phone}
+                                onChange={(e) => setData('shop_phone', e.target.value)}
+                                placeholder="01xxxxxxx"
+                            />
+                            {errors.shop_phone && <p className="text-xs text-destructive">{errors.shop_phone}</p>}
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="sup-phone">رقم الجوال</Label>
                             <Input
                                 id="sup-phone"
                                 dir="ltr"
@@ -133,18 +183,19 @@ function SupplierDialog({
                             />
                             {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
                         </div>
-                        <div className="space-y-1.5">
-                            <Label htmlFor="sup-email">البريد الإلكتروني</Label>
-                            <Input
-                                id="sup-email"
-                                type="email"
-                                dir="ltr"
-                                value={data.email}
-                                onChange={(e) => setData('email', e.target.value)}
-                                placeholder="email@example.com"
-                            />
-                            {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
-                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <Label htmlFor="sup-email">البريد الإلكتروني</Label>
+                        <Input
+                            id="sup-email"
+                            type="email"
+                            dir="ltr"
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
+                            placeholder="email@example.com"
+                        />
+                        {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
                     </div>
 
                     <div className="space-y-1.5">
@@ -208,7 +259,7 @@ export function Suppliers({ suppliers, filters }: Props) {
                         <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             className="ps-9 min-h-[44px] text-base"
-                            placeholder="بحث بالاسم أو الجوال أو البريد..."
+                            placeholder="بحث بالاسم أو التخصص أو الجوال أو البريد..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
@@ -239,6 +290,7 @@ export function Suppliers({ suppliers, filters }: Props) {
                         <TableHeader>
                             <TableRow className="bg-muted/40 hover:bg-muted/40">
                                 <TableHead className="text-right font-semibold w-48">الاسم</TableHead>
+                                <TableHead className="text-right font-semibold w-40">التخصص</TableHead>
                                 <TableHead className="text-right font-semibold w-36">الجوال</TableHead>
                                 <TableHead className="text-right font-semibold w-52">البريد الإلكتروني</TableHead>
                                 <TableHead className="text-right font-semibold w-28">عدد القطع</TableHead>
@@ -250,7 +302,7 @@ export function Suppliers({ suppliers, filters }: Props) {
                         <TableBody>
                             {suppliers.data.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="py-16 text-center">
+                                    <TableCell colSpan={8} className="py-16 text-center">
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                             <Truck className="h-10 w-10 opacity-30" />
                                             <p className="text-lg">لا يوجد موردون</p>
@@ -268,6 +320,9 @@ export function Suppliers({ suppliers, filters }: Props) {
                                             <Link href={`/suppliers/${s.id}`} className="font-semibold hover:text-primary transition-colors">
                                                 {s.name}
                                             </Link>
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {s.specialty ?? <span className="text-muted-foreground/40">—</span>}
                                         </TableCell>
                                         <TableCell dir="ltr" className="text-right text-sm text-muted-foreground">
                                             {s.phone ?? <span className="text-muted-foreground/40">—</span>}

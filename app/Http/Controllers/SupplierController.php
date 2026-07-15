@@ -20,7 +20,9 @@ class SupplierController extends Controller
             ->when($request->search, fn($q, $s) => $q
                 ->where('name', 'like', "%{$s}%")
                 ->orWhere('phone', 'like', "%{$s}%")
+                ->orWhere('shop_phone', 'like', "%{$s}%")
                 ->orWhere('email', 'like', "%{$s}%")
+                ->orWhere('specialty', 'like', "%{$s}%")
             )
             ->latest()
             ->paginate(15)
@@ -30,8 +32,11 @@ class SupplierController extends Controller
             'suppliers' => $suppliers->through(fn($s) => [
                 'id'          => $s->id,
                 'name'        => $s->name,
+                'address'     => $s->address,
                 'phone'       => $s->phone,
+                'shop_phone'  => $s->shop_phone,
                 'email'       => $s->email,
+                'specialty'   => $s->specialty,
                 'notes'       => $s->notes,
                 'parts_count' => $s->parts_count,
                 'created_at'  => $s->created_at->format('Y-m-d'),
@@ -101,8 +106,11 @@ class SupplierController extends Controller
             'supplier' => [
                 'id'         => $supplier->id,
                 'name'       => $supplier->name,
+                'address'    => $supplier->address,
                 'phone'      => $supplier->phone,
+                'shop_phone' => $supplier->shop_phone,
                 'email'      => $supplier->email,
+                'specialty'  => $supplier->specialty,
                 'notes'      => $supplier->notes,
                 'created_at' => $supplier->created_at->format('Y-m-d'),
             ],
@@ -122,10 +130,13 @@ class SupplierController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name'  => 'required|string|max:255',
-            'phone' => 'nullable|string|max:50',
-            'email' => 'nullable|email|max:255',
-            'notes' => 'nullable|string|max:1000',
+            'name'       => 'required|string|max:255',
+            'address'    => 'nullable|string|max:255',
+            'phone'      => 'nullable|string|max:50',
+            'shop_phone' => 'nullable|string|max:50',
+            'email'      => 'nullable|email|max:255',
+            'specialty'  => 'nullable|string|max:255',
+            'notes'      => 'nullable|string|max:1000',
         ]);
 
         Supplier::create($validated);
@@ -136,10 +147,13 @@ class SupplierController extends Controller
     public function update(Request $request, Supplier $supplier): RedirectResponse
     {
         $validated = $request->validate([
-            'name'  => 'required|string|max:255',
-            'phone' => 'nullable|string|max:50',
-            'email' => 'nullable|email|max:255',
-            'notes' => 'nullable|string|max:1000',
+            'name'       => 'required|string|max:255',
+            'address'    => 'nullable|string|max:255',
+            'phone'      => 'nullable|string|max:50',
+            'shop_phone' => 'nullable|string|max:50',
+            'email'      => 'nullable|email|max:255',
+            'specialty'  => 'nullable|string|max:255',
+            'notes'      => 'nullable|string|max:1000',
         ]);
 
         $supplier->update($validated);

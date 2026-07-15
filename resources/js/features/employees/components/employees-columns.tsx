@@ -39,6 +39,12 @@ export const employeesColumns: ColumnDef<Employee>[] = [
         meta: { label: 'رقم الهوية' },
     },
     {
+        accessorKey: 'document_type',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="نوع الوثيقة" />,
+        cell: ({ row }) => <div className="text-sm">{row.getValue('document_type') || '—'}</div>,
+        meta: { label: 'نوع الوثيقة' },
+    },
+    {
         accessorKey: 'nationality',
         header: ({ column }) => <DataTableColumnHeader column={column} title="الجنسية" />,
         cell: ({ row }) => <div className="text-sm">{row.getValue('nationality')}</div>,
@@ -61,6 +67,20 @@ export const employeesColumns: ColumnDef<Employee>[] = [
         cell: ({ row }) => <div className="text-sm">{row.getValue('emergency_phone')}</div>,
         enableSorting: false,
         meta: { label: 'رقم الطوارئ' },
+    },
+    {
+        accessorKey: 'emergency_contact_name',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="جهة اتصال الطوارئ" />,
+        cell: ({ row }) => <div className="text-sm">{row.getValue('emergency_contact_name') || '—'}</div>,
+        enableSorting: false,
+        meta: { label: 'جهة اتصال الطوارئ' },
+    },
+    {
+        accessorKey: 'emergency_contact_relationship',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="صلة القرابة" />,
+        cell: ({ row }) => <div className="text-sm">{row.getValue('emergency_contact_relationship') || '—'}</div>,
+        enableSorting: false,
+        meta: { label: 'صلة القرابة' },
     },
     {
         accessorKey: 'id_image',

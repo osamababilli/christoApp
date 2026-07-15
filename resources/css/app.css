@@ -15,11 +15,12 @@
     }
     html {
         @apply overflow-x-hidden;
-        font-family: 'IBM Plex Sans Arabic', sans-serif;
+        font-family: 'Cairo', sans-serif;
+        font-size: 18px;
     }
     body {
         @apply min-h-svh w-full bg-background text-foreground has-[div[data-variant='inset']]:bg-sidebar;
-        font-family: 'IBM Plex Sans Arabic', sans-serif;
+        font-family: 'Cairo', sans-serif;
     }
 
     /* Override Radix scroll locking for sticky headers */

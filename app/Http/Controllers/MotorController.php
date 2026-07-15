@@ -11,6 +11,7 @@ use App\Models\Part;
 use App\Models\Supplier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -91,41 +92,80 @@ class MotorController extends Controller
             'customers'  => $this->customersList(),
             'categories' => Category::orderBy('name')->get(['id', 'name', 'color', 'icon']),
             'employees'  => $this->employeesList(),
+            'suppliers'  => Supplier::orderBy('name')->get(['id', 'name'])
+                ->map(fn($s) => ['id' => $s->id, 'name' => $s->name])
+                ->toArray(),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'customer_id'      => 'nullable|exists:customers,id',
-            'customer_name'    => 'required_without:customer_id|nullable|string|max:255',
-            'customer_phone'   => 'required_without:customer_id|nullable|string|max:50',
-            'category_id'      => 'nullable|exists:categories,id',
-            'status'           => 'required|in:in_workshop,in_progress,ready,delivered',
-            'notes'            => 'nullable|string',
-            'received_by'      => 'nullable|exists:employees,id',
+            'customer_id'        => 'nullable|exists:customers,id',
+            'customer_name'      => 'required_without:customer_id|nullable|string|max:255',
+            'customer_phone'     => 'required_without:customer_id|nullable|string|max:50',
+            'category_id'        => 'nullable|exists:categories,id',
+            'notes'              => 'nullable|string',
+            'received_by'          => 'required|exists:employees,id',
+            'description'          => 'required|string',
+            'parts'                => 'array',
+            'parts.*.part_name'    => 'required|string|max:255',
+            'parts.*.quantity'     => 'required|numeric|min:0.001',
+            'parts.*.type'         => 'nullable|in:part,oil,transport,cleaning,other',
+            'parts.*.purchased_by' => 'nullable|in:customer,company',
+            'parts.*.unit_cost'    => 'nullable|numeric|min:0',
+            'parts.*.unit_price'   => 'nullable|numeric|min:0',
+            'parts.*.supplier_id'  => 'nullable|exists:suppliers,id',
+            'parts.*.is_paid'      => 'boolean',
         ]);
 
-        if (! empty($validated['customer_id'])) {
-            $customer = Customer::findOrFail($validated['customer_id']);
-        } else {
-            $customer = Customer::firstOrCreate(
-                ['phone' => $validated['customer_phone']],
-                ['name'  => $validated['customer_name']]
-            );
-            $customer->update(['name' => $validated['customer_name']]);
-        }
+        $motor = DB::transaction(function () use ($validated) {
+            if (! empty($validated['customer_id'])) {
+                $customer = Customer::findOrFail($validated['customer_id']);
+            } else {
+                $customer = Customer::firstOrCreate(
+                    ['phone' => $validated['customer_phone']],
+                    ['name'  => $validated['customer_name']]
+                );
+                $customer->update(['name' => $validated['customer_name']]);
+            }
 
-        Motor::create([
-            'customer_id'      => $customer->id,
-            'category_id'      => $validated['category_id'] ?? null,
-            'status'           => $validated['status'],
-            'notes'            => $validated['notes'] ?? null,
-            'received_at'      => now(),
-            'received_by'      => $validated['received_by'] ?? null,
-        ]);
+            $motor = Motor::create([
+                'customer_id' => $customer->id,
+                'category_id' => $validated['category_id'] ?? null,
+                'status'      => 'in_workshop',
+                'notes'       => $validated['notes'] ?? null,
+                'received_at' => now(),
+                'received_by' => $validated['received_by'] ?? null,
+            ]);
 
-        return redirect()->route('motors.index')
+            $order = MaintenanceOrder::create([
+                'motor_id'    => $motor->id,
+                'stage'       => 1,
+                'description' => $validated['description'],
+                'status'      => 'in_progress',
+                'started_at'  => now(),
+                'labor_cost'  => 0,
+            ]);
+
+            foreach ($validated['parts'] ?? [] as $part) {
+                Part::create([
+                    'maintenance_id' => $order->id,
+                    'part_name'      => $part['part_name'],
+                    'quantity'       => $part['quantity'],
+                    'type'           => $part['type'] ?? 'part',
+                    'purchased_by'   => $part['purchased_by'] ?? 'customer',
+                    'unit_cost'      => $part['unit_cost'] ?? null,
+                    'unit_price'     => $part['unit_price'] ?? null,
+                    'supplier_id'    => $part['supplier_id'] ?? null,
+                    'is_paid'        => $part['is_paid'] ?? false,
+                ]);
+            }
+
+            return $motor;
+        });
+
+        return redirect()->route('motors.show', $motor)
             ->with('success', 'تم تسجيل قيد الاستلام بنجاح');
     }
 

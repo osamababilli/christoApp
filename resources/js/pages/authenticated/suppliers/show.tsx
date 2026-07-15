@@ -15,8 +15,8 @@ import { cn } from '@/lib/utils';
 import { router, Link, useForm } from '@inertiajs/react';
 import {
     ArrowRight, CheckCircle2, ChevronDown, ChevronUp, Clock,
-    CreditCard, Mail, Package, Phone, Plus, ShoppingCart,
-    Trash2, Truck, Wallet,
+    CreditCard, Mail, MapPin, Package, Phone, Plus, ShoppingCart,
+    Trash2, Truck, Wallet, Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -36,8 +36,9 @@ interface Payment {
     id: number; amount: number; payment_date: string; notes: string | null;
 }
 interface Supplier {
-    id: number; name: string; phone: string | null;
-    email: string | null; notes: string | null; created_at: string;
+    id: number; name: string; address: string | null; phone: string | null;
+    shop_phone: string | null; email: string | null; specialty: string | null;
+    notes: string | null; created_at: string;
 }
 interface Summary {
     motor_parts_cost: number; direct_cost: number;
@@ -330,16 +331,34 @@ export default function SupplierShow({ supplier, parts, purchases, payments, sum
                                 <Truck className="h-7 w-7" />
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold">{supplier.name}</h1>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <h1 className="text-xl font-bold">{supplier.name}</h1>
+                                    {supplier.specialty && (
+                                        <Badge variant="secondary" className="gap-1 text-xs">
+                                            <Wrench className="h-3 w-3" />{supplier.specialty}
+                                        </Badge>
+                                    )}
+                                </div>
                                 <div className="mt-1 flex flex-col gap-0.5">
                                     {supplier.phone && (
                                         <span className="flex items-center gap-1.5 text-sm text-muted-foreground" dir="ltr">
                                             <Phone className="h-3.5 w-3.5 shrink-0" />{supplier.phone}
                                         </span>
                                     )}
+                                    {supplier.shop_phone && (
+                                        <span className="flex items-center gap-1.5 text-sm text-muted-foreground" dir="ltr">
+                                            <Phone className="h-3.5 w-3.5 shrink-0" />{supplier.shop_phone}
+                                            <span dir="rtl" className="text-xs text-muted-foreground/70">(المحل)</span>
+                                        </span>
+                                    )}
                                     {supplier.email && (
                                         <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                             <Mail className="h-3.5 w-3.5 shrink-0" />{supplier.email}
+                                        </span>
+                                    )}
+                                    {supplier.address && (
+                                        <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                            <MapPin className="h-3.5 w-3.5 shrink-0" />{supplier.address}
                                         </span>
                                     )}
                                 </div>

@@ -11,7 +11,7 @@ class Supplier extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'phone', 'email', 'notes'];
+    protected $fillable = ['name', 'address', 'phone', 'shop_phone', 'email', 'specialty', 'notes'];
 
     public function parts(): HasMany
     {
