@@ -80,6 +80,7 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
     const [customerName, setCustomerName]   = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [description, setDescription]     = useState('');
+    const [laborCost, setLaborCost]         = useState('');
     const [parts, setParts]                 = useState<PartRow[]>([]);
 
     // ── مورد جديد (يُفتح لصف قطعة محدد) ──
@@ -173,6 +174,7 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
             category_id: categoryId,
             received_by: receivedBy,
             description,
+            labor_cost: laborCost,
             parts: parts
                 .filter((p) => p.part_name.trim() !== '')
                 .map((p) => ({
@@ -331,7 +333,7 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
                         وصف العطل / الصيانة المطلوبة <span className="text-destructive">*</span>
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                     <Textarea
                         className="min-h-[120px] resize-none text-base"
                         value={description}
@@ -339,7 +341,21 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
                         placeholder="مثال: تغيير زيت المحرك، تسريب في الفرامل..."
                         autoFocus
                     />
-                    {errors.description && <p className="mt-1.5 text-sm text-destructive">{errors.description}</p>}
+                    {errors.description && <p className="text-sm text-destructive">{errors.description}</p>}
+
+                    <div className="space-y-1.5">
+                        <Label className="text-sm font-medium">تكلفة العمالة</Label>
+                        <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            className="min-h-[44px] text-base"
+                            placeholder="0.00"
+                            value={laborCost}
+                            onChange={(e) => setLaborCost(e.target.value)}
+                        />
+                        {errors.labor_cost && <p className="text-sm text-destructive">{errors.labor_cost}</p>}
+                    </div>
                 </CardContent>
             </Card>
 

@@ -108,6 +108,7 @@ class MotorController extends Controller
             'notes'              => 'nullable|string',
             'received_by'          => 'required|exists:employees,id',
             'description'          => 'required|string',
+            'labor_cost'           => 'nullable|numeric|min:0',
             'parts'                => 'array',
             'parts.*.part_name'    => 'required|string|max:255',
             'parts.*.quantity'     => 'required|numeric|min:0.001',
@@ -145,7 +146,7 @@ class MotorController extends Controller
                 'description' => $validated['description'],
                 'status'      => 'in_progress',
                 'started_at'  => now(),
-                'labor_cost'  => 0,
+                'labor_cost'  => $validated['labor_cost'] ?? 0,
             ]);
 
             foreach ($validated['parts'] ?? [] as $part) {

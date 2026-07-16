@@ -96,9 +96,9 @@ class Motor extends Model
 
         // Use aggregate queries to avoid loading entire relation trees
         $labor = $this->maintenanceOrders()->sum('labor_cost');
-        $parts = Part::join('maintenance_orders', 'parts.maintenance_order_id', '=', 'maintenance_orders.id')
+        $parts = Part::join('maintenance_orders', 'parts_used.maintenance_id', '=', 'maintenance_orders.id')
             ->where('maintenance_orders.motor_id', $this->id)
-            ->sum('parts.total_cost');
+            ->sum('parts_used.total_cost');
         $paid = $this->transactions()->sum('amount');
 
         return ($labor + $parts - $paid) <= 0.009;
