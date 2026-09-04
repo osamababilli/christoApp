@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\MaintenanceOrder;
 use App\Models\Motor;
 use App\Models\Quotation;
 use App\Models\QuotationItem;
+use App\Models\ReceivedItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -96,7 +96,6 @@ class QuotationController extends Controller
 
         return Inertia::render('authenticated/quotations/show', [
             'quotation' => $this->formatQuotation($quotation, $services, $parts),
-            'categories' => Category::orderBy('name')->get(['id', 'name', 'color']),
             'employees'  => $this->employeesList(),
         ]);
     }
@@ -234,9 +233,11 @@ class QuotationController extends Controller
     public function convert(Request $request, Quotation $quotation): RedirectResponse
     {
         $validated = $request->validate([
-            'category_id' => 'nullable|exists:categories,id',
-            'notes'       => 'nullable|string',
-            'received_by' => 'nullable|exists:employees,id',
+            'notes'                       => 'nullable|string',
+            'received_by'                 => 'nullable|exists:employees,id',
+            'received_items'              => 'array',
+            'received_items.*.item_name'  => 'required|string|max:255',
+            'received_items.*.quantity'   => 'required|integer|min:1',
         ]);
 
         return DB::transaction(function () use ($validated, $quotation) {
@@ -260,12 +261,19 @@ class QuotationController extends Controller
 
             $motor = Motor::create([
                 'customer_id' => $customer->id,
-                'category_id' => $validated['category_id'] ?? null,
                 'status'      => 'in_workshop',
                 'notes'       => $validated['notes'] ?? $locked->notes,
                 'received_at' => now(),
                 'received_by' => $validated['received_by'] ?? null,
             ]);
+
+            foreach ($validated['received_items'] ?? [] as $item) {
+                ReceivedItem::create([
+                    'motor_id'  => $motor->id,
+                    'item_name' => $item['item_name'],
+                    'quantity'  => $item['quantity'],
+                ]);
+            }
 
             $locked->load('items');
             $serviceItems = $locked->items->where('type', 'service')->values();

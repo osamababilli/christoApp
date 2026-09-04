@@ -43,6 +43,7 @@ class Motor extends Model
 
         static::deleting(function (Motor $motor) {
             $motor->maintenanceOrders()->each(fn($o) => $o->delete());
+            $motor->receivedItems()->delete();
         });
     }
 
@@ -76,6 +77,11 @@ class Motor extends Model
     public function maintenanceOrders(): HasMany
     {
         return $this->hasMany(MaintenanceOrder::class);
+    }
+
+    public function receivedItems(): HasMany
+    {
+        return $this->hasMany(ReceivedItem::class);
     }
 
     public function transactions(): HasMany

@@ -5,7 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { useForm } from '@inertiajs/react';
-import { AlertTriangle, Calendar, DollarSign, Loader2, Save, X } from 'lucide-react';
+import { AlertTriangle, Calendar, Loader2, Save, X } from 'lucide-react';
 
 interface Props {
     motorId: number;
@@ -22,7 +22,6 @@ export function MaintenanceOrderForm({ motorId, onCancel }: Props) {
     const { data, setData, post, processing, errors, reset } = useForm({
         motor_id:    motorId,
         description: '',
-        labor_cost:  '',
         status:      'in_progress',
         stop_reason: '',
         started_at:  new Date().toISOString().slice(0, 10),
@@ -104,38 +103,20 @@ export function MaintenanceOrderForm({ motorId, onCancel }: Props) {
                 </div>
             )}
 
-            {/* Labor cost + Start date */}
-            <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                    <Label htmlFor="mo-labor" className="flex items-center gap-1.5 font-medium">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        تكلفة العمالة
-                    </Label>
-                    <Input
-                        id="mo-labor"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        className="min-h-[44px]"
-                        value={data.labor_cost}
-                        onChange={(e) => setData('labor_cost', e.target.value)}
-                        placeholder="0.00"
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="mo-started" className="flex items-center gap-1.5 font-medium">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        تاريخ البدء
-                    </Label>
-                    <Input
-                        id="mo-started"
-                        type="date"
-                        className="min-h-[44px]"
-                        dir="ltr"
-                        value={data.started_at}
-                        onChange={(e) => setData('started_at', e.target.value)}
-                    />
-                </div>
+            {/* Start date */}
+            <div className="space-y-2">
+                <Label htmlFor="mo-started" className="flex items-center gap-1.5 font-medium">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    تاريخ البدء
+                </Label>
+                <Input
+                    id="mo-started"
+                    type="date"
+                    className="min-h-[44px]"
+                    dir="ltr"
+                    value={data.started_at}
+                    onChange={(e) => setData('started_at', e.target.value)}
+                />
             </div>
 
             {/* Actions */}

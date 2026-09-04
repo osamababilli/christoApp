@@ -20,6 +20,8 @@ class TransactionController extends Controller
         $validated = $request->validate([
             'type'             => 'required|in:payment,discount',
             'amount'           => 'required|numeric|min:0.01',
+            'payment_method'   => 'nullable|in:cash,whish,omt',
+            'account_name'     => 'nullable|string|max:255',
             'notes'            => 'nullable|string|max:255',
             'transaction_date' => 'nullable|date',
         ]);
@@ -27,6 +29,8 @@ class TransactionController extends Controller
         $transaction = $motor->transactions()->create([
             'customer_id'      => $motor->customer_id,
             'type'             => $validated['type'],
+            'payment_method'   => $validated['type'] === 'payment' ? ($validated['payment_method'] ?? null) : null,
+            'account_name'     => $validated['type'] === 'payment' ? ($validated['account_name'] ?? null) : null,
             'amount'           => $validated['amount'],
             'notes'            => $validated['notes'] ?? null,
             'transaction_date' => $validated['transaction_date'] ?? now(),

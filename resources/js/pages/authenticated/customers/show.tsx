@@ -40,6 +40,9 @@ interface CustomerTransaction {
     type: 'payment' | 'discount';
     type_label: string;
     amount: number;
+    payment_method: 'cash' | 'whish' | 'omt' | null;
+    payment_method_label: string | null;
+    reference_no: string | null;
     notes: string | null;
     transaction_date: string;
 }
@@ -100,6 +103,8 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
     const { data, setData, post, processing, errors, reset } = useForm({
         type:             'payment' as 'payment' | 'discount',
         amount:           '',
+        payment_method:   'cash' as 'cash' | 'whish' | 'omt',
+        reference_no:     '',
         notes:            '',
         transaction_date: new Date().toISOString().split('T')[0],
     });
@@ -221,6 +226,50 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                                         />
                                     </div>
                                 </div>
+
+                                {data.type === 'payment' && (
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-muted-foreground">طريقة الدفع</label>
+                                            <div className="grid grid-cols-3 gap-1.5">
+                                                {([
+                                                    { value: 'cash', label: 'Cash' },
+                                                    { value: 'whish', label: 'Whish' },
+                                                    { value: 'omt', label: 'Omt' },
+                                                ] as const).map((opt) => (
+                                                    <button
+                                                        key={opt.value}
+                                                        type="button"
+                                                        onClick={() => setData('payment_method', opt.value)}
+                                                        className={cn(
+                                                            'rounded-lg border px-2 py-1.5 text-xs font-semibold transition-all cursor-pointer',
+                                                            data.payment_method === opt.value
+                                                                ? 'border-green-400 bg-green-50 text-green-700 ring-2 ring-green-400 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300'
+                                                                : 'border-muted bg-muted/20 text-muted-foreground hover:bg-muted/50',
+                                                        )}
+                                                    >
+                                                        {opt.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        {data.payment_method !== 'cash' && (
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-medium text-muted-foreground">رقم الحوالة / المرجعي</label>
+                                                <input
+                                                    type="text"
+                                                    dir="ltr"
+                                                    className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                    placeholder="مثال: 123456"
+                                                    value={data.reference_no}
+                                                    onChange={(e) => setData('reference_no', e.target.value)}
+                                                />
+                                                {errors.reference_no && <p className="text-xs text-destructive">{errors.reference_no}</p>}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div className="flex gap-2">
                                     <Button type="submit" size="sm" className="flex-1 gap-2" disabled={processing}>
                                         {processing
@@ -243,6 +292,7 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                                     <TableRow className="bg-muted/40">
                                         <TableHead className="text-right text-xs">النوع</TableHead>
                                         <TableHead className="text-right text-xs">المبلغ</TableHead>
+                                        <TableHead className="text-right text-xs">طريقة الدفع</TableHead>
                                         <TableHead className="text-right text-xs">التاريخ</TableHead>
                                         <TableHead className="text-right text-xs">ملاحظة</TableHead>
                                         <TableHead className="w-8" />
@@ -260,6 +310,11 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                                             </TableCell>
                                             <TableCell className="font-mono font-semibold text-sm" dir="ltr">
                                                 $ {fmt(t.amount)}
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {t.payment_method_label
+                                                    ? `${t.payment_method_label}${t.reference_no ? ` — ${t.reference_no}` : ''}`
+                                                    : '—'}
                                             </TableCell>
                                             <TableCell dir="ltr" className="text-right text-sm text-muted-foreground">
                                                 {t.transaction_date}

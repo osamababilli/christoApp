@@ -15,14 +15,6 @@ interface Props {
     onCancel?: () => void;
 }
 
-const typeOptions = [
-    { value: 'part',      label: 'قطعة',    color: 'border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:border-blue-700 dark:text-blue-300',       active: 'ring-2 ring-blue-400'   },
-    { value: 'oil',       label: 'زيت',     color: 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:border-amber-700 dark:text-amber-300', active: 'ring-2 ring-amber-400'  },
-    { value: 'transport', label: 'نقل',     color: 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300', active: 'ring-2 ring-purple-400' },
-    { value: 'cleaning',  label: 'تنظيف',   color: 'border-cyan-300 bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:border-cyan-700 dark:text-cyan-300',       active: 'ring-2 ring-cyan-400'   },
-    { value: 'other',     label: 'أخرى',    color: 'border-gray-300 bg-gray-50 text-gray-700 dark:bg-gray-800/40 dark:border-gray-600 dark:text-gray-300',       active: 'ring-2 ring-gray-400'   },
-];
-
 export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
     const { data, setData, post, processing, errors, reset } = useForm({
         maintenance_id: maintenanceId,
@@ -76,28 +68,6 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
                         <X className="h-4 w-4" />
                     </button>
                 )}
-            </div>
-
-            {/* Type chips */}
-            <div className="space-y-1.5">
-                <Label className="text-sm font-medium">النوع</Label>
-                <div className="flex flex-wrap gap-2">
-                    {typeOptions.map((opt) => (
-                        <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => setData('type', opt.value)}
-                            className={cn(
-                                'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer',
-                                opt.color,
-                                data.type === opt.value && opt.active,
-                            )}
-                        >
-                            {data.type === opt.value && <span className="me-1">✓</span>}
-                            {opt.label}
-                        </button>
-                    ))}
-                </div>
             </div>
 
             {/* Purchased by */}

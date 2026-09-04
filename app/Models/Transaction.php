@@ -16,6 +16,9 @@ class Transaction extends Model
         'motor_id',
         'customer_id',
         'type',
+        'payment_method',
+        'account_name',
+        'reference_no',
         'amount',
         'paid_amount',
         'remaining_amount',
@@ -43,5 +46,15 @@ class Transaction extends Model
     public function accountEntry(): HasOne
     {
         return $this->hasOne(AccountEntry::class);
+    }
+
+    public static function paymentMethodLabel(?string $method): ?string
+    {
+        return match($method) {
+            'cash'  => 'نقدًا',
+            'whish' => 'Whish',
+            'omt'   => 'OMT',
+            default => null,
+        };
     }
 }

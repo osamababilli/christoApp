@@ -14,12 +14,14 @@ import { ProfileDropdown } from '@/components/profile-dropdown';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { router, Link } from '@inertiajs/react';
-import { CheckCircle2, Clock, Package, Search, Trash2 } from 'lucide-react';
+import { router, Link, useForm } from '@inertiajs/react';
+import { CheckCircle2, Clock, Package, Plus, Search, Store, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 interface Part {
@@ -48,8 +50,28 @@ interface PaginatedParts {
     links: Array<{ url: string | null; label: string; active: boolean }>;
 }
 
+interface ShopPurchase {
+    id: number;
+    part_name: string;
+    part_type: string;
+    type_label: string;
+    quantity: number;
+    unit_cost: number;
+    total_cost: number;
+    supplier_name: string | null;
+    purchase_date: string;
+    notes: string | null;
+}
+
+interface SupplierOption {
+    id: number;
+    name: string;
+}
+
 interface Props {
     parts: PaginatedParts;
+    shop_purchases: ShopPurchase[];
+    suppliers: SupplierOption[];
     filters: { search?: string; type?: string };
 }
 
@@ -61,22 +83,220 @@ const typeConfig: Record<string, { color: string; active: string; badge: string 
     other:     { color: 'border-gray-200 bg-gray-50 text-gray-600 dark:bg-gray-800/40 dark:border-gray-700 dark:text-gray-300',       active: 'ring-2 ring-gray-400',   badge: 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800/60 dark:text-gray-300 dark:border-gray-700'           },
 };
 
-const typeOptions = [
-    { value: '',          label: 'الكل'    },
-    { value: 'part',      label: 'قطعة'    },
-    { value: 'oil',       label: 'زيت'     },
-    { value: 'transport', label: 'نقل'     },
-    { value: 'cleaning',  label: 'تنظيف'   },
-    { value: 'other',     label: 'أخرى'    },
-];
+function ShopPurchasesSection({ purchases, suppliers }: { purchases: ShopPurchase[]; suppliers: SupplierOption[] }) {
+    const [showForm, setShowForm] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<ShopPurchase | null>(null);
 
-export function Parts({ parts, filters }: Props) {
+    const { data, setData, post, processing, errors, reset } = useForm({
+        part_name:      '',
+        supplier_id:    '' as number | '',
+        quantity:       '1',
+        unit_cost:      '',
+        purchase_date:  new Date().toISOString().split('T')[0],
+        notes:          '',
+    });
+
+    const totalValue = purchases.reduce((s, p) => s + Number(p.total_cost), 0);
+
+    function submit(e: React.FormEvent) {
+        e.preventDefault();
+        post('/shop-purchases', {
+            preserveScroll: true,
+            onSuccess: () => { reset(); setShowForm(false); },
+        });
+    }
+
+    function confirmDelete() {
+        if (!deleteTarget) return;
+        router.delete(`/supplier-purchases/${deleteTarget.id}`, { preserveScroll: true });
+        setDeleteTarget(null);
+    }
+
+    return (
+        <>
+            <Card>
+                <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <Store className="h-4 w-4 text-muted-foreground" />
+                            مشتريات المحل (غير مرتبطة بقيد استلام)
+                        </CardTitle>
+                        <Button size="sm" className="gap-1.5" onClick={() => setShowForm(!showForm)}>
+                            <Plus className="h-3.5 w-3.5" />
+                            إضافة مشترى
+                        </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                        أغراض ومستلزمات تُشترى للمحل نفسه — ليست مرتبطة بأي عميل أو قيد استلام.
+                    </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {showForm && (
+                        <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 space-y-3">
+                            <form onSubmit={submit} className="space-y-3">
+                                <div className="space-y-1">
+                                    <Label className="text-xs">
+                                        اسم القطعة / المستلزم <span className="text-destructive">*</span>
+                                    </Label>
+                                    <Input
+                                        value={data.part_name}
+                                        onChange={(e) => setData('part_name', e.target.value)}
+                                        placeholder="مثال: مفك، شحم، أدوات تنظيف..."
+                                        className="min-h-[38px]"
+                                    />
+                                    {errors.part_name && <p className="text-xs text-destructive">{errors.part_name}</p>}
+                                </div>
+                                <div className="grid gap-3 sm:grid-cols-4">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">الكمية</Label>
+                                        <Input
+                                            type="number"
+                                            min="0.001"
+                                            step="0.001"
+                                            value={data.quantity}
+                                            onChange={(e) => setData('quantity', e.target.value)}
+                                            className="min-h-[38px]"
+                                            dir="ltr"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">سعر الوحدة</Label>
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={data.unit_cost}
+                                            onChange={(e) => setData('unit_cost', e.target.value)}
+                                            className="min-h-[38px]"
+                                            dir="ltr"
+                                            placeholder="0.00"
+                                        />
+                                        {errors.unit_cost && <p className="text-xs text-destructive">{errors.unit_cost}</p>}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">التاريخ</Label>
+                                        <Input
+                                            type="date"
+                                            value={data.purchase_date}
+                                            onChange={(e) => setData('purchase_date', e.target.value)}
+                                            className="min-h-[38px]"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">المورد (اختياري)</Label>
+                                        <Select
+                                            value={data.supplier_id === '' ? '__none__' : String(data.supplier_id)}
+                                            onValueChange={(v) => setData('supplier_id', v === '__none__' ? '' : Number(v))}
+                                        >
+                                            <SelectTrigger className="min-h-[38px]">
+                                                <SelectValue placeholder="— بدون مورد —" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__none__">— بدون مورد —</SelectItem>
+                                                {suppliers.map((s) => (
+                                                    <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs">ملاحظات</Label>
+                                    <Input
+                                        value={data.notes}
+                                        onChange={(e) => setData('notes', e.target.value)}
+                                        placeholder="اختياري..."
+                                        className="min-h-[38px]"
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button type="submit" size="sm" className="flex-1 gap-2" disabled={processing}>
+                                        {processing ? 'جاري الحفظ...' : 'تسجيل المشترى'}
+                                    </Button>
+                                    <Button type="button" variant="outline" size="sm" className="px-5" onClick={() => setShowForm(false)}>
+                                        إلغاء
+                                    </Button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+
+                    {purchases.length > 0 ? (
+                        <div className="overflow-x-auto rounded-lg border">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-muted/40">
+                                        <TableHead className="text-right text-xs">التاريخ</TableHead>
+                                        <TableHead className="text-right text-xs">القطعة/المستلزم</TableHead>
+                                        <TableHead className="text-right text-xs">الكمية</TableHead>
+                                        <TableHead className="text-right text-xs">سعر الوحدة</TableHead>
+                                        <TableHead className="text-right text-xs">الإجمالي</TableHead>
+                                        <TableHead className="text-right text-xs">المورد</TableHead>
+                                        <TableHead className="w-8" />
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {purchases.map((p) => (
+                                        <TableRow key={p.id}>
+                                            <TableCell dir="ltr" className="text-right text-sm text-muted-foreground">{p.purchase_date}</TableCell>
+                                            <TableCell className="font-medium text-sm">{p.part_name}</TableCell>
+                                            <TableCell className="text-sm">{p.quantity}</TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">{p.unit_cost.toFixed(2)}</TableCell>
+                                            <TableCell className="font-semibold text-sm">{p.total_cost.toFixed(2)}</TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">{p.supplier_name ?? '—'}</TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-destructive hover:text-destructive"
+                                                    onClick={() => setDeleteTarget(p)}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    ) : (
+                        <p className="py-4 text-center text-sm text-muted-foreground">لا توجد مشتريات مسجلة للمحل</p>
+                    )}
+
+                    {purchases.length > 0 && (
+                        <div className="flex justify-end text-sm font-semibold text-muted-foreground">
+                            إجمالي مشتريات المحل: <span className="ms-2 font-bold text-foreground">{totalValue.toFixed(2)}</span>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>حذف المشترى</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            هل أنت متأكد من حذف "{deleteTarget?.part_name}"؟ لا يمكن التراجع.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            حذف
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
+    );
+}
+
+export function Parts({ parts, shop_purchases, suppliers, filters }: Props) {
     const [search, setSearch]             = useState(filters.search ?? '');
-    const [type, setType]                 = useState(filters.type ?? '');
     const [deleteTarget, setDeleteTarget] = useState<Part | null>(null);
 
-    function applyFilters(newSearch?: string, newType?: string) {
-        router.get('/parts', { search: newSearch ?? search, type: newType ?? type }, {
+    function applyFilters(newSearch?: string) {
+        router.get('/parts', { search: newSearch ?? search }, {
             preserveState: true,
             replace: true,
         });
@@ -140,32 +360,13 @@ export function Parts({ parts, filters }: Props) {
                     </div>
                 </div>
 
-                {/* Type filter chips */}
-                <div className="flex flex-wrap gap-2">
-                    {typeOptions.map((opt) => {
-                        const isActive = type === opt.value;
-                        const cfg = typeConfig[opt.value];
-                        return (
-                            <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() => { setType(opt.value); applyFilters(undefined, opt.value); }}
-                                className={cn(
-                                    'rounded-full border px-4 py-1.5 text-sm font-medium transition-all cursor-pointer',
-                                    opt.value === ''
-                                        ? cn('border-muted-foreground/30 bg-muted text-muted-foreground', isActive && 'ring-2 ring-muted-foreground/50 bg-muted/80')
-                                        : cn(cfg.color, isActive && cfg.active),
-                                )}
-                            >
-                                {isActive && <span className="me-1.5">✓</span>}
-                                {opt.label}
-                            </button>
-                        );
-                    })}
-                </div>
+                <ShopPurchasesSection purchases={shop_purchases} suppliers={suppliers} />
 
                 {/* Table */}
                 <Card>
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-base">قطع مرتبطة بقيود الاستلام</CardTitle>
+                    </CardHeader>
                     <CardContent className="p-0">
                         <Table>
                             <TableHeader>

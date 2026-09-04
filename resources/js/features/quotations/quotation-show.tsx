@@ -15,6 +15,7 @@ import { ThemeSwitch } from '@/components/theme-switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
@@ -31,6 +32,7 @@ import {
     FileText,
     Pencil,
     Phone,
+    Plus,
     Printer,
     Send,
     Trash2,
@@ -76,12 +78,10 @@ interface Quotation {
     grand_total: number;
 }
 
-interface CategoryOption { id: number; name: string; color: string | null }
 interface EmployeeOption { id: number; full_name: string }
 
 interface Props {
     quotation: Quotation;
-    categories: CategoryOption[];
     employees: EmployeeOption[];
 }
 
@@ -93,15 +93,27 @@ const statusConfig: Record<string, { label: string; color: string }> = {
     converted: { label: 'تم التحويل',   color: 'bg-purple-100 text-purple-800 border-purple-200' },
 };
 
-export function QuotationShow({ quotation, categories, employees }: Props) {
+export function QuotationShow({ quotation, employees }: Props) {
     const [deleteOpen,  setDeleteOpen]  = useState(false);
     const [convertOpen, setConvertOpen] = useState(false);
 
     const convertForm = useForm({
-        category_id: null as number | null,
-        notes:       quotation.notes ?? '',
-        received_by: null as number | null,
+        notes:          quotation.notes ?? '',
+        received_by:    null as number | null,
+        received_items: [{ item_name: '', quantity: '1' }] as { item_name: string; quantity: string }[],
     });
+
+    function addConvertItem() {
+        convertForm.setData('received_items', [...convertForm.data.received_items, { item_name: '', quantity: '1' }]);
+    }
+
+    function removeConvertItem(idx: number) {
+        convertForm.setData('received_items', convertForm.data.received_items.filter((_, i) => i !== idx));
+    }
+
+    function updateConvertItem(idx: number, field: 'item_name' | 'quantity', value: string) {
+        convertForm.setData('received_items', convertForm.data.received_items.map((row, i) => (i === idx ? { ...row, [field]: value } : row)));
+    }
 
     function updateStatus(status: string) {
         router.patch(`/quotations/${quotation.id}/status`, { status }, { preserveScroll: true });
@@ -113,6 +125,10 @@ export function QuotationShow({ quotation, categories, employees }: Props) {
 
     function submitConvert(e: React.FormEvent) {
         e.preventDefault();
+        convertForm.transform((data) => ({
+            ...data,
+            received_items: data.received_items.filter((r) => r.item_name.trim() !== ''),
+        }));
         convertForm.post(`/quotations/${quotation.id}/convert`);
     }
 
@@ -393,7 +409,7 @@ export function QuotationShow({ quotation, categories, employees }: Props) {
 
             {/* ── Convert dialog ── */}
             <AlertDialog open={convertOpen} onOpenChange={setConvertOpen}>
-                <AlertDialogContent className="max-w-md">
+                <AlertDialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
                     <AlertDialogHeader>
                         <AlertDialogTitle>تحويل إلى قيد استلام</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -401,22 +417,6 @@ export function QuotationShow({ quotation, categories, employees }: Props) {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <form onSubmit={submitConvert} className="space-y-4 py-2">
-                        <div className="space-y-2">
-                            <Label>التصنيف (اختياري)</Label>
-                            <Select
-                                value={convertForm.data.category_id?.toString() ?? ''}
-                                onValueChange={(v) => convertForm.setData('category_id', v ? parseInt(v) : null)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="بدون تصنيف" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {categories.map((cat) => (
-                                        <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
                         <div className="space-y-2">
                             <Label>موظف الاستلام (اختياري)</Label>
                             <Select
@@ -432,6 +432,40 @@ export function QuotationShow({ quotation, categories, employees }: Props) {
                                     ))}
                                 </SelectContent>
                             </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>ماذا استلمنا؟ (اسم القطعة والعدد)</Label>
+                            {convertForm.data.received_items.map((row, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                    <Input
+                                        placeholder="مثال: موتور"
+                                        value={row.item_name}
+                                        onChange={(e) => updateConvertItem(idx, 'item_name', e.target.value)}
+                                        className="flex-1"
+                                    />
+                                    <Input
+                                        type="number"
+                                        min="1"
+                                        step="1"
+                                        value={row.quantity}
+                                        onChange={(e) => updateConvertItem(idx, 'quantity', e.target.value)}
+                                        className="w-20"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                                        onClick={() => removeConvertItem(idx)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                            <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={addConvertItem}>
+                                <Plus className="h-3.5 w-3.5" />
+                                إضافة قطعة مستلمة
+                            </Button>
                         </div>
                         <div className="space-y-2">
                             <Label>ملاحظات</Label>

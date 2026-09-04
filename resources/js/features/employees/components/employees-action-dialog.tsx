@@ -96,6 +96,8 @@ export function EmployeesActionDialog({ currentRow, open, onOpenChange }: Employ
             formData.append('_method', 'POST');
             router.post(`/employees/${currentRow!.id}`, formData, {
                 forceFormData: true,
+                preserveState: true,
+                preserveScroll: true,
                 onSuccess: () => { form.reset(); setImageFile(null); onOpenChange(false); },
                 onError: (errors) => {
                     Object.entries(errors).forEach(([key, msg]) => form.setError(key as any, { message: msg }));
@@ -105,6 +107,8 @@ export function EmployeesActionDialog({ currentRow, open, onOpenChange }: Employ
         } else {
             router.post('/employees', formData, {
                 forceFormData: true,
+                preserveState: true,
+                preserveScroll: true,
                 onSuccess: () => { form.reset(); setImageFile(null); setImagePreview(null); onOpenChange(false); },
                 onError: (errors) => {
                     Object.entries(errors).forEach(([key, msg]) => form.setError(key as any, { message: msg }));

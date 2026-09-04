@@ -4,7 +4,7 @@ import { ProfileDropdown } from '@/components/profile-dropdown';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { Button } from '@/components/ui/button';
 import { type CustomerOption } from '@/features/motors/customer-combobox';
-import { type CategoryOption, type EmployeeOption } from '@/features/motors/motor-form';
+import { type EmployeeOption } from '@/features/motors/motor-form';
 import { MotorIntakeForm } from '@/features/motors/motor-intake-form';
 import { Link } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
@@ -16,12 +16,11 @@ interface SupplierOption {
 
 interface Props {
     customers: CustomerOption[];
-    categories: CategoryOption[];
     employees: EmployeeOption[];
     suppliers: SupplierOption[];
 }
 
-export default function MotorCreatePage({ customers, categories, employees, suppliers }: Props) {
+export default function MotorCreatePage({ customers, employees, suppliers }: Props) {
     return (
         <>
             <Header>
@@ -39,7 +38,6 @@ export default function MotorCreatePage({ customers, categories, employees, supp
             <Main>
                 <MotorIntakeForm
                     customers={customers}
-                    categories={categories}
                     employees={employees}
                     suppliers={suppliers}
                 />

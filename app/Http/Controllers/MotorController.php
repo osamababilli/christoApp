@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountEntry;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\MaintenanceOrder;
 use App\Models\Motor;
 use App\Models\Part;
+use App\Models\ReceivedItem;
 use App\Models\Supplier;
+use App\Models\Transaction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -109,6 +112,9 @@ class MotorController extends Controller
             'received_by'          => 'required|exists:employees,id',
             'description'          => 'required|string',
             'labor_cost'           => 'nullable|numeric|min:0',
+            'received_items'                => 'array',
+            'received_items.*.item_name'    => 'required|string|max:255',
+            'received_items.*.quantity'     => 'required|integer|min:1',
             'parts'                => 'array',
             'parts.*.part_name'    => 'required|string|max:255',
             'parts.*.quantity'     => 'required|numeric|min:0.001',
@@ -118,6 +124,11 @@ class MotorController extends Controller
             'parts.*.unit_price'   => 'nullable|numeric|min:0',
             'parts.*.supplier_id'  => 'nullable|exists:suppliers,id',
             'parts.*.is_paid'      => 'boolean',
+            'deposit'                  => 'nullable|array',
+            'deposit.amount'           => 'required_with:deposit|numeric|min:0.01',
+            'deposit.payment_method'   => 'required_with:deposit|in:cash,whish,omt',
+            'deposit.account_name'     => 'nullable|string|max:255',
+            'deposit.is_full_payment'  => 'boolean',
         ]);
 
         $motor = DB::transaction(function () use ($validated) {
@@ -149,6 +160,14 @@ class MotorController extends Controller
                 'labor_cost'  => $validated['labor_cost'] ?? 0,
             ]);
 
+            foreach ($validated['received_items'] ?? [] as $item) {
+                ReceivedItem::create([
+                    'motor_id'  => $motor->id,
+                    'item_name' => $item['item_name'],
+                    'quantity'  => $item['quantity'],
+                ]);
+            }
+
             foreach ($validated['parts'] ?? [] as $part) {
                 Part::create([
                     'maintenance_id' => $order->id,
@@ -160,6 +179,32 @@ class MotorController extends Controller
                     'unit_price'     => $part['unit_price'] ?? null,
                     'supplier_id'    => $part['supplier_id'] ?? null,
                     'is_paid'        => $part['is_paid'] ?? false,
+                ]);
+            }
+
+            if (! empty($validated['deposit']['amount'])) {
+                $deposit = $validated['deposit'];
+                $notes   = 'دفعة مسبقة عند الاستلام'
+                    . (! empty($deposit['account_name']) ? " — الحساب: {$deposit['account_name']}" : '')
+                    . (! empty($deposit['is_full_payment']) ? ' — تسكير الحساب' : ' — باقي على الحساب');
+
+                $transaction = $motor->transactions()->create([
+                    'customer_id'      => $customer->id,
+                    'type'             => 'payment',
+                    'payment_method'   => $deposit['payment_method'],
+                    'account_name'     => $deposit['account_name'] ?? null,
+                    'amount'           => $deposit['amount'],
+                    'notes'            => $notes,
+                    'transaction_date' => now(),
+                ]);
+
+                AccountEntry::create([
+                    'type'           => 'income',
+                    'amount'         => $deposit['amount'],
+                    'description'    => "دفعة مسبقة — {$customer->name} ({$motor->reference_number})",
+                    'entry_date'     => today(),
+                    'notes'          => $notes,
+                    'transaction_id' => $transaction->id,
                 ]);
             }
 
@@ -179,6 +224,7 @@ class MotorController extends Controller
             'receivedByEmployee',
             'maintenanceOrders.parts.supplier',
             'transactions',
+            'receivedItems',
         ]);
 
         $suppliers = Supplier::orderBy('name')->get(['id', 'name'])
@@ -207,11 +253,19 @@ class MotorController extends Controller
                 'assigned_to_name'          => $motor->assignedToUser?->name ?? null,
                 'received_by'               => $motor->received_by,
                 'received_by_name'          => $motor->receivedByEmployee?->full_name ?? null,
+                'received_items' => $motor->receivedItems->map(fn($ri) => [
+                    'id'        => $ri->id,
+                    'item_name' => $ri->item_name,
+                    'quantity'  => $ri->quantity,
+                ]),
                 'transactions' => $motor->transactions->sortByDesc('transaction_date')->values()->map(fn($t) => [
                     'id'               => $t->id,
                     'type'             => $t->type,
                     'type_label'       => $t->type === 'payment' ? 'دفعة' : 'خصم',
                     'amount'           => (float) $t->amount,
+                    'payment_method'   => $t->payment_method,
+                    'payment_method_label' => Transaction::paymentMethodLabel($t->payment_method),
+                    'account_name'     => $t->account_name,
                     'notes'            => $t->notes,
                     'transaction_date' => $t->transaction_date->format('Y-m-d'),
                 ]),

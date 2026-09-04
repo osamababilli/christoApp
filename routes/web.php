@@ -56,6 +56,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/parts', [PartController::class, 'store'])->name('parts.store');
     Route::put('/parts/{part}', [PartController::class, 'update'])->name('parts.update');
     Route::delete('/parts/{part}', [PartController::class, 'destroy'])->name('parts.destroy');
+    Route::post('/shop-purchases', [PartController::class, 'storeShopPurchase'])->name('shop-purchases.store');
 
     // Transactions
     Route::post('/motors/{motor}/transactions', [TransactionController::class, 'store'])->name('transactions.store');

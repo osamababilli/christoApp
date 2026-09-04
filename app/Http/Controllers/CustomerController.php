@@ -109,6 +109,8 @@ class CustomerController extends Controller
         $validated = $request->validate([
             'type'             => 'required|in:payment,discount',
             'amount'           => 'required|numeric|min:0.01',
+            'payment_method'   => 'nullable|in:cash,whish,omt',
+            'reference_no'     => 'nullable|string|max:255',
             'notes'            => 'nullable|string|max:255',
             'transaction_date' => 'nullable|date',
         ]);
@@ -117,6 +119,8 @@ class CustomerController extends Controller
             'customer_id'      => $customer->id,
             'motor_id'         => null,
             'type'             => $validated['type'],
+            'payment_method'   => $validated['type'] === 'payment' ? ($validated['payment_method'] ?? null) : null,
+            'reference_no'     => $validated['type'] === 'payment' ? ($validated['reference_no'] ?? null) : null,
             'amount'           => $validated['amount'],
             'notes'            => $validated['notes'] ?? null,
             'transaction_date' => $validated['transaction_date'] ?? now(),
@@ -202,6 +206,9 @@ class CustomerController extends Controller
                     'type'             => $t->type,
                     'type_label'       => $t->type === 'payment' ? 'دفعة' : 'خصم',
                     'amount'           => (float) $t->amount,
+                    'payment_method'   => $t->payment_method,
+                    'payment_method_label' => Transaction::paymentMethodLabel($t->payment_method),
+                    'reference_no'     => $t->reference_no,
                     'notes'            => $t->notes,
                     'transaction_date' => $t->transaction_date instanceof \Carbon\Carbon
                         ? $t->transaction_date->format('Y-m-d')
@@ -287,6 +294,9 @@ class CustomerController extends Controller
                     'type'             => $t->type,
                     'type_label'       => $t->type === 'payment' ? 'دفعة' : 'خصم',
                     'amount'           => (float) $t->amount,
+                    'payment_method'   => $t->payment_method,
+                    'payment_method_label' => Transaction::paymentMethodLabel($t->payment_method),
+                    'reference_no'     => $t->reference_no,
                     'notes'            => $t->notes,
                     'transaction_date' => $t->transaction_date instanceof \Carbon\Carbon
                         ? $t->transaction_date->format('Y-m-d')

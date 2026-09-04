@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Link, router } from '@inertiajs/react';
@@ -11,7 +10,7 @@ import { useState } from 'react';
 import { CustomerCombobox, type CustomerOption } from '../motors/customer-combobox';
 
 type ServiceRow = { description: string; labor_cost: string };
-type PartRow    = { description: string; part_type: string; quantity: string; unit_price: string };
+type PartRow    = { description: string; quantity: string; unit_price: string };
 
 interface QuotationData {
     id?: number;
@@ -29,14 +28,6 @@ interface Props {
     customers: CustomerOption[];
     isEdit?: boolean;
 }
-
-const partTypeOptions = [
-    { value: 'part',      label: 'قطعة' },
-    { value: 'oil',       label: 'زيت' },
-    { value: 'transport', label: 'نقل' },
-    { value: 'cleaning',  label: 'تنظيف' },
-    { value: 'other',     label: 'أخرى' },
-];
 
 export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
     const [processing, setProcessing] = useState(false);
@@ -69,7 +60,7 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
 
     /* ── Parts ── */
     function addPart() {
-        setParts((prev) => [...prev, { description: '', part_type: '', quantity: '1', unit_price: '' }]);
+        setParts((prev) => [...prev, { description: '', quantity: '1', unit_price: '' }]);
     }
 
     function removePart(idx: number) {
@@ -105,7 +96,6 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
             services: services.map((s) => ({ description: s.description, labor_cost: s.labor_cost })),
             parts:    parts.map((p) => ({
                 description: p.description,
-                part_type:   p.part_type || null,
                 quantity:    p.quantity,
                 unit_price:  p.unit_price,
             })),
@@ -266,21 +256,6 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
                                             {errors[`parts.${idx}.description`] && (
                                                 <p className="text-xs text-destructive mt-1">{errors[`parts.${idx}.description`]}</p>
                                             )}
-                                        </div>
-                                        <div className="w-36">
-                                            <Select
-                                                value={part.part_type || ''}
-                                                onValueChange={(v) => updatePart(idx, 'part_type', v)}
-                                            >
-                                                <SelectTrigger className="min-h-[42px]">
-                                                    <SelectValue placeholder="النوع" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {partTypeOptions.map((opt) => (
-                                                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
                                         </div>
                                         <Button
                                             type="button"

@@ -29,6 +29,7 @@ import {
     DollarSign,
     FileText,
     Lock,
+    Package,
     Pencil,
     Phone,
     Plus,
@@ -49,6 +50,9 @@ interface Transaction {
     type: 'payment' | 'discount';
     type_label: string;
     amount: number;
+    payment_method: 'cash' | 'whish' | 'omt' | null;
+    payment_method_label: string | null;
+    account_name: string | null;
     notes: string | null;
     transaction_date: string;
 }
@@ -65,6 +69,12 @@ interface Part {
     is_paid: boolean;
     purchased_by: 'customer' | 'company';
     supplier_name: string | null;
+}
+
+interface ReceivedItem {
+    id: number;
+    item_name: string;
+    quantity: number;
 }
 
 interface MaintenanceOrder {
@@ -92,6 +102,7 @@ interface Motor {
     category_name: string | null;
     assigned_to_name: string | null;
     received_by_name: string | null;
+    received_items: ReceivedItem[];
     transactions: Transaction[];
     maintenance_orders: MaintenanceOrder[];
 }
@@ -246,14 +257,6 @@ function StatusUpdateBar({ motor }: { motor: Motor }) {
     );
 }
 
-const typeColors: Record<string, string> = {
-    part:      'bg-blue-100 text-blue-700',
-    oil:       'bg-amber-100 text-amber-700',
-    transport: 'bg-purple-100 text-purple-700',
-    cleaning:  'bg-cyan-100 text-cyan-700',
-    other:     'bg-gray-100 text-gray-600',
-};
-
 function PartsSection({ order, suppliers, onDeletePart, isLocked }: { order: MaintenanceOrder; suppliers: SupplierOption[]; onDeletePart: (id: number, name: string) => void; isLocked: boolean }) {
     const [showForm, setShowForm] = useState(false);
     return (
@@ -287,7 +290,6 @@ function PartsSection({ order, suppliers, onDeletePart, isLocked }: { order: Mai
                         <TableHeader>
                             <TableRow className="bg-muted/40">
                                 <TableHead className="text-right text-xs">القطعة</TableHead>
-                                <TableHead className="text-right text-xs">النوع</TableHead>
                                 <TableHead className="text-right text-xs">جهة الشراء</TableHead>
                                 <TableHead className="text-right text-xs">الكمية</TableHead>
                                 <TableHead className="text-right text-xs">سعر الشراء</TableHead>
@@ -303,11 +305,6 @@ function PartsSection({ order, suppliers, onDeletePart, isLocked }: { order: Mai
                                 return (
                                 <TableRow key={part.id}>
                                     <TableCell className="text-sm font-medium">{part.part_name}</TableCell>
-                                    <TableCell>
-                                        <Badge variant="secondary" className={`text-xs ${typeColors[part.type] ?? ''}`}>
-                                            {part.type_label}
-                                        </Badge>
-                                    </TableCell>
                                     <TableCell>
                                         <Badge variant="outline" className={cn('text-xs', isCompany
                                             ? 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300'
@@ -373,6 +370,8 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
     const { data, setData, post, processing, errors, reset } = useForm({
         type:             'payment' as 'payment' | 'discount',
         amount:           '',
+        payment_method:   'cash' as 'cash' | 'whish' | 'omt',
+        account_name:     '',
         notes:            '',
         transaction_date: new Date().toISOString().split('T')[0],
     });
@@ -500,6 +499,45 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                                     </div>
                                 </div>
 
+                                {data.type === 'payment' && (
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-muted-foreground">طريقة الدفع</label>
+                                            <div className="grid grid-cols-3 gap-1.5">
+                                                {([
+                                                    { value: 'cash', label: 'نقدًا' },
+                                                    { value: 'whish', label: 'Whish' },
+                                                    { value: 'omt', label: 'OMT' },
+                                                ] as const).map((opt) => (
+                                                    <button
+                                                        key={opt.value}
+                                                        type="button"
+                                                        onClick={() => setData('payment_method', opt.value)}
+                                                        className={cn(
+                                                            'rounded-lg border px-2 py-1.5 text-xs font-semibold transition-all cursor-pointer',
+                                                            data.payment_method === opt.value
+                                                                ? 'border-green-400 bg-green-50 text-green-700 ring-2 ring-green-400 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300'
+                                                                : 'border-muted bg-muted/20 text-muted-foreground hover:bg-muted/50',
+                                                        )}
+                                                    >
+                                                        {opt.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-muted-foreground">الحساب المستلم</label>
+                                            <input
+                                                type="text"
+                                                className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                placeholder="مثال: صندوق الورشة..."
+                                                value={data.account_name}
+                                                onChange={(e) => setData('account_name', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="flex gap-2">
                                     <Button type="submit" size="sm" className="flex-1 gap-2" disabled={processing}>
                                         {processing ? <><Clock className="h-3.5 w-3.5 animate-spin" /> جاري الحفظ...</> : <><CheckCircle2 className="h-3.5 w-3.5" /> تسجيل</>}
@@ -520,6 +558,7 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                                     <TableRow className="bg-muted/40">
                                         <TableHead className="text-right text-xs">التاريخ</TableHead>
                                         <TableHead className="text-right text-xs">النوع</TableHead>
+                                        <TableHead className="text-right text-xs">الطريقة</TableHead>
                                         <TableHead className="text-right text-xs">ملاحظة</TableHead>
                                         <TableHead className="text-right text-xs">المبلغ</TableHead>
                                         <TableHead className="w-8" />
@@ -539,6 +578,11 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                                                 >
                                                     {t.type_label}
                                                 </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {t.payment_method_label
+                                                    ? `${t.payment_method_label}${t.account_name ? ` — ${t.account_name}` : ''}`
+                                                    : '—'}
                                             </TableCell>
                                             <TableCell className="text-sm text-muted-foreground">{t.notes ?? '—'}</TableCell>
                                             <TableCell className="font-semibold text-sm">{t.amount.toFixed(2)}</TableCell>
@@ -758,6 +802,24 @@ export function MotorShow({ motor, suppliers }: Props) {
                                     </div>
                                 ))}
                             </dl>
+                            {motor.received_items.length > 0 && (
+                                <>
+                                    <Separator className="my-3" />
+                                    <div className="space-y-2">
+                                        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                            <Package className="h-3.5 w-3.5" /> القطع المستلمة
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {motor.received_items.map((ri) => (
+                                                <Badge key={ri.id} variant="secondary" className="gap-1 text-xs font-medium">
+                                                    {ri.item_name}
+                                                    <span className="text-muted-foreground">× {ri.quantity}</span>
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                             {motor.notes && (
                                 <>
                                     <Separator className="my-3" />
@@ -781,10 +843,6 @@ export function MotorShow({ motor, suppliers }: Props) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            <div className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
-                                <span className="text-sm text-muted-foreground">تكلفة العمالة</span>
-                                <span className="font-semibold">{totalLabor.toFixed(2)}</span>
-                            </div>
                             <div className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
                                 <span className="text-sm text-muted-foreground">تكلفة القطع</span>
                                 <span className="font-semibold">{totalParts.toFixed(2)}</span>
@@ -927,11 +985,8 @@ export function MotorShow({ motor, suppliers }: Props) {
                                                         اكتمل: {order.completed_at}
                                                     </span>
                                                 )}
-                                                <span className="flex items-center gap-1 font-semibold text-foreground">
-                                                    <DollarSign className="h-3.5 w-3.5" />
-                                                    عمالة: {Number(order.labor_cost).toFixed(2)}
-                                                </span>
                                                 <span className="flex items-center gap-1 font-bold text-primary">
+                                                    <DollarSign className="h-3.5 w-3.5" />
                                                     إجمالي الأمر: {orderTotal.toFixed(2)}
                                                 </span>
                                             </div>

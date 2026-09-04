@@ -8,11 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { EmployeesActionDialog } from '@/features/employees/components/employees-action-dialog';
 import { router } from '@inertiajs/react';
-import { Check, ChevronDown, ChevronsUpDown, ChevronUp, Loader2, Package, Plus, Save, Settings2, Tag, Trash2, User, UserCheck, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronsUpDown, ChevronUp, Loader2, Package, Plus, Save, Settings2, Trash2, User, UserCheck, Wallet, X } from 'lucide-react';
 import { useState } from 'react';
 import { CustomerCombobox, type CustomerOption } from './customer-combobox';
-import type { CategoryOption, EmployeeOption } from './motor-form';
+import type { EmployeeOption } from './motor-form';
 
 interface SupplierOption { id: number; name: string }
 
@@ -27,52 +28,26 @@ type PartRow = {
     is_paid: boolean;
 };
 
+type ReceivedItemRow = {
+    item_name: string;
+    quantity: string;
+};
+
 interface Props {
     customers: CustomerOption[];
-    categories: CategoryOption[];
     employees: EmployeeOption[];
     suppliers: SupplierOption[];
 }
-
-const partTypeOptions = [
-    { value: 'part',      label: 'قطعة',    color: 'border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:border-blue-700 dark:text-blue-300',       active: 'ring-2 ring-blue-400'   },
-    { value: 'oil',       label: 'زيت',     color: 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:border-amber-700 dark:text-amber-300', active: 'ring-2 ring-amber-400'  },
-    { value: 'transport', label: 'نقل',     color: 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300', active: 'ring-2 ring-purple-400' },
-    { value: 'cleaning',  label: 'تنظيف',   color: 'border-cyan-300 bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:border-cyan-700 dark:text-cyan-300',       active: 'ring-2 ring-cyan-400'   },
-    { value: 'other',     label: 'أخرى',    color: 'border-gray-300 bg-gray-50 text-gray-700 dark:bg-gray-800/40 dark:border-gray-600 dark:text-gray-300',       active: 'ring-2 ring-gray-400'   },
-];
 
 function emptyPartRow(): PartRow {
     return { part_name: '', type: 'part', quantity: '1', purchased_by: 'customer', unit_cost: '', unit_price: '', supplier_id: '', is_paid: false };
 }
 
-const COLOR_HEX: Record<string, string> = {
-    blue:   '#3b82f6',
-    indigo: '#6366f1',
-    cyan:   '#06b6d4',
-    teal:   '#14b8a6',
-    sky:    '#0ea5e9',
-    green:  '#22c55e',
-    yellow: '#eab308',
-    orange: '#f97316',
-    red:    '#ef4444',
-    pink:   '#ec4899',
-    purple: '#a855f7',
-    gray:   '#6b7280',
-};
-
-const COLOR_PALETTE = Object.keys(COLOR_HEX);
-
-function colorHex(color: string | null): string {
-    return COLOR_HEX[color ?? 'gray'] ?? '#6b7280';
+function emptyReceivedItemRow(): ReceivedItemRow {
+    return { item_name: '', quantity: '1' };
 }
 
-function getXsrfToken(): string {
-    const match = document.cookie.split(';').find((c) => c.trim().startsWith('XSRF-TOKEN='));
-    return match ? decodeURIComponent(match.trim().slice('XSRF-TOKEN='.length)) : '';
-}
-
-export function MotorIntakeForm({ customers, categories: initialCategories, employees, suppliers }: Props) {
+export function MotorIntakeForm({ customers, employees, suppliers }: Props) {
     const [processing, setProcessing] = useState(false);
     const [errors, setErrors]         = useState<Record<string, string>>({});
 
@@ -80,7 +55,7 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
     const [customerName, setCustomerName]   = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [description, setDescription]     = useState('');
-    const [laborCost, setLaborCost]         = useState('');
+    const [receivedItems, setReceivedItems] = useState<ReceivedItemRow[]>([emptyReceivedItemRow()]);
     const [parts, setParts]                 = useState<PartRow[]>([]);
 
     // ── مورد جديد (يُفتح لصف قطعة محدد) ──
@@ -89,17 +64,31 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
     const [newSupPhone, setNewSupPhone]   = useState('');
     const [creatingSupplier, setCreatingSupplier] = useState(false);
 
+    // ── دفعة مسبقة (اختياري، نادر الحدوث) ──
+    const [hasDeposit, setHasDeposit]           = useState(false);
+    const [depositAmount, setDepositAmount]     = useState('');
+    const [depositMethod, setDepositMethod]     = useState<'cash' | 'whish' | 'omt'>('cash');
+    const [depositAccount, setDepositAccount]   = useState('');
+    const [depositFullPayment, setDepositFullPayment] = useState(false);
+
     // ── تفاصيل إضافية (اختياري) ──
     const [showExtra, setShowExtra]     = useState(false);
-    const [categoryId, setCategoryId]   = useState<number | null>(null);
+    const [notes, setNotes]             = useState('');
     const [receivedBy, setReceivedBy]   = useState<number | null>(null);
-    const [cats, setCats]               = useState<CategoryOption[]>(initialCategories);
-    const [showAddCat, setShowAddCat]   = useState(false);
-    const [newCatName, setNewCatName]   = useState('');
-    const [newCatColor, setNewCatColor] = useState('blue');
-    const [addingCat, setAddingCat]     = useState(false);
-    const [addCatError, setAddCatError] = useState('');
     const [empOpen, setEmpOpen]         = useState(false);
+    const [showAddEmployee, setShowAddEmployee] = useState(false);
+
+    function addReceivedItem() {
+        setReceivedItems((prev) => [...prev, emptyReceivedItemRow()]);
+    }
+
+    function removeReceivedItem(idx: number) {
+        setReceivedItems((prev) => prev.filter((_, i) => i !== idx));
+    }
+
+    function updateReceivedItem<K extends keyof ReceivedItemRow>(idx: number, field: K, value: ReceivedItemRow[K]) {
+        setReceivedItems((prev) => prev.map((row, i) => (i === idx ? { ...row, [field]: value } : row)));
+    }
 
     function addPart() {
         setParts((prev) => [...prev, emptyPartRow()]);
@@ -133,35 +122,6 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
         );
     }
 
-    async function handleAddCat() {
-        if (!newCatName.trim()) return;
-        setAddingCat(true);
-        setAddCatError('');
-        try {
-            const res = await fetch('/settings/categories', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-XSRF-TOKEN': getXsrfToken(),
-                },
-                body: JSON.stringify({ name: newCatName.trim(), color: newCatColor }),
-            });
-            const body = await res.json();
-            if (!res.ok) { setAddCatError(body.errors?.name?.[0] ?? 'حدث خطأ'); return; }
-            const created: CategoryOption = { id: body.id, name: body.name, color: body.color };
-            setCats((prev) => [...prev, created]);
-            setCategoryId(created.id);
-            setShowAddCat(false);
-            setNewCatName('');
-            setNewCatColor('blue');
-        } catch {
-            setAddCatError('حدث خطأ في الاتصال');
-        } finally {
-            setAddingCat(false);
-        }
-    }
-
     function submit(e: React.FormEvent) {
         e.preventDefault();
         setProcessing(true);
@@ -171,10 +131,12 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
             customer_id: customerId,
             customer_name: customerName,
             customer_phone: customerPhone,
-            category_id: categoryId,
+            notes,
             received_by: receivedBy,
             description,
-            labor_cost: laborCost,
+            received_items: receivedItems
+                .filter((r) => r.item_name.trim() !== '')
+                .map((r) => ({ item_name: r.item_name, quantity: r.quantity })),
             parts: parts
                 .filter((p) => p.part_name.trim() !== '')
                 .map((p) => ({
@@ -187,6 +149,14 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
                     supplier_id: p.purchased_by === 'company' && p.supplier_id !== '' ? p.supplier_id : null,
                     is_paid: p.purchased_by === 'company' ? p.is_paid : true,
                 })),
+            deposit: hasDeposit && depositAmount.trim() !== ''
+                ? {
+                    amount: depositAmount,
+                    payment_method: depositMethod,
+                    account_name: depositAccount.trim() || null,
+                    is_full_payment: depositFullPayment,
+                }
+                : null,
         };
 
         router.post('/motors', payload, {
@@ -199,6 +169,7 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
     }
 
     return (
+        <>
         <form onSubmit={submit} className="mx-auto max-w-2xl space-y-5 pb-10">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">تسجيل قيد استلام جديد</h1>
@@ -270,52 +241,64 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
                         );
                     })()}
 
-                    <Popover open={empOpen} onOpenChange={setEmpOpen}>
-                        <PopoverTrigger asChild>
-                            <button
-                                type="button"
-                                className={cn(
-                                    'flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition-colors',
-                                    'hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring',
-                                    receivedBy !== null ? 'border-dashed text-muted-foreground' : 'text-muted-foreground',
-                                )}
-                            >
-                                <span>{receivedBy !== null ? 'تغيير المستلم' : 'اختر موظفاً مستلماً...'}</span>
-                                <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                            </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[280px] p-0" align="start">
-                            <Command>
-                                <CommandInput placeholder="ابحث عن موظف..." />
-                                <CommandList>
-                                    <CommandEmpty>لا يوجد موظف بهذا الاسم.</CommandEmpty>
-                                    <CommandGroup>
-                                        {employees.map((emp) => {
-                                            const initials = emp.full_name.trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
-                                            const isSelected = receivedBy === emp.id;
-                                            return (
-                                                <CommandItem
-                                                    key={emp.id}
-                                                    value={emp.full_name}
-                                                    onSelect={() => {
-                                                        setReceivedBy(isSelected ? null : emp.id);
-                                                        setEmpOpen(false);
-                                                    }}
-                                                    className="gap-2.5"
-                                                >
-                                                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
-                                                        {initials}
-                                                    </div>
-                                                    <span className="flex-1 text-sm">{emp.full_name}</span>
-                                                    {isSelected && <Check className="h-4 w-4 text-primary" />}
-                                                </CommandItem>
-                                            );
-                                        })}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                        </PopoverContent>
-                    </Popover>
+                    <div className="flex gap-2">
+                        <Popover open={empOpen} onOpenChange={setEmpOpen}>
+                            <PopoverTrigger asChild>
+                                <button
+                                    type="button"
+                                    className={cn(
+                                        'flex flex-1 items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition-colors',
+                                        'hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring',
+                                        receivedBy !== null ? 'border-dashed text-muted-foreground' : 'text-muted-foreground',
+                                    )}
+                                >
+                                    <span>{receivedBy !== null ? 'تغيير المستلم' : 'اختر موظفاً مستلماً...'}</span>
+                                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                                </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[280px] p-0" align="start">
+                                <Command>
+                                    <CommandInput placeholder="ابحث عن موظف..." />
+                                    <CommandList>
+                                        <CommandEmpty>لا يوجد موظف بهذا الاسم.</CommandEmpty>
+                                        <CommandGroup>
+                                            {employees.map((emp) => {
+                                                const initials = emp.full_name.trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+                                                const isSelected = receivedBy === emp.id;
+                                                return (
+                                                    <CommandItem
+                                                        key={emp.id}
+                                                        value={emp.full_name}
+                                                        onSelect={() => {
+                                                            setReceivedBy(isSelected ? null : emp.id);
+                                                            setEmpOpen(false);
+                                                        }}
+                                                        className="gap-2.5"
+                                                    >
+                                                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+                                                            {initials}
+                                                        </div>
+                                                        <span className="flex-1 text-sm">{emp.full_name}</span>
+                                                        {isSelected && <Check className="h-4 w-4 text-primary" />}
+                                                    </CommandItem>
+                                                );
+                                            })}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-10 w-10 shrink-0"
+                            title="إضافة موظف جديد"
+                            onClick={() => setShowAddEmployee(true)}
+                        >
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                    </div>
 
                     {employees.length === 0 && (
                         <p className="text-xs text-muted-foreground text-center py-1">
@@ -342,24 +325,60 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
                         autoFocus
                     />
                     {errors.description && <p className="text-sm text-destructive">{errors.description}</p>}
-
-                    <div className="space-y-1.5">
-                        <Label className="text-sm font-medium">تكلفة العمالة</Label>
-                        <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            className="min-h-[44px] text-base"
-                            placeholder="0.00"
-                            value={laborCost}
-                            onChange={(e) => setLaborCost(e.target.value)}
-                        />
-                        {errors.labor_cost && <p className="text-sm text-destructive">{errors.labor_cost}</p>}
-                    </div>
                 </CardContent>
             </Card>
 
-            {/* 4. القطع (اختياري) */}
+            {/* 4. القطع المستلمة */}
+            <Card>
+                <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                        القطع المستلمة
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                        ما استلمته الورشة فعليًا من العميل ضمن هذا القيد — مثال: موتور × 2، شاسيه × 1، بستون × 1.
+                    </p>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    {receivedItems.map((row, idx) => (
+                        <div key={idx} className="flex items-end gap-2">
+                            <div className="flex-1 space-y-1.5">
+                                {idx === 0 && <Label className="text-sm font-medium">اسم القطعة</Label>}
+                                <Input
+                                    className="min-h-[40px]"
+                                    placeholder="مثال: موتور"
+                                    value={row.item_name}
+                                    onChange={(e) => updateReceivedItem(idx, 'item_name', e.target.value)}
+                                />
+                            </div>
+                            <div className="w-24 space-y-1.5">
+                                {idx === 0 && <Label className="text-sm font-medium">العدد</Label>}
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    className="min-h-[40px]"
+                                    value={row.quantity}
+                                    onChange={(e) => updateReceivedItem(idx, 'quantity', e.target.value)}
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => removeReceivedItem(idx)}
+                                className="mb-2.5 text-muted-foreground transition-colors hover:text-destructive"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </button>
+                        </div>
+                    ))}
+                    <Button type="button" variant="outline" className="w-full gap-2" onClick={addReceivedItem}>
+                        <Plus className="h-4 w-4" />
+                        إضافة قطعة مستلمة
+                    </Button>
+                </CardContent>
+            </Card>
+
+            {/* 5. القطع (اختياري) */}
             <Card>
                 <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-base">
@@ -380,25 +399,6 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
                                 >
                                     <Trash2 className="h-4 w-4" />
                                 </button>
-                            </div>
-
-                            {/* النوع */}
-                            <div className="flex flex-wrap gap-2">
-                                {partTypeOptions.map((opt) => (
-                                    <button
-                                        key={opt.value}
-                                        type="button"
-                                        onClick={() => updatePart(idx, 'type', opt.value)}
-                                        className={cn(
-                                            'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer',
-                                            opt.color,
-                                            row.type === opt.value && opt.active,
-                                        )}
-                                    >
-                                        {row.type === opt.value && <span className="me-1">✓</span>}
-                                        {opt.label}
-                                    </button>
-                                ))}
                             </div>
 
                             {/* جهة الشراء */}
@@ -589,7 +589,7 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
                 </CardContent>
             </Card>
 
-            {/* 5. تفاصيل إضافية (اختياري، مطوي) */}
+            {/* 6. تفاصيل إضافية (اختياري، مطوي) */}
             <Card>
                 <button
                     type="button"
@@ -605,105 +605,132 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
 
                 {showExtra && (
                     <CardContent className="space-y-5 border-t pt-4">
-                        {/* التصنيف */}
-                        <div className="space-y-3">
-                            <Label className="flex items-center gap-2 text-sm">
-                                <Tag className="h-4 w-4 text-muted-foreground" />
-                                التصنيف
-                            </Label>
-                            <div className="flex flex-wrap gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setCategoryId(null)}
-                                    className={cn(
-                                        'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-all cursor-pointer select-none',
-                                        categoryId === null
-                                            ? 'border-2 border-foreground/40 bg-muted shadow-sm'
-                                            : 'border-muted bg-muted/20 text-muted-foreground hover:bg-muted/50',
-                                    )}
-                                >
-                                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-muted-foreground/30 shrink-0" />
-                                    بدون
-                                    {categoryId === null && <Check className="ms-1 h-3 w-3" />}
-                                </button>
-
-                                {cats.map((cat) => {
-                                    const sel = categoryId === cat.id;
-                                    const hex = colorHex(cat.color);
-                                    return (
-                                        <button
-                                            key={cat.id}
-                                            type="button"
-                                            onClick={() => setCategoryId(cat.id)}
-                                            className={cn(
-                                                'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-all cursor-pointer select-none',
-                                                sel ? 'border-2 shadow-sm' : 'border-muted bg-muted/20 text-muted-foreground hover:bg-muted/50',
-                                            )}
-                                            style={sel ? { borderColor: hex, backgroundColor: hex + '1a', color: hex } : undefined}
-                                        >
-                                            <span className="inline-block h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: hex }} />
-                                            {cat.name}
-                                            {sel && <Check className="ms-1 h-3 w-3" />}
-                                        </button>
-                                    );
-                                })}
-
-                                {!showAddCat && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowAddCat(true)}
-                                        className="flex items-center gap-1 rounded-lg border border-dashed border-primary/50 px-3 py-1.5 text-sm font-medium text-primary/70 transition-all cursor-pointer hover:border-primary hover:text-primary hover:bg-primary/5"
-                                    >
-                                        <Plus className="h-3.5 w-3.5" />
-                                        إضافة
-                                    </button>
-                                )}
-                            </div>
-
-                            {showAddCat && (
-                                <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 p-3 space-y-2.5">
-                                    <Input
-                                        autoFocus
-                                        placeholder="اسم التصنيف..."
-                                        value={newCatName}
-                                        onChange={(e) => setNewCatName(e.target.value)}
-                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCat(); } }}
-                                        className="min-h-[38px] text-sm"
-                                    />
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {COLOR_PALETTE.map((c) => (
-                                            <button
-                                                key={c}
-                                                type="button"
-                                                onClick={() => setNewCatColor(c)}
-                                                title={c}
-                                                className={cn(
-                                                    'h-6 w-6 rounded-full border-2 transition-all',
-                                                    newCatColor === c ? 'border-foreground scale-110 shadow' : 'border-transparent hover:border-muted-foreground/50',
-                                                )}
-                                                style={{ backgroundColor: colorHex(c) }}
-                                            />
-                                        ))}
-                                    </div>
-                                    {addCatError && <p className="text-xs text-destructive">{addCatError}</p>}
-                                    <div className="flex gap-2">
-                                        <Button type="button" size="sm" className="h-8 gap-1 text-xs" disabled={!newCatName.trim() || addingCat} onClick={handleAddCat}>
-                                            {addingCat ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-                                            إضافة
-                                        </Button>
-                                        <Button type="button" variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setShowAddCat(false); setNewCatName(''); setAddCatError(''); }}>
-                                            <X className="h-3 w-3 me-1" />
-                                            إلغاء
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
+                        {/* ملاحظات */}
+                        <div className="space-y-1.5">
+                            <Label className="text-sm font-medium">ملاحظات</Label>
+                            <Textarea
+                                className="min-h-[90px] resize-none text-sm"
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="اكتب أي ملاحظات إضافية هنا..."
+                            />
                         </div>
                     </CardContent>
                 )}
             </Card>
 
-            {/* 6. حفظ */}
+            {/* 7. دفعة مسبقة (اختياري) */}
+            <Card>
+                <button
+                    type="button"
+                    className="flex w-full items-center justify-between gap-2 p-4 text-start"
+                    onClick={() => setHasDeposit((v) => !v)}
+                >
+                    <span className="flex items-center gap-2 text-base font-semibold">
+                        <Wallet className="h-4 w-4 text-muted-foreground" />
+                        هل دفع العميل مبلغًا مسبقًا؟ (اختياري)
+                    </span>
+                    <span
+                        className={cn(
+                            'flex h-6 w-11 shrink-0 items-center rounded-full border px-0.5 transition-colors',
+                            hasDeposit ? 'justify-end border-green-400 bg-green-500' : 'justify-start border-muted bg-muted',
+                        )}
+                    >
+                        <span className="h-4.5 w-4.5 rounded-full bg-white shadow" />
+                    </span>
+                </button>
+
+                {hasDeposit && (
+                    <CardContent className="space-y-4 border-t pt-4">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="space-y-1.5">
+                                <Label className="text-sm font-medium">
+                                    المبلغ المدفوع <span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                    type="number"
+                                    min="0.01"
+                                    step="0.01"
+                                    className="min-h-[40px]"
+                                    placeholder="0.00"
+                                    value={depositAmount}
+                                    onChange={(e) => setDepositAmount(e.target.value)}
+                                />
+                                {errors['deposit.amount'] && <p className="text-sm text-destructive">{errors['deposit.amount']}</p>}
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-sm font-medium">طريقة الدفع</Label>
+                                <div className="grid grid-cols-3 gap-1.5">
+                                    {([
+                                        { value: 'cash', label: 'نقدًا' },
+                                        { value: 'whish', label: 'Whish' },
+                                        { value: 'omt', label: 'OMT' },
+                                    ] as const).map((opt) => (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => setDepositMethod(opt.value)}
+                                            className={cn(
+                                                'rounded-lg border px-2 py-2 text-sm font-semibold transition-all cursor-pointer',
+                                                depositMethod === opt.value
+                                                    ? 'border-green-400 bg-green-50 text-green-700 ring-2 ring-green-400 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300'
+                                                    : 'border-muted bg-muted/20 text-muted-foreground hover:bg-muted/50',
+                                            )}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label className="text-sm font-medium">الحساب المستلم للمبلغ</Label>
+                            <Input
+                                className="min-h-[40px]"
+                                placeholder="مثال: صندوق الورشة، أو رقم حساب Whish..."
+                                value={depositAccount}
+                                onChange={(e) => setDepositAccount(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label className="text-sm font-medium">حالة الحساب</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setDepositFullPayment(false)}
+                                    className={cn(
+                                        'rounded-lg border px-3 py-2 text-sm font-semibold transition-all cursor-pointer',
+                                        !depositFullPayment
+                                            ? 'border-orange-300 bg-orange-50 text-orange-700 ring-2 ring-orange-400 dark:bg-orange-950/40 dark:border-orange-700 dark:text-orange-300'
+                                            : 'border-muted bg-muted/20 text-muted-foreground hover:bg-muted/50',
+                                    )}
+                                >
+                                    باقي على الحساب
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setDepositFullPayment(true)}
+                                    className={cn(
+                                        'rounded-lg border px-3 py-2 text-sm font-semibold transition-all cursor-pointer',
+                                        depositFullPayment
+                                            ? 'border-green-300 bg-green-50 text-green-700 ring-2 ring-green-400 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300'
+                                            : 'border-muted bg-muted/20 text-muted-foreground hover:bg-muted/50',
+                                    )}
+                                >
+                                    تسكير الحساب
+                                </button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                يُحسب المتبقي فعليًا لاحقًا بعد تحديد تكلفة الصيانة الكاملة من صفحة القيد.
+                            </p>
+                        </div>
+                    </CardContent>
+                )}
+            </Card>
+
+            {/* 8. حفظ */}
             <div className="flex flex-col gap-2.5 pt-1">
                 <Button type="submit" size="lg" className="min-h-[52px] w-full gap-2 text-base" disabled={processing}>
                     {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
@@ -714,5 +741,8 @@ export function MotorIntakeForm({ customers, categories: initialCategories, empl
                 </Button>
             </div>
         </form>
+
+        <EmployeesActionDialog open={showAddEmployee} onOpenChange={setShowAddEmployee} />
+        </>
     );
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Part;
 use App\Models\Supplier;
+use App\Models\SupplierPurchase;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -27,6 +28,23 @@ class PartController extends Controller
 
         $parts = $query->paginate(20)->withQueryString();
 
+        $shopPurchases = SupplierPurchase::with('supplier')
+            ->orderByDesc('purchase_date')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn($p) => [
+                'id'            => $p->id,
+                'part_name'     => $p->part_name,
+                'part_type'     => $p->part_type,
+                'type_label'    => Part::typeLabel($p->part_type),
+                'quantity'      => (float) $p->quantity,
+                'unit_cost'     => (float) $p->unit_cost,
+                'total_cost'    => (float) $p->total_cost,
+                'supplier_name' => $p->supplier?->name,
+                'purchase_date' => $p->purchase_date->format('Y-m-d'),
+                'notes'         => $p->notes,
+            ]);
+
         return Inertia::render('authenticated/parts', [
             'parts' => $parts->through(fn($p) => [
                 'id'               => $p->id,
@@ -46,8 +64,31 @@ class PartController extends Controller
                 'stage'            => $p->maintenance->stage,
                 'is_locked'        => $p->maintenance->motor->isLocked(),
             ]),
+            'shop_purchases' => $shopPurchases,
+            'suppliers'      => Supplier::orderBy('name')->get(['id', 'name']),
             'filters' => $request->only(['search', 'type']),
         ]);
+    }
+
+    // ── مشتريات المحل (غير مرتبطة بأي قيد استلام) ──
+
+    public function storeShopPurchase(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'part_name'     => 'required|string|max:255',
+            'supplier_id'   => 'nullable|exists:suppliers,id',
+            'quantity'      => 'required|numeric|min:0.001',
+            'unit_cost'     => 'required|numeric|min:0',
+            'purchase_date' => 'required|date',
+            'notes'         => 'nullable|string|max:500',
+        ]);
+
+        $validated['part_type']  = 'part';
+        $validated['total_cost'] = $validated['quantity'] * $validated['unit_cost'];
+
+        SupplierPurchase::create($validated);
+
+        return back()->with('success', 'تم تسجيل المشترى');
     }
 
     public function store(Request $request): RedirectResponse
