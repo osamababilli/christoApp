@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 import { router, Link } from '@inertiajs/react';
 import {
     BarChart3,
-    CheckCircle2,
     ClipboardList,
     Clock,
     DollarSign,
@@ -31,6 +30,7 @@ interface Financial {
     unpaid_parts: number;
     grand_total: number;
     total_paid: number;
+    total_discount: number;
 }
 
 interface Totals {
@@ -234,7 +234,7 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                             <div className="rounded-xl border-2 border-primary/20 bg-primary/5 px-5 py-4">
                                 <p className="text-xs text-muted-foreground">إجمالي الفواتير</p>
                                 <p className="mt-1 text-2xl font-bold text-primary">{financial.grand_total.toFixed(2)}</p>
@@ -252,6 +252,10 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
                                     <Wallet className="h-3.5 w-3.5" /> المدفوع (دفعات)
                                 </p>
                                 <p className="mt-1 text-xl font-semibold text-green-700 dark:text-green-400">{financial.total_paid.toFixed(2)}</p>
+                            </div>
+                            <div className="rounded-xl border border-violet-200 bg-violet-50 px-5 py-4 dark:border-violet-900 dark:bg-violet-950/30">
+                                <p className="text-xs text-violet-700 dark:text-violet-400">خصومات ممنوحة</p>
+                                <p className="mt-1 text-xl font-semibold text-violet-700 dark:text-violet-400">{financial.total_discount.toFixed(2)}</p>
                             </div>
                             <div className="rounded-xl border border-orange-200 bg-orange-50 px-5 py-4 dark:border-orange-900 dark:bg-orange-950/30">
                                 <p className="flex items-center gap-1 text-xs text-orange-700 dark:text-orange-400">

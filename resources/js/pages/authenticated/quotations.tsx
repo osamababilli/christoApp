@@ -1,5 +1,5 @@
 import { QuotationsList } from '@/features/quotations';
 
-export default function QuotationsPage({ quotations, filters }: any) {
-    return <QuotationsList quotations={quotations} filters={filters} />;
+export default function QuotationsPage(props: React.ComponentProps<typeof QuotationsList>) {
+    return <QuotationsList {...props} />;
 }

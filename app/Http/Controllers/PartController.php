@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MaintenanceOrder;
 use App\Models\Part;
 use App\Models\Supplier;
 use App\Models\SupplierPurchase;
@@ -105,20 +106,17 @@ class PartController extends Controller
             'purchased_by'   => 'nullable|in:customer,company',
         ]);
 
-        $part = Part::create($validated);
+        $motor = MaintenanceOrder::findOrFail($validated['maintenance_id'])->motor;
 
-        // إذا كان إجمالي المدفوع يغطي الإجمالي الجديد (بما فيه هذه القطعة)، عَلِّمها مدفوعة
-        $part->load('maintenance.motor.maintenanceOrders.parts', 'maintenance.motor.transactions');
-        $motor      = $part->maintenance->motor;
-        $grandTotal = $motor->maintenanceOrders->sum('labor_cost')
-            + $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
-        $paid       = $motor->transactions->sum('amount');
+        if ($motor->isLocked()) {
+            return back()->with('error', 'لا يمكن الإضافة — القيد مغلق.');
+        }
 
-        if ($grandTotal > 0 && $paid >= ($grandTotal - 0.009)) {
-            // المبلغ المدفوع يغطي الإجمالي الكامل — عَلِّم جميع القطع غير المدفوعة
-            foreach ($motor->maintenanceOrders as $order) {
-                $order->parts()->where('is_paid', false)->update(['is_paid' => true]);
-            }
+        Part::create($validated);
+
+        // If what the customer already paid still covers the new total, the new part is paid too
+        if ($motor->grandTotal() > 0 && $motor->outstandingBalance() <= 0.009) {
+            $motor->markPartsPaid();
         }
 
         return back()->with('success', 'تمت إضافة القطعة');
@@ -126,6 +124,12 @@ class PartController extends Controller
 
     public function update(Request $request, Part $part): RedirectResponse
     {
+        $part->load('maintenance.motor');
+
+        if ($part->maintenance->motor->isLocked()) {
+            return back()->with('error', 'لا يمكن التعديل — القيد مغلق.');
+        }
+
         $validated = $request->validate([
             'part_name'    => 'required|string|max:255',
             'supplier_id'  => 'nullable|exists:suppliers,id',
@@ -144,7 +148,7 @@ class PartController extends Controller
 
     public function destroy(Part $part): RedirectResponse
     {
-        $part->load('maintenance.motor.maintenanceOrders.parts', 'maintenance.motor.transactions');
+        $part->load('maintenance.motor');
 
         if ($part->maintenance->motor->isLocked()) {
             return back()->with('error', 'لا يمكن الحذف — القيد مغلق.');

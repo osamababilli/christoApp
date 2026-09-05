@@ -22,12 +22,19 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
+        if (app()->isProduction()) {
+            $this->command?->warn('DemoSeeder is disabled in production.');
+            return;
+        }
+
+        $demoPassword = Hash::make(env('DEMO_PASSWORD') ?: 'password');
+
         // ── 1. Users ─────────────────────────────────────────────
         $admin = User::firstOrCreate(
             ['email' => 'admin@workshop.com'],
             [
                 'name'     => 'غسان متري',
-                'password' => Hash::make('password'),
+                'password' => $demoPassword,
                 'role'     => 'admin',
                 'status'   => 'active',
                 'phone'    => '0501234567',
@@ -38,8 +45,8 @@ class DemoSeeder extends Seeder
             ['email' => 'ahmad@workshop.com'],
             [
                 'name'     => 'أحمد السالم',
-                'password' => Hash::make('password'),
-                'role'     => 'user',
+                'password' => $demoPassword,
+                'role'     => 'cashier',
                 'status'   => 'active',
                 'phone'    => '0551112233',
             ]
@@ -49,8 +56,8 @@ class DemoSeeder extends Seeder
             ['email' => 'khalid@workshop.com'],
             [
                 'name'     => 'خالد العمري',
-                'password' => Hash::make('password'),
-                'role'     => 'user',
+                'password' => $demoPassword,
+                'role'     => 'cashier',
                 'status'   => 'active',
                 'phone'    => '0562223344',
             ]

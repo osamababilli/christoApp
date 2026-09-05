@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 
 class UserController extends Controller
@@ -29,12 +31,12 @@ class UserController extends Controller
             'phone'    => ['nullable', 'string', 'max:30'],
             'role'     => ['required', Rule::in(['admin', 'manager', 'cashier'])],
             'status'   => ['required', Rule::in(['active', 'inactive', 'suspended'])],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
         User::create($data);
 
-        return back()->with('success', 'User created successfully.');
+        return back()->with('success', 'تم إنشاء المستخدم بنجاح');
     }
 
     public function update(Request $request, User $user)
@@ -45,8 +47,12 @@ class UserController extends Controller
             'phone'    => ['nullable', 'string', 'max:30'],
             'role'     => ['required', Rule::in(['admin', 'manager', 'cashier'])],
             'status'   => ['required', Rule::in(['active', 'inactive', 'suspended'])],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'password' => ['nullable', 'confirmed', Password::defaults()],
         ]);
+
+        if ($user->id === Auth::id() && ($data['role'] !== 'admin' || $data['status'] !== 'active')) {
+            return back()->withErrors(['role' => 'لا يمكنك تخفيض صلاحياتك أو تعطيل حسابك بنفسك']);
+        }
 
         if (empty($data['password'])) {
             unset($data['password']);
@@ -54,18 +60,24 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return back()->with('success', 'User updated successfully.');
+        // Kick the user out of any open sessions once their access or credentials change
+        if ($user->status !== 'active' || isset($data['password']) || $user->wasChanged('role')) {
+            $this->invalidateSessions($user);
+        }
+
+        return back()->with('success', 'تم تحديث بيانات المستخدم');
     }
 
     public function destroy(User $user)
     {
         if ($user->id === Auth::id()) {
-            return back()->withErrors(['error' => 'You cannot delete your own account.']);
+            return back()->withErrors(['error' => 'لا يمكنك حذف حسابك الحالي']);
         }
 
+        $this->invalidateSessions($user);
         $user->delete();
 
-        return back()->with('success', 'User deleted successfully.');
+        return back()->with('success', 'تم حذف المستخدم');
     }
 
     public function updateProfile(Request $request)
@@ -80,7 +92,7 @@ class UserController extends Controller
 
         if ($request->filled('password')) {
             $rules['current_password'] = ['required', 'current_password'];
-            $rules['password']         = ['required', 'string', 'min:8', 'confirmed'];
+            $rules['password']         = ['required', 'confirmed', Password::defaults()];
         }
 
         $data = $request->validate($rules);
@@ -94,5 +106,12 @@ class UserController extends Controller
         $user->update($data);
 
         return back()->with('success', 'تم تحديث الملف الشخصي بنجاح.');
+    }
+
+    private function invalidateSessions(User $user): void
+    {
+        if (config('session.driver') === 'database') {
+            DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
+        }
     }
 }

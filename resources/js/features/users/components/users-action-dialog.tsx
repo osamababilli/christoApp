@@ -78,7 +78,7 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: UsersActio
             },
             onError: (errors) => {
                 Object.entries(errors).forEach(([key, msg]) => {
-                    form.setError(key as any, { message: msg });
+                    form.setError(key as Parameters<typeof form.setError>[0], { message: msg });
                 });
             },
             onFinish: () => setIsLoading(false),

@@ -4,6 +4,12 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { type Employee } from '../data/schema';
 import { DataTableRowActions } from './data-table-row-actions';
 
+const SALARY_PERIOD_LABELS: Record<string, string> = {
+    daily: 'يومي',
+    weekly: 'اسبوعي',
+    monthly: 'شهري',
+};
+
 export const employeesColumns: ColumnDef<Employee>[] = [
     {
         id: 'select',
@@ -81,6 +87,22 @@ export const employeesColumns: ColumnDef<Employee>[] = [
         cell: ({ row }) => <div className="text-sm">{row.getValue('emergency_contact_relationship') || '—'}</div>,
         enableSorting: false,
         meta: { label: 'صلة القرابة' },
+    },
+    {
+        accessorKey: 'salary_amount',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="الراتب" />,
+        cell: ({ row }) => {
+            const amount: number | null | undefined = row.getValue('salary_amount');
+            const period: string | null | undefined = row.original.salary_period;
+            if (amount == null) return <div className="text-sm text-muted-foreground">—</div>;
+            return (
+                <div className="text-sm font-medium">
+                    {amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {period && <span className="ms-1 text-xs font-normal text-muted-foreground">/ {SALARY_PERIOD_LABELS[period] ?? period}</span>}
+                </div>
+            );
+        },
+        meta: { label: 'الراتب' },
     },
     {
         accessorKey: 'id_image',

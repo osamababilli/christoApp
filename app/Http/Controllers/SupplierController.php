@@ -9,6 +9,7 @@ use App\Models\SupplierPayment;
 use App\Models\SupplierPurchase;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -214,33 +215,36 @@ class SupplierController extends Controller
             'notes'        => 'nullable|string|max:500',
         ]);
 
-        // Record as expense in treasury
-        $entry = AccountEntry::create([
-            'type'        => 'expense',
-            'amount'      => $validated['amount'],
-            'description' => "دفعة للمورد — {$supplier->name}",
-            'entry_date'  => $validated['payment_date'],
-            'notes'       => $validated['notes'] ?? null,
-        ]);
+        DB::transaction(function () use ($validated, $supplier) {
+            // Record as expense in treasury
+            $entry = AccountEntry::create([
+                'type'        => 'expense',
+                'amount'      => $validated['amount'],
+                'description' => "دفعة للمورد — {$supplier->name}",
+                'entry_date'  => $validated['payment_date'],
+                'notes'       => $validated['notes'] ?? null,
+            ]);
 
-        $supplier->payments()->create([
-            'amount'              => $validated['amount'],
-            'payment_date'        => $validated['payment_date'],
-            'notes'               => $validated['notes'] ?? null,
-            'accounting_entry_id' => $entry->id,
-        ]);
+            $supplier->payments()->create([
+                'amount'              => $validated['amount'],
+                'payment_date'        => $validated['payment_date'],
+                'notes'               => $validated['notes'] ?? null,
+                'accounting_entry_id' => $entry->id,
+            ]);
+        });
 
         return back()->with('success', 'تم تسجيل الدفعة وخصمها من الصندوق');
     }
 
     public function destroyPayment(SupplierPayment $payment): RedirectResponse
     {
-        // Remove from treasury
-        if ($payment->accounting_entry_id) {
-            AccountEntry::find($payment->accounting_entry_id)?->delete();
-        }
+        DB::transaction(function () use ($payment) {
+            if ($payment->accounting_entry_id) {
+                AccountEntry::find($payment->accounting_entry_id)?->delete();
+            }
 
-        $payment->delete();
+            $payment->delete();
+        });
 
         return back()->with('success', 'تم حذف الدفعة وإعادتها للصندوق');
     }

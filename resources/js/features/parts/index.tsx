@@ -1,3 +1,8 @@
+import { Header } from '@/components/layout/header';
+import { Main } from '@/components/layout/main';
+import { PaginationLinks } from '@/components/pagination-links';
+import { ProfileDropdown } from '@/components/profile-dropdown';
+import { ThemeSwitch } from '@/components/theme-switch';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -8,10 +13,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Header } from '@/components/layout/header';
-import { Main } from '@/components/layout/main';
-import { ProfileDropdown } from '@/components/profile-dropdown';
-import { ThemeSwitch } from '@/components/theme-switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,8 +20,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
 import { cn } from '@/lib/utils';
-import { router, Link, useForm } from '@inertiajs/react';
+import { Link, router, useForm } from '@inertiajs/react';
 import { CheckCircle2, Clock, Package, Plus, Search, Store, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -76,24 +78,45 @@ interface Props {
 }
 
 const typeConfig: Record<string, { color: string; active: string; badge: string }> = {
-    part:      { color: 'border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-300',       active: 'ring-2 ring-blue-400',   badge: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'       },
-    oil:       { color: 'border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300', active: 'ring-2 ring-amber-400',  badge: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800' },
-    transport: { color: 'border-purple-200 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-300', active: 'ring-2 ring-purple-400', badge: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800' },
-    cleaning:  { color: 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:border-cyan-800 dark:text-cyan-300',       active: 'ring-2 ring-cyan-400',   badge: 'bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border-cyan-800'           },
-    other:     { color: 'border-gray-200 bg-gray-50 text-gray-600 dark:bg-gray-800/40 dark:border-gray-700 dark:text-gray-300',       active: 'ring-2 ring-gray-400',   badge: 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800/60 dark:text-gray-300 dark:border-gray-700'           },
+    part: {
+        color: 'border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-300',
+        active: 'ring-2 ring-blue-400',
+        badge: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800',
+    },
+    oil: {
+        color: 'border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300',
+        active: 'ring-2 ring-amber-400',
+        badge: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800',
+    },
+    transport: {
+        color: 'border-purple-200 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-300',
+        active: 'ring-2 ring-purple-400',
+        badge: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800',
+    },
+    cleaning: {
+        color: 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:border-cyan-800 dark:text-cyan-300',
+        active: 'ring-2 ring-cyan-400',
+        badge: 'bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border-cyan-800',
+    },
+    other: {
+        color: 'border-gray-200 bg-gray-50 text-gray-600 dark:bg-gray-800/40 dark:border-gray-700 dark:text-gray-300',
+        active: 'ring-2 ring-gray-400',
+        badge: 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800/60 dark:text-gray-300 dark:border-gray-700',
+    },
 };
 
 function ShopPurchasesSection({ purchases, suppliers }: { purchases: ShopPurchase[]; suppliers: SupplierOption[] }) {
+    const can = useCan();
     const [showForm, setShowForm] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<ShopPurchase | null>(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        part_name:      '',
-        supplier_id:    '' as number | '',
-        quantity:       '1',
-        unit_cost:      '',
-        purchase_date:  new Date().toISOString().split('T')[0],
-        notes:          '',
+        part_name: '',
+        supplier_id: '' as number | '',
+        quantity: '1',
+        unit_cost: '',
+        purchase_date: new Date().toISOString().split('T')[0],
+        notes: '',
     });
 
     const totalValue = purchases.reduce((s, p) => s + Number(p.total_cost), 0);
@@ -102,7 +125,10 @@ function ShopPurchasesSection({ purchases, suppliers }: { purchases: ShopPurchas
         e.preventDefault();
         post('/shop-purchases', {
             preserveScroll: true,
-            onSuccess: () => { reset(); setShowForm(false); },
+            onSuccess: () => {
+                reset();
+                setShowForm(false);
+            },
         });
     }
 
@@ -126,13 +152,11 @@ function ShopPurchasesSection({ purchases, suppliers }: { purchases: ShopPurchas
                             إضافة مشترى
                         </Button>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                        أغراض ومستلزمات تُشترى للمحل نفسه — ليست مرتبطة بأي عميل أو قيد استلام.
-                    </p>
+                    <p className="text-sm text-muted-foreground">أغراض ومستلزمات تُشترى للمحل نفسه — ليست مرتبطة بأي عميل أو قيد استلام.</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {showForm && (
-                        <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 space-y-3">
+                        <div className="space-y-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4">
                             <form onSubmit={submit} className="space-y-3">
                                 <div className="space-y-1">
                                     <Label className="text-xs">
@@ -194,7 +218,9 @@ function ShopPurchasesSection({ purchases, suppliers }: { purchases: ShopPurchas
                                             <SelectContent>
                                                 <SelectItem value="__none__">— بدون مورد —</SelectItem>
                                                 {suppliers.map((s) => (
-                                                    <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                                                    <SelectItem key={s.id} value={String(s.id)}>
+                                                        {s.name}
+                                                    </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
@@ -238,21 +264,25 @@ function ShopPurchasesSection({ purchases, suppliers }: { purchases: ShopPurchas
                                 <TableBody>
                                     {purchases.map((p) => (
                                         <TableRow key={p.id}>
-                                            <TableCell dir="ltr" className="text-right text-sm text-muted-foreground">{p.purchase_date}</TableCell>
-                                            <TableCell className="font-medium text-sm">{p.part_name}</TableCell>
+                                            <TableCell dir="ltr" className="text-right text-sm text-muted-foreground">
+                                                {p.purchase_date}
+                                            </TableCell>
+                                            <TableCell className="text-sm font-medium">{p.part_name}</TableCell>
                                             <TableCell className="text-sm">{p.quantity}</TableCell>
                                             <TableCell className="text-sm text-muted-foreground">{p.unit_cost.toFixed(2)}</TableCell>
-                                            <TableCell className="font-semibold text-sm">{p.total_cost.toFixed(2)}</TableCell>
+                                            <TableCell className="text-sm font-semibold">{p.total_cost.toFixed(2)}</TableCell>
                                             <TableCell className="text-sm text-muted-foreground">{p.supplier_name ?? '—'}</TableCell>
                                             <TableCell>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 text-destructive hover:text-destructive"
-                                                    onClick={() => setDeleteTarget(p)}
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
+                                                {can('delete-suppliers') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-destructive hover:text-destructive"
+                                                        onClick={() => setDeleteTarget(p)}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -275,13 +305,11 @@ function ShopPurchasesSection({ purchases, suppliers }: { purchases: ShopPurchas
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>حذف المشترى</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            هل أنت متأكد من حذف "{deleteTarget?.part_name}"؟ لا يمكن التراجع.
-                        </AlertDialogDescription>
+                        <AlertDialogDescription>هل أنت متأكد من حذف "{deleteTarget?.part_name}"؟ لا يمكن التراجع.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        <AlertDialogAction onClick={confirmDelete} className="text-destructive-foreground bg-destructive hover:bg-destructive/90">
                             حذف
                         </AlertDialogAction>
                     </AlertDialogFooter>
@@ -292,14 +320,19 @@ function ShopPurchasesSection({ purchases, suppliers }: { purchases: ShopPurchas
 }
 
 export function Parts({ parts, shop_purchases, suppliers, filters }: Props) {
-    const [search, setSearch]             = useState(filters.search ?? '');
+    const can = useCan();
+    const [search, setSearch] = useState(filters.search ?? '');
     const [deleteTarget, setDeleteTarget] = useState<Part | null>(null);
 
     function applyFilters(newSearch?: string) {
-        router.get('/parts', { search: newSearch ?? search }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/parts',
+            { search: newSearch ?? search },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     }
 
     function handleDelete() {
@@ -308,9 +341,9 @@ export function Parts({ parts, shop_purchases, suppliers, filters }: Props) {
         setDeleteTarget(null);
     }
 
-    const paidCount   = parts.data.filter((p) => p.is_paid).length;
+    const paidCount = parts.data.filter((p) => p.is_paid).length;
     const unpaidCount = parts.data.filter((p) => !p.is_paid).length;
-    const totalValue  = parts.data.reduce((s, p) => s + Number(p.total_cost), 0);
+    const totalValue = parts.data.reduce((s, p) => s + Number(p.total_cost), 0);
 
     return (
         <>
@@ -319,7 +352,7 @@ export function Parts({ parts, shop_purchases, suppliers, filters }: Props) {
                     <div className="relative max-w-sm flex-1">
                         <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
-                            className="ps-9 min-h-[44px] text-base"
+                            className="min-h-[44px] ps-9 text-base"
                             placeholder="بحث بالقطعة أو الرقم المرجعي أو العميل..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -337,7 +370,6 @@ export function Parts({ parts, shop_purchases, suppliers, filters }: Props) {
             </Header>
 
             <Main className="flex flex-1 flex-col gap-5">
-
                 {/* Title + stats */}
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -402,13 +434,16 @@ export function Parts({ parts, shop_purchases, suppliers, filters }: Props) {
                                                 <TableCell>
                                                     <Link
                                                         href={`/motors/${part.motor_id}`}
-                                                        className="font-mono text-sm font-semibold text-primary hover:underline underline-offset-4"
+                                                        className="font-mono text-sm font-semibold text-primary underline-offset-4 hover:underline"
                                                     >
                                                         {part.reference_number}
                                                     </Link>
                                                 </TableCell>
-                                                <TableCell className="font-medium text-sm">
-                                                    <Link href={`/customers/${part.customer_id}`} className="hover:underline underline-offset-4 text-primary">
+                                                <TableCell className="text-sm font-medium">
+                                                    <Link
+                                                        href={`/customers/${part.customer_id}`}
+                                                        className="text-primary underline-offset-4 hover:underline"
+                                                    >
                                                         {part.customer_name}
                                                     </Link>
                                                 </TableCell>
@@ -428,31 +463,36 @@ export function Parts({ parts, shop_purchases, suppliers, filters }: Props) {
                                                 <TableCell className="font-semibold">{Number(part.total_cost).toFixed(2)}</TableCell>
                                                 <TableCell>
                                                     {part.is_paid ? (
-                                                        <Badge variant="outline" className="gap-1 border-green-200 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="gap-1 border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950/40 dark:text-green-300"
+                                                        >
                                                             <CheckCircle2 className="h-3 w-3" />
                                                             مدفوع
                                                         </Badge>
                                                     ) : (
-                                                        <Badge variant="outline" className="gap-1 border-orange-200 bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:border-orange-800 dark:text-orange-300">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="gap-1 border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300"
+                                                        >
                                                             <Clock className="h-3 w-3" />
                                                             معلق
                                                         </Badge>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="text-sm text-muted-foreground">
-                                                    {part.supplier_name ?? '—'}
-                                                </TableCell>
+                                                <TableCell className="text-sm text-muted-foreground">{part.supplier_name ?? '—'}</TableCell>
                                                 <TableCell>
-                                                    {!part.is_locked && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 text-destructive hover:text-destructive"
-                                                            onClick={() => setDeleteTarget(part)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    )}
+                                                    {!part.is_locked &&
+                                                        (can('delete-parts') ? (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                                                onClick={() => setDeleteTarget(part)}
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        ) : null)}
                                                 </TableCell>
                                             </TableRow>
                                         );
@@ -464,31 +504,21 @@ export function Parts({ parts, shop_purchases, suppliers, filters }: Props) {
                 </Card>
 
                 {/* Pagination */}
-                {parts.last_page > 1 && (
-                    <div className="flex items-center justify-center gap-2">
-                        {parts.links.map((link, i) => (
-                            <Button
-                                key={i}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="sm"
-                                disabled={!link.url}
-                                onClick={() => link.url && router.visit(link.url)}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
-                )}
+                {parts.last_page > 1 && <PaginationLinks links={parts.links} />}
             </Main>
 
             {/* Delete confirmation */}
-            <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+            <AlertDialog
+                open={!!deleteTarget}
+                onOpenChange={(open) => {
+                    if (!open) setDeleteTarget(null);
+                }}
+            >
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
                         <AlertDialogDescription>
-                            سيتم حذف القطعة{' '}
-                            <span className="font-bold text-foreground">"{deleteTarget?.part_name}"</span>{' '}
-                            من قيد الاستلام{' '}
+                            سيتم حذف القطعة <span className="font-bold text-foreground">"{deleteTarget?.part_name}"</span> من قيد الاستلام{' '}
                             <span className="font-bold text-foreground">{deleteTarget?.reference_number}</span>.
                             <br />
                             هذا الإجراء لا يمكن التراجع عنه.
@@ -496,10 +526,7 @@ export function Parts({ parts, shop_purchases, suppliers, filters }: Props) {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                        <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={handleDelete}
-                        >
+                        <AlertDialogAction className="text-destructive-foreground bg-destructive hover:bg-destructive/90" onClick={handleDelete}>
                             نعم، احذف
                         </AlertDialogAction>
                     </AlertDialogFooter>

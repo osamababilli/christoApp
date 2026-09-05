@@ -252,7 +252,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function Th({ children, align }: { children: React.ReactNode; align?: string }) {
     return (
-        <th style={{ padding: '6px 10px', textAlign: (align ?? 'right') as any, fontWeight: 700, borderBottom: '1px solid #e4e4e7', color: '#555' }}>
+        <th style={{ padding: '6px 10px', textAlign: (align ?? 'right') as React.CSSProperties['textAlign'], fontWeight: 700, borderBottom: '1px solid #e4e4e7', color: '#555' }}>
             {children}
         </th>
     );
@@ -260,7 +260,7 @@ function Th({ children, align }: { children: React.ReactNode; align?: string }) 
 
 function Td({ children, align }: { children: React.ReactNode; align?: string }) {
     return (
-        <td style={{ padding: '5px 10px', textAlign: (align ?? 'right') as any, color: '#333' }}>
+        <td style={{ padding: '5px 10px', textAlign: (align ?? 'right') as React.CSSProperties['textAlign'], color: '#333' }}>
             {children}
         </td>
     );

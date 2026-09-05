@@ -81,6 +81,10 @@ class MaintenanceController extends Controller
 
     public function updateStatus(Request $request, MaintenanceOrder $maintenance): RedirectResponse
     {
+        if ($maintenance->motor->isLocked()) {
+            return back()->with('error', 'لا يمكن التعديل — القيد مغلق.');
+        }
+
         $validated = $request->validate([
             'status'      => 'required|in:in_progress,completed,on_hold',
             'stop_reason' => 'nullable|string|max:255',
@@ -97,7 +101,7 @@ class MaintenanceController extends Controller
 
     public function update(Request $request, MaintenanceOrder $maintenance): RedirectResponse
     {
-        $maintenance->load('motor.maintenanceOrders.parts', 'motor.transactions');
+        $maintenance->load('motor');
 
         if ($maintenance->motor->isLocked()) {
             return back()->with('error', 'لا يمكن التعديل — القيد مغلق.');
@@ -122,7 +126,7 @@ class MaintenanceController extends Controller
 
     public function destroy(MaintenanceOrder $maintenance): RedirectResponse
     {
-        $maintenance->load('motor.maintenanceOrders.parts', 'motor.transactions');
+        $maintenance->load('motor');
 
         if ($maintenance->motor->isLocked()) {
             return back()->with('error', 'لا يمكن الحذف — القيد مغلق.');

@@ -74,12 +74,10 @@ export default function DeliveryPrint({ motor }: { motor: Motor }) {
                 </div>
 
                 {/* Customer + Motor */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+                <div style={{ marginBottom: 24 }}>
                     <DeliverySection title="بيانات العميل">
                         <DeliveryRow label="الاسم" value={motor.customer.name} />
                         <DeliveryRow label="الجوال" value={motor.customer.phone} ltr />
-                    </DeliverySection>
-                    <DeliverySection title="بيانات قيد الاستلام">
                     </DeliverySection>
                 </div>
 

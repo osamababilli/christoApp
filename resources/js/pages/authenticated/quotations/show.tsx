@@ -1,5 +1,5 @@
 import { QuotationShow } from '@/features/quotations/quotation-show';
 
-export default function QuotationShowPage({ quotation, employees }: any) {
-    return <QuotationShow quotation={quotation} employees={employees} />;
+export default function QuotationShowPage(props: React.ComponentProps<typeof QuotationShow>) {
+    return <QuotationShow {...props} />;
 }

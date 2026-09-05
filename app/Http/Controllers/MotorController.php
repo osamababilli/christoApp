@@ -68,6 +68,30 @@ class MotorController extends Controller
         return back()->with('success', 'تم استعادة القيد بنجاح');
     }
 
+    public function forceDestroy(int $id): RedirectResponse
+    {
+        $motor = Motor::onlyTrashed()->findOrFail($id);
+
+        DB::transaction(fn () => $motor->forceDelete());
+
+        return back()->with('success', "تم حذف القيد {$motor->reference_number} نهائياً مع كل ما يتعلق به");
+    }
+
+    public function bulkForceDestroy(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        // Only archived motors qualify — live ids are silently ignored rather than deleted
+        $motors = Motor::onlyTrashed()->whereIn('id', $validated['ids'])->get();
+
+        DB::transaction(fn () => $motors->each->forceDelete());
+
+        return back()->with('success', "تم حذف {$motors->count()} قيد استلام نهائياً من الأرشيف");
+    }
+
     private function employeesList(): array
     {
         return Employee::orderBy('full_name')
@@ -416,11 +440,7 @@ class MotorController extends Controller
 
     private function isLocked(Motor $motor): bool
     {
-        $motor->loadMissing(['maintenanceOrders.parts', 'transactions']);
-        $grandTotal = $motor->maintenanceOrders->sum('labor_cost')
-            + $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
-        $paid = $motor->transactions->sum('amount');
-        return $motor->status === 'delivered' && ($grandTotal - $paid) <= 0.009;
+        return $motor->isLocked();
     }
 
     public function edit(Motor $motor): Response|RedirectResponse
@@ -486,7 +506,6 @@ class MotorController extends Controller
             'category_id'       => $validated['category_id'] ?? null,
             'status'            => $validated['status'],
             'notes'             => $validated['notes'] ?? null,
-            'received_at'       => $validated['received_at'] ?? $motor->received_at,
             'delivered_at'      => $validated['delivered_at'] ?? null,
             'assigned_to'       => $validated['assigned_to'] ?? null,
             'received_by'       => $validated['received_by'] ?? null,
@@ -498,6 +517,10 @@ class MotorController extends Controller
 
     public function destroy(Motor $motor): RedirectResponse
     {
+        if ($this->isLocked($motor)) {
+            return back()->with('error', 'لا يمكن أرشفة قيد استلام مسلَّم ومسدَّد بالكامل.');
+        }
+
         $motor->delete();
 
         return redirect()->route('motors.index')
@@ -511,11 +534,17 @@ class MotorController extends Controller
             'ids.*' => 'integer|exists:motors,id',
         ]);
 
-        Motor::whereIn('id', $validated['ids'])->each(fn($m) => $m->delete());
+        $motors  = Motor::whereIn('id', $validated['ids'])->get();
+        $locked  = $motors->filter(fn($m) => $m->isLocked());
+        $motors->diff($locked)->each(fn($m) => $m->delete());
 
-        $count = count($validated['ids']);
+        $count = $motors->count() - $locked->count();
+        $msg   = "تم أرشفة {$count} قيد استلام بنجاح";
+        if ($locked->isNotEmpty()) {
+            $msg .= ' — تم تجاوز ' . $locked->count() . ' قيد مغلق (مسلَّم ومسدَّد)';
+        }
 
-        return back()->with('success', "تم أرشفة {$count} قيد استلام بنجاح");
+        return back()->with('success', $msg);
     }
 
     public function updateStatus(Request $request, Motor $motor): RedirectResponse
@@ -523,6 +552,10 @@ class MotorController extends Controller
         $validated = $request->validate([
             'status' => 'required|in:in_workshop,in_progress,ready,delivered',
         ]);
+
+        if ($this->isLocked($motor) && $validated['status'] !== 'delivered') {
+            return back()->with('error', 'لا يمكن إعادة فتح قيد مسلَّم ومسدَّد بالكامل.');
+        }
 
         if ($validated['status'] === 'delivered') {
             $motor->update(['status' => 'delivered', 'delivered_at' => now()]);

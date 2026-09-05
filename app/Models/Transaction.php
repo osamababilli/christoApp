@@ -14,6 +14,7 @@ class Transaction extends Model
 
     protected $fillable = [
         'motor_id',
+        'invoice_id',
         'customer_id',
         'type',
         'payment_method',
@@ -38,6 +39,11 @@ class Transaction extends Model
         return $this->belongsTo(Motor::class);
     }
 
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
+    }
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
@@ -54,6 +60,7 @@ class Transaction extends Model
             'cash'  => 'نقدًا',
             'whish' => 'Whish',
             'omt'   => 'OMT',
+            'check' => 'شيك',
             default => null,
         };
     }

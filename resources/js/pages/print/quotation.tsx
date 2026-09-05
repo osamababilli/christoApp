@@ -250,7 +250,7 @@ function Th({ children, align, light }: { children: React.ReactNode; align?: str
     return (
         <th style={{
             padding: '9px 12px',
-            textAlign: (align ?? 'right') as any,
+            textAlign: (align ?? 'right') as React.CSSProperties['textAlign'],
             fontWeight: 700,
             fontSize: 12,
             color: light ? '#fff' : '#555',
@@ -263,7 +263,7 @@ function Th({ children, align, light }: { children: React.ReactNode; align?: str
 
 function Td({ children, align, muted }: { children: React.ReactNode; align?: string; muted?: boolean }) {
     return (
-        <td style={{ padding: '8px 12px', textAlign: (align ?? 'right') as any, color: muted ? '#999' : '#333' }}>
+        <td style={{ padding: '8px 12px', textAlign: (align ?? 'right') as React.CSSProperties['textAlign'], color: muted ? '#999' : '#333' }}>
             {children}
         </td>
     );

@@ -386,7 +386,7 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
                             variant="outline"
                             className="w-full gap-2"
                             disabled={processing}
-                            onClick={(e) => submit(e as any, 'draft')}
+                            onClick={(e) => submit(e as unknown as React.FormEvent, 'draft')}
                         >
                             {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                             حفظ كمسودة
@@ -396,7 +396,7 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
                             size="lg"
                             className="w-full gap-2"
                             disabled={processing}
-                            onClick={(e) => submit(e as any, 'sent')}
+                            onClick={(e) => submit(e as unknown as React.FormEvent, 'sent')}
                         >
                             {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                             حفظ وإرسال

@@ -1,3 +1,5 @@
+import type { UserRole } from '@/types';
+
 type User = {
     name: string;
     email: string;
@@ -14,6 +16,8 @@ type BaseNavItem = {
     title: string;
     badge?: string;
     icon?: React.ElementType;
+    /** Omit to show the item to every signed-in user. */
+    roles?: UserRole[];
 };
 
 type NavLink = BaseNavItem & {

@@ -1,3 +1,8 @@
+import { Header } from '@/components/layout/header';
+import { Main } from '@/components/layout/main';
+import { PaginationLinks } from '@/components/pagination-links';
+import { ProfileDropdown } from '@/components/profile-dropdown';
+import { ThemeSwitch } from '@/components/theme-switch';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -8,17 +13,14 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Header } from '@/components/layout/header';
-import { Main } from '@/components/layout/main';
-import { ProfileDropdown } from '@/components/profile-dropdown';
-import { ThemeSwitch } from '@/components/theme-switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { router, Link } from '@inertiajs/react';
+import { useCan } from '@/hooks/use-can';
+import { Link, router } from '@inertiajs/react';
 import { Eye, Search, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -54,21 +56,26 @@ interface Props {
 
 const statusColors: Record<string, string> = {
     in_progress: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    completed:   'bg-green-100 text-green-800 border-green-200',
-    on_hold:     'bg-red-100 text-red-800 border-red-200',
+    completed: 'bg-green-100 text-green-800 border-green-200',
+    on_hold: 'bg-red-100 text-red-800 border-red-200',
 };
 
 export function Maintenance({ orders, filters }: Props) {
-    const [search, setSearch]           = useState(filters.search ?? '');
-    const [status, setStatus]           = useState(filters.status ?? '');
-    const [deleteId, setDeleteId]       = useState<number | null>(null);
+    const can = useCan();
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [status, setStatus] = useState(filters.status ?? '');
+    const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
 
     function applyFilters(newSearch?: string, newStatus?: string) {
-        router.get('/maintenance', { search: newSearch ?? search, status: newStatus ?? status }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/maintenance',
+            { search: newSearch ?? search, status: newStatus ?? status },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     }
 
     function confirmDelete(order: Order) {
@@ -90,7 +97,7 @@ export function Maintenance({ orders, filters }: Props) {
                     <div className="relative max-w-sm flex-1">
                         <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
-                            className="ps-9 min-h-[44px] text-base"
+                            className="min-h-[44px] ps-9 text-base"
                             placeholder="بحث..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -104,7 +111,7 @@ export function Maintenance({ orders, filters }: Props) {
                             applyFilters(undefined, v === 'all' ? '' : v);
                         }}
                     >
-                        <SelectTrigger className="w-44 min-h-[44px] text-base">
+                        <SelectTrigger className="min-h-[44px] w-44 text-base">
                             <SelectValue placeholder="كل الحالات" />
                         </SelectTrigger>
                         <SelectContent>
@@ -146,7 +153,7 @@ export function Maintenance({ orders, filters }: Props) {
                             <TableBody>
                                 {orders.data.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={9} className="py-12 text-center text-muted-foreground text-lg">
+                                        <TableCell colSpan={9} className="py-12 text-center text-lg text-muted-foreground">
                                             لا توجد أوامر صيانة
                                         </TableCell>
                                     </TableRow>
@@ -156,16 +163,19 @@ export function Maintenance({ orders, filters }: Props) {
                                             <TableCell>
                                                 <Link
                                                     href={`/motors/${order.motor_id}`}
-                                                    className="font-mono font-semibold text-primary hover:underline underline-offset-4"
+                                                    className="font-mono font-semibold text-primary underline-offset-4 hover:underline"
                                                 >
                                                     {order.reference_number}
                                                 </Link>
                                             </TableCell>
                                             <TableCell>
-                                                <Link href={`/customers/${order.customer_id}`} className="hover:underline underline-offset-4 text-primary font-medium">
+                                                <Link
+                                                    href={`/customers/${order.customer_id}`}
+                                                    className="font-medium text-primary underline-offset-4 hover:underline"
+                                                >
                                                     {order.customer_name}
                                                 </Link>
-                                                <div className="text-xs text-muted-foreground text-right" dir="ltr">
+                                                <div className="text-right text-xs text-muted-foreground" dir="ltr">
                                                     {order.customer_phone}
                                                 </div>
                                             </TableCell>
@@ -177,22 +187,19 @@ export function Maintenance({ orders, filters }: Props) {
                                             <TableCell className="max-w-[200px] truncate">{order.description}</TableCell>
                                             <TableCell>{Number(order.labor_cost).toFixed(2)}</TableCell>
                                             <TableCell>
-                                                <Badge
-                                                    variant="outline"
-                                                    className={`text-sm ${statusColors[order.status] ?? ''}`}
-                                                >
+                                                <Badge variant="outline" className={`text-sm ${statusColors[order.status] ?? ''}`}>
                                                     {order.status_label}
                                                 </Badge>
-                                                {order.stop_reason && (
-                                                    <p className="mt-1 text-xs text-orange-600">{order.stop_reason}</p>
-                                                )}
+                                                {order.stop_reason && <p className="mt-1 text-xs text-orange-600">{order.stop_reason}</p>}
                                             </TableCell>
                                             <TableCell>{order.started_at}</TableCell>
                                             <TableCell>
                                                 {order.completed_at ? (
-                                                    <span className="text-green-700 dark:text-green-400 font-medium text-sm">{order.completed_at}</span>
+                                                    <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                                                        {order.completed_at}
+                                                    </span>
                                                 ) : (
-                                                    <span className="text-muted-foreground text-sm">—</span>
+                                                    <span className="text-sm text-muted-foreground">—</span>
                                                 )}
                                             </TableCell>
                                             <TableCell>
@@ -202,17 +209,18 @@ export function Maintenance({ orders, filters }: Props) {
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
-                                                    {!order.is_locked && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            title="حذف"
-                                                            className="text-destructive hover:text-destructive"
-                                                            onClick={() => confirmDelete(order)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    )}
+                                                    {!order.is_locked &&
+                                                        (can('delete-maintenance') ? (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                title="حذف"
+                                                                className="text-destructive hover:text-destructive"
+                                                                onClick={() => confirmDelete(order)}
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        ) : null)}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -223,45 +231,31 @@ export function Maintenance({ orders, filters }: Props) {
                     </CardContent>
                 </Card>
 
-                {orders.last_page > 1 && (
-                    <div className="flex items-center justify-center gap-2">
-                        {orders.links.map((link, i) => (
-                            <Button
-                                key={i}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="sm"
-                                disabled={!link.url}
-                                onClick={() => link.url && router.visit(link.url)}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
-                )}
+                {orders.last_page > 1 && <PaginationLinks links={orders.links} />}
             </Main>
 
-            <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) { setDeleteId(null); setDeleteTarget(null); } }}>
+            <AlertDialog
+                open={!!deleteId}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDeleteId(null);
+                        setDeleteTarget(null);
+                    }
+                }}
+            >
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
                         <AlertDialogDescription>
-                            سيتم حذف أمر الصيانة{' '}
-                            <span className="font-bold text-foreground">
-                                مرحلة {deleteTarget?.stage}
-                            </span>{' '}
-                            لقيد الاستلام{' '}
-                            <span className="font-bold text-foreground">
-                                {deleteTarget?.reference_number}
-                            </span>.
+                            سيتم حذف أمر الصيانة <span className="font-bold text-foreground">مرحلة {deleteTarget?.stage}</span> لقيد الاستلام{' '}
+                            <span className="font-bold text-foreground">{deleteTarget?.reference_number}</span>.
                             <br />
                             هذا الإجراء لا يمكن التراجع عنه.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                        <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={handleDelete}
-                        >
+                        <AlertDialogAction className="text-destructive-foreground bg-destructive hover:bg-destructive/90" onClick={handleDelete}>
                             نعم، احذف
                         </AlertDialogAction>
                     </AlertDialogFooter>

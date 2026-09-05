@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\Motor;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -10,67 +13,16 @@ class WorkshopDashboardController extends Controller
 {
     public function index(): Response
     {
-        $inWorkshop = Motor::whereIn('status', ['in_workshop', 'in_progress'])->count();
-        $readyCount = Motor::where('status', 'ready')->count();
-        $receivedToday      = Motor::whereDate('received_at', today())->count();
-        $deliveredToday     = Motor::whereDate('delivered_at', today())->count();
-        $allMotors = Motor::with(['customer', 'maintenanceOrders.parts', 'transactions'])->get();
+        $inWorkshop     = Motor::whereIn('status', ['in_workshop', 'in_progress'])->count();
+        $readyCount     = Motor::where('status', 'ready')->count();
+        $receivedToday  = Motor::whereDate('received_at', today())->count();
+        $deliveredToday = Motor::whereDate('delivered_at', today())->count();
 
-        $unpaidTotal      = 0;
-        $unpaidMotorsList = [];
-
-        // Account customers: outstanding balance = total invoiced - customer-level payments
-        $accountCustomerIds = $allMotors
-            ->filter(fn($m) => ($m->customer->account_type ?? 'direct') === 'account')
-            ->pluck('customer_id')
-            ->unique();
-
-        $accountOutstanding = 0;
-        if ($accountCustomerIds->isNotEmpty()) {
-            $accountInvoiced = $allMotors
-                ->filter(fn($m) => $accountCustomerIds->contains($m->customer_id))
-                ->sum(function ($motor) {
-                    return $motor->maintenanceOrders->sum('labor_cost')
-                        + $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
-                });
-
-            $accountPaid = \App\Models\Transaction::whereIn('customer_id', $accountCustomerIds)
-                ->whereNull('motor_id')
-                ->sum('amount');
-
-            $accountOutstanding = max(0, $accountInvoiced - $accountPaid);
-        }
-
-        foreach ($allMotors as $motor) {
-            // Skip account-type customers — their balance is tracked at customer level
-            if (($motor->customer->account_type ?? 'direct') === 'account') {
-                continue;
-            }
-
-            $labor      = $motor->maintenanceOrders->sum('labor_cost');
-            $parts      = $motor->maintenanceOrders->flatMap(fn($o) => $o->parts)->sum('total_cost');
-            $grandTotal = $labor + $parts;
-            $paid       = $motor->transactions->sum('amount');
-            $remaining  = $grandTotal - $paid;
-
-            if ($remaining > 0.009) {
-                $unpaidTotal += $remaining;
-                $unpaidMotorsList[] = [
-                    'id'               => $motor->id,
-                    'reference_number' => $motor->reference_number,
-                    'customer_id'      => $motor->customer->id,
-                    'customer_name'    => $motor->customer->name,
-                    'customer_phone'   => $motor->customer->phone,
-                    'status'           => $motor->status,
-                    'status_label'     => Motor::statusLabel($motor->status),
-                    'remaining'        => $remaining,
-                ];
-            }
-        }
-
-        usort($unpaidMotorsList, fn($a, $b) => $b['remaining'] <=> $a['remaining']);
-        $top5Unpaid = array_slice($unpaidMotorsList, 0, 5);
-        $top5Unpaid = array_map(fn($m) => array_merge($m, ['remaining' => number_format($m['remaining'], 2)]), $top5Unpaid);
+        // Aggregates over the whole ledger are the expensive part — cache them briefly
+        [$unpaid, $account] = Cache::remember('dashboard.balances', now()->addMinute(), fn () => [
+            $this->unpaidDirectMotors(),
+            $this->accountCustomersOutstanding(),
+        ]);
 
         $recentMotors = Motor::with(['customer', 'category', 'receivedByEmployee'])
             ->latest()
@@ -91,17 +43,94 @@ class WorkshopDashboardController extends Controller
 
         return Inertia::render('authenticated/workshop-dashboard', [
             'stats' => [
-                'inWorkshop'          => $inWorkshop,
-                'readyCount'          => $readyCount,
-                'unpaidTotal'         => number_format((float) $unpaidTotal, 2),
-                'unpaidCount'         => count($unpaidMotorsList),
-                'accountOutstanding'  => number_format((float) $accountOutstanding, 2),
-                'accountCount'        => $accountCustomerIds->count(),
-                'receivedToday'       => $receivedToday,
-                'deliveredToday'      => $deliveredToday,
+                'inWorkshop'         => $inWorkshop,
+                'readyCount'         => $readyCount,
+                'unpaidTotal'        => number_format($unpaid['total'], 2),
+                'unpaidCount'        => $unpaid['count'],
+                'accountOutstanding' => number_format($account['total'], 2),
+                'accountCount'       => $account['count'],
+                'receivedToday'      => $receivedToday,
+                'deliveredToday'     => $deliveredToday,
             ],
             'recentMotors' => $recentMotors,
-            'unpaidMotors' => $top5Unpaid,
+            'unpaidMotors' => $unpaid['top'],
         ]);
+    }
+
+    /**
+     * Per-motor balance for direct-pay customers, computed in SQL:
+     * (labor + parts) − payments, keeping only motors that still owe something.
+     */
+    private function unpaidDirectMotors(): array
+    {
+        $labor = DB::table('maintenance_orders')
+            ->selectRaw('motor_id, SUM(labor_cost) AS labor')
+            ->whereNull('deleted_at')
+            ->groupBy('motor_id');
+
+        $parts = DB::table('parts_used')
+            ->join('maintenance_orders', 'maintenance_orders.id', '=', 'parts_used.maintenance_id')
+            ->selectRaw('maintenance_orders.motor_id, SUM(parts_used.total_cost) AS parts')
+            ->whereNull('parts_used.deleted_at')
+            ->whereNull('maintenance_orders.deleted_at')
+            ->groupBy('maintenance_orders.motor_id');
+
+        $paid = DB::table('transactions')
+            ->selectRaw('motor_id, SUM(amount) AS paid')
+            ->whereNull('deleted_at')
+            ->whereNotNull('motor_id')
+            ->groupBy('motor_id');
+
+        $balances = DB::table('motors')
+            ->join('customers', 'customers.id', '=', 'motors.customer_id')
+            ->leftJoinSub($labor, 'l', 'l.motor_id', '=', 'motors.id')
+            ->leftJoinSub($parts, 'p', 'p.motor_id', '=', 'motors.id')
+            ->leftJoinSub($paid,  't', 't.motor_id', '=', 'motors.id')
+            ->whereNull('motors.deleted_at')
+            ->where('customers.account_type', '!=', 'account')
+            ->selectRaw('
+                motors.id, motors.reference_number, motors.status,
+                customers.id AS customer_id, customers.name AS customer_name, customers.phone AS customer_phone,
+                (COALESCE(l.labor, 0) + COALESCE(p.parts, 0) - COALESCE(t.paid, 0)) AS remaining
+            ');
+
+        $rows = DB::query()
+            ->fromSub($balances, 'b')
+            ->where('remaining', '>', 0.009)
+            ->orderByDesc('remaining')
+            ->get();
+
+        return [
+            'total' => (float) $rows->sum('remaining'),
+            'count' => $rows->count(),
+            'top'   => $rows->take(5)->map(fn($r) => [
+                'id'               => $r->id,
+                'reference_number' => $r->reference_number,
+                'customer_id'      => $r->customer_id,
+                'customer_name'    => $r->customer_name,
+                'customer_phone'   => $r->customer_phone,
+                'status'           => $r->status,
+                'status_label'     => Motor::statusLabel($r->status),
+                'remaining'        => number_format((float) $r->remaining, 2),
+            ])->values()->all(),
+        ];
+    }
+
+    /**
+     * Account customers are billed through invoices, so their balance is
+     * invoices + opening balance − all payments — the same formula the statement page uses.
+     */
+    private function accountCustomersOutstanding(): array
+    {
+        $customers = Customer::where('account_type', 'account')
+            ->withSum('invoices as invoiced', 'amount')
+            ->withSum('transactions as paid', 'amount')
+            ->get();
+
+        $total = $customers->sum(fn($c) => max(0,
+            (float) ($c->invoiced ?? 0) + (float) ($c->opening_balance ?? 0) - (float) ($c->paid ?? 0)
+        ));
+
+        return ['total' => (float) $total, 'count' => $customers->count()];
     }
 }

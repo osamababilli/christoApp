@@ -1,3 +1,8 @@
+import { Header } from '@/components/layout/header';
+import { Main } from '@/components/layout/main';
+import { PaginationLinks } from '@/components/pagination-links';
+import { ProfileDropdown } from '@/components/profile-dropdown';
+import { ThemeSwitch } from '@/components/theme-switch';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -8,17 +13,14 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Header } from '@/components/layout/header';
-import { Main } from '@/components/layout/main';
-import { ProfileDropdown } from '@/components/profile-dropdown';
-import { ThemeSwitch } from '@/components/theme-switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
 import { cn } from '@/lib/utils';
-import { router, Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -47,25 +49,26 @@ interface Props {
 }
 
 const statusConfig: Record<string, string> = {
-    draft:     'bg-gray-100 text-gray-700 border-gray-200',
-    sent:      'bg-blue-100 text-blue-800 border-blue-200',
-    accepted:  'bg-green-100 text-green-800 border-green-200',
-    rejected:  'bg-red-100 text-red-800 border-red-200',
+    draft: 'bg-gray-100 text-gray-700 border-gray-200',
+    sent: 'bg-blue-100 text-blue-800 border-blue-200',
+    accepted: 'bg-green-100 text-green-800 border-green-200',
+    rejected: 'bg-red-100 text-red-800 border-red-200',
     converted: 'bg-purple-100 text-purple-800 border-purple-200',
 };
 
 const statusFilters = [
-    { value: '',          label: 'الكل' },
-    { value: 'draft',     label: 'مسودة' },
-    { value: 'sent',      label: 'تم الإرسال' },
-    { value: 'accepted',  label: 'مقبول' },
-    { value: 'rejected',  label: 'مرفوض' },
+    { value: '', label: 'الكل' },
+    { value: 'draft', label: 'مسودة' },
+    { value: 'sent', label: 'تم الإرسال' },
+    { value: 'accepted', label: 'مقبول' },
+    { value: 'rejected', label: 'مرفوض' },
     { value: 'converted', label: 'تم التحويل' },
 ];
 
 export function QuotationsList({ quotations, filters }: Props) {
-    const [search,      setSearch]      = useState(filters.search ?? '');
-    const [status,      setStatus]      = useState(filters.status ?? '');
+    const can = useCan();
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [status, setStatus] = useState(filters.status ?? '');
     const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
     function applyFilters(newSearch?: string, newStatus?: string) {
@@ -93,7 +96,7 @@ export function QuotationsList({ quotations, filters }: Props) {
                     <div className="relative max-w-sm flex-1">
                         <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
-                            className="ps-9 min-h-[44px] text-base"
+                            className="min-h-[44px] ps-9 text-base"
                             placeholder="بحث بالاسم أو الجوال أو رقم العرض..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -135,7 +138,7 @@ export function QuotationsList({ quotations, filters }: Props) {
                                 applyFilters(undefined, sf.value);
                             }}
                             className={cn(
-                                'rounded-full border px-3.5 py-1 text-sm font-medium transition-all cursor-pointer',
+                                'cursor-pointer rounded-full border px-3.5 py-1 text-sm font-medium transition-all',
                                 status === sf.value
                                     ? 'border-foreground bg-foreground text-background shadow-sm'
                                     : 'border-border bg-background text-muted-foreground hover:bg-muted',
@@ -163,7 +166,7 @@ export function QuotationsList({ quotations, filters }: Props) {
                             <TableBody>
                                 {quotations.data.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="py-12 text-center text-muted-foreground text-lg">
+                                        <TableCell colSpan={7} className="py-12 text-center text-lg text-muted-foreground">
                                             لا توجد عروض أسعار مطابقة للبحث
                                         </TableCell>
                                     </TableRow>
@@ -171,12 +174,17 @@ export function QuotationsList({ quotations, filters }: Props) {
                                     quotations.data.map((q) => (
                                         <TableRow key={q.id}>
                                             <TableCell>
-                                                <Link href={`/quotations/${q.id}`} className="font-mono font-semibold text-primary hover:underline underline-offset-2">
+                                                <Link
+                                                    href={`/quotations/${q.id}`}
+                                                    className="font-mono font-semibold text-primary underline-offset-2 hover:underline"
+                                                >
                                                     {q.reference_number}
                                                 </Link>
                                             </TableCell>
                                             <TableCell className="font-medium">{q.customer_name}</TableCell>
-                                            <TableCell dir="ltr" className="text-right">{q.customer_phone}</TableCell>
+                                            <TableCell dir="ltr" className="text-right">
+                                                {q.customer_phone}
+                                            </TableCell>
                                             <TableCell>
                                                 <Badge
                                                     variant="outline"
@@ -201,15 +209,17 @@ export function QuotationsList({ quotations, filters }: Props) {
                                                             </Button>
                                                         </Link>
                                                     )}
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        title="حذف"
-                                                        className="text-destructive hover:text-destructive"
-                                                        onClick={() => setDeleteTarget(q.id)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    {can('delete-quotations') && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            title="حذف"
+                                                            className="text-destructive hover:text-destructive"
+                                                            onClick={() => setDeleteTarget(q.id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -227,24 +237,7 @@ export function QuotationsList({ quotations, filters }: Props) {
                             صفحة <span className="font-semibold text-foreground">{quotations.current_page}</span> من{' '}
                             <span className="font-semibold text-foreground">{quotations.last_page}</span>
                         </p>
-                        <div className="flex items-center gap-1.5">
-                            {quotations.links.map((link, i) => {
-                                const isPrev = link.label.includes('previous') || link.label.includes('Previous') || link.label === '&laquo; Previous';
-                                const isNext = link.label.includes('next') || link.label.includes('Next') || link.label === 'Next &raquo;';
-                                const displayLabel = isPrev ? '&raquo; السابق' : isNext ? 'التالي &laquo;' : link.label;
-                                return (
-                                    <Button
-                                        key={i}
-                                        variant={link.active ? 'default' : 'outline'}
-                                        size="sm"
-                                        className="min-w-[36px]"
-                                        disabled={!link.url}
-                                        onClick={() => link.url && router.visit(link.url)}
-                                        dangerouslySetInnerHTML={{ __html: displayLabel }}
-                                    />
-                                );
-                            })}
-                        </div>
+                        <PaginationLinks links={quotations.links} />
                     </div>
                 )}
             </Main>
@@ -254,16 +247,11 @@ export function QuotationsList({ quotations, filters }: Props) {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            هل أنت متأكد من حذف هذا العرض؟ لا يمكن التراجع عن هذا الإجراء.
-                        </AlertDialogDescription>
+                        <AlertDialogDescription>هل أنت متأكد من حذف هذا العرض؟ لا يمكن التراجع عن هذا الإجراء.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                        <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={doDelete}
-                        >
+                        <AlertDialogAction className="text-destructive-foreground bg-destructive hover:bg-destructive/90" onClick={doDelete}>
                             نعم، احذف
                         </AlertDialogAction>
                     </AlertDialogFooter>

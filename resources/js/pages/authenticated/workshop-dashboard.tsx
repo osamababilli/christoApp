@@ -21,6 +21,7 @@ interface Props {
         status_label: string;
         received_at: string;
         category_name: string | null;
+        received_by_name: string | null;
     }>;
     unpaidMotors: Array<{
         id: number;

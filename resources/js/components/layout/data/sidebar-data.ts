@@ -1,30 +1,28 @@
 import {
-    Bug,
-    ClipboardSignature,
-    Construction,
-    FileX,
-    LayoutDashboard,
-    Lock,
-    ServerOff,
-    ShieldCheck,
-    Users,
-    Wrench,
-    ClipboardList,
-    Package,
-    Truck,
     BarChart3,
+    ClipboardList,
+    ClipboardSignature,
     Cog,
-    UserCircle,
-    Vault,
+    FileSpreadsheet,
     FolderOpen,
+    LayoutDashboard,
+    Package,
+    ReceiptText,
+    Tags,
+    Truck,
+    UserCircle,
+    UserCog,
+    Users,
+    Vault,
+    Wrench,
 } from 'lucide-react';
 import { type SidebarData } from '../types';
 
 export const sidebarData: SidebarData = {
     user: {
-        name: 'سوبر ادمن',
-        email: 'admin@workshop.com',
-        avatar: '/avatars/shadcn.jpg',
+        name: 'مستخدم',
+        email: '',
+        avatar: '',
     },
     teams: [
         {
@@ -37,66 +35,31 @@ export const sidebarData: SidebarData = {
         {
             title: 'الرئيسية',
             items: [
-                {
-                    title: 'لوحة التحكم',
-                    url: '/',
-                    icon: LayoutDashboard,
-                },
-                {
-                    title: 'قيود الاستلام',
-                    url: '/motors',
-                    icon: Wrench,
-                },
-                {
-                    title: 'عروض الأسعار',
-                    url: '/quotations',
-                    icon: ClipboardSignature,
-                },
-                {
-                    title: 'الصيانة',
-                    url: '/maintenance',
-                    icon: ClipboardList,
-                },
-                {
-                    title: 'القطع والمستلزمات',
-                    url: '/parts',
-                    icon: Package,
-                },
-                {
-                    title: 'العملاء',
-                    url: '/customers',
-                    icon: Users,
-                },
-                {
-                    title: 'الموردون',
-                    url: '/suppliers',
-                    icon: Truck,
-                },
-                {
-                    title: 'الموظفون',
-                    url: '/employees',
-                    icon: UserCircle,
-                },
-                {
-                    title: 'وثائق المحل',
-                    url: '/documents',
-                    icon: FolderOpen,
-                },
+                { title: 'لوحة التحكم',        url: '/',            icon: LayoutDashboard },
+                { title: 'قيود الاستلام',      url: '/motors',      icon: Wrench },
+                { title: 'عروض الأسعار',       url: '/quotations',  icon: ClipboardSignature },
+                { title: 'الصيانة',            url: '/maintenance', icon: ClipboardList },
+                { title: 'القطع والمستلزمات',  url: '/parts',       icon: Package },
+                { title: 'العملاء',            url: '/customers',   icon: Users },
+                { title: 'الموردون',           url: '/suppliers',   icon: Truck },
+                { title: 'الموظفون',           url: '/employees',   icon: UserCircle, roles: ['admin', 'manager'] },
+                { title: 'وثائق المحل',        url: '/documents',   icon: FolderOpen },
             ],
         },
         {
             title: 'المالية',
             items: [
-                {
-                    title: 'المحاسبة والخزنة',
-                    url: '/accounting',
-                    icon: Vault,
-                },
-                {
-                    title: 'التقارير',
-                    url: '/reports',
-                    icon: BarChart3,
-                },
+                { title: 'الفواتير',            url: '/invoices',   icon: FileSpreadsheet },
+                { title: 'كشف حساب',            url: '/statement',  icon: ReceiptText },
+                { title: 'المحاسبة والخزنة',    url: '/accounting', icon: Vault,     roles: ['admin', 'manager'] },
+                { title: 'التقارير',            url: '/reports',    icon: BarChart3, roles: ['admin', 'manager'] },
+            ],
+        },
+        {
+            title: 'الإدارة',
+            items: [
+                { title: 'المستخدمون',  url: '/settings/users',      icon: UserCog, roles: ['admin'] },
+                { title: 'التصنيفات',   url: '/settings/categories', icon: Tags,    roles: ['admin'] },
             ],
         },
     ],

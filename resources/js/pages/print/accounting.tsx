@@ -29,12 +29,6 @@ const TYPE_COLOR: Record<string, string> = {
     deposit: '#0284c7',
 };
 
-const TYPE_SIGN: Record<string, string> = {
-    income:  '+',
-    expense: '−',
-    deposit: '+',
-};
-
 const TYPE_BG: Record<string, string> = {
     income:  '#f0fdf4',
     expense: '#fff1f2',
@@ -67,7 +61,11 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
     };
 
     // Running balance per row
-    let running = 0;
+    const rowsWithRunning = entries.reduce<Array<{ entry: (typeof entries)[number]; running: number }>>((acc, entry) => {
+        const prev = acc.length ? acc[acc.length - 1].running : 0;
+        acc.push({ entry, running: prev + (entry.type === 'expense' ? -entry.amount : entry.amount) });
+        return acc;
+    }, []);
 
     return (
         <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", background: '#fff', color: '#111', minHeight: '100vh' }}>
@@ -170,9 +168,8 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
                             </tr>
                         </thead>
                         <tbody>
-                            {entries.map((entry, i) => {
+                            {rowsWithRunning.map(({ entry, running }, i) => {
                                 const isExpense = entry.type === 'expense';
-                                running += isExpense ? -entry.amount : entry.amount;
                                 const runningPos = running >= 0;
 
                                 return (
@@ -276,7 +273,7 @@ function SummaryCard({ label, value, sub, color, bg, border, bold }: {
 
 function Th({ children, align }: { children: React.ReactNode; align?: string }) {
     return (
-        <th style={{ padding: '8px 12px', textAlign: (align ?? 'right') as any, fontWeight: 700, fontSize: 12 }}>
+        <th style={{ padding: '8px 12px', textAlign: (align ?? 'right') as React.CSSProperties['textAlign'], fontWeight: 700, fontSize: 12 }}>
             {children}
         </th>
     );
@@ -284,7 +281,7 @@ function Th({ children, align }: { children: React.ReactNode; align?: string }) 
 
 function Td({ children, align, ltr }: { children: React.ReactNode; align?: string; ltr?: boolean }) {
     return (
-        <td style={{ padding: '7px 12px', textAlign: (align ?? 'right') as any, verticalAlign: 'middle', direction: ltr ? 'ltr' : undefined }}>
+        <td style={{ padding: '7px 12px', textAlign: (align ?? 'right') as React.CSSProperties['textAlign'], verticalAlign: 'middle', direction: ltr ? 'ltr' : undefined }}>
             {children}
         </td>
     );

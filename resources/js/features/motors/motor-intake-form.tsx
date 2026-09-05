@@ -201,7 +201,7 @@ export function MotorIntakeForm({ customers, employees, suppliers }: Props) {
                         }}
                         onNewNameChange={setCustomerName}
                         onNewPhoneChange={setCustomerPhone}
-                        errors={errors as any}
+                        errors={errors as Record<string, string>}
                     />
                 </CardContent>
             </Card>

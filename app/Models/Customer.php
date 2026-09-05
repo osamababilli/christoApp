@@ -11,7 +11,10 @@ class Customer extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'phone', 'email', 'notes', 'account_type', 'opening_balance', 'opening_balance_notes'];
+    protected $fillable = [
+        'name', 'phone', 'email', 'notes', 'account_type', 'opening_balance', 'opening_balance_notes',
+        'client_type', 'address', 'responsible_name', 'accounting_name', 'accounting_phone', 'accounting_email',
+    ];
 
     protected $casts = ['opening_balance' => 'decimal:2'];
 
@@ -20,8 +23,33 @@ class Customer extends Model
         return $this->hasMany(Motor::class);
     }
 
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(CustomerContact::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function quotations(): HasMany
+    {
+        return $this->hasMany(Quotation::class);
+    }
+
+    public static function clientTypeLabel(?string $type): string
+    {
+        return match ($type) {
+            'military' => 'مؤسسة عسكرية',
+            'garage'   => 'كراج',
+            'company'  => 'شركة',
+            default    => 'فردي',
+        };
     }
 }

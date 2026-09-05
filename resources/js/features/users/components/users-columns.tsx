@@ -68,7 +68,7 @@ export const usersColumns: ColumnDef<User>[] = [
         header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
         cell: ({ row }) => {
             const status = row.getValue<string>('status');
-            const badgeColor = callTypes.get(status as any);
+            const badgeColor = callTypes.get(status as Parameters<typeof callTypes.get>[0]);
             return (
                 <Badge variant="outline" className={cn('capitalize', badgeColor)}>
                     {status}

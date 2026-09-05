@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from '@inertiajs/react';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -12,7 +12,7 @@ import { z } from 'zod';
 
 const formSchema = z.object({
     email: z.email({
-        error: (iss) => (iss.input === '' ? 'Please enter your email' : undefined),
+        error: (iss) => (iss.input === '' ? 'يرجى إدخال البريد الإلكتروني' : 'البريد الإلكتروني غير صالح'),
     }),
 });
 
@@ -30,7 +30,7 @@ export function ForgotPasswordForm({ className, ...props }: React.HTMLAttributes
             onFinish: () => setIsLoading(false),
             onSuccess: () => {
                 form.reset();
-                toast.success(`Password reset link sent to ${data.email}`);
+                toast.success(`تم إرسال رابط إعادة التعيين إلى ${data.email}`);
             },
             onError: (errors) => {
                 if (errors.email) form.setError('email', { message: errors.email });
@@ -46,17 +46,17 @@ export function ForgotPasswordForm({ className, ...props }: React.HTMLAttributes
                     name="email"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>البريد الإلكتروني</FormLabel>
                             <FormControl>
-                                <Input placeholder="name@example.com" {...field} />
+                                <Input placeholder="example@domain.com" dir="ltr" className="text-left placeholder:text-right" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-                <Button className="mt-2" disabled={isLoading}>
-                    Continue
-                    {isLoading ? <Loader2 className="animate-spin" /> : <ArrowRight />}
+                <Button className="mt-2 gap-2" disabled={isLoading}>
+                    إرسال الرابط
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowLeft className="h-4 w-4" />}
                 </Button>
             </form>
         </Form>

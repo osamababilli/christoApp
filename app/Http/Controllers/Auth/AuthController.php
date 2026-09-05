@@ -17,9 +17,17 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
+        $user = User::where('email', $credentials['email'])->first();
+
+        if ($user && $user->status !== 'active') {
+            throw ValidationException::withMessages([
+                'email' => 'تم تعطيل هذا الحساب — تواصل مع مدير النظام',
+            ]);
+        }
+
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages([
-                'email' => 'The provided credentials are incorrect.',
+                'email' => 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
             ]);
         }
 

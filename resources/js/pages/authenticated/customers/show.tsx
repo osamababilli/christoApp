@@ -2,12 +2,6 @@ import { Header } from '@/components/layout/header';
 import { Main } from '@/components/layout/main';
 import { ProfileDropdown } from '@/components/profile-dropdown';
 import { ThemeSwitch } from '@/components/theme-switch';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
-import { Link, router, useForm } from '@inertiajs/react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -18,6 +12,13 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
+import { cn } from '@/lib/utils';
+import { Link, router, useForm } from '@inertiajs/react';
 import { ArrowRight, CheckCircle2, Clock, CreditCard, FileText, Phone, Plus, Star, Trash2, User, Wallet } from 'lucide-react';
 import { useState } from 'react';
 
@@ -28,10 +29,15 @@ interface Motor {
     status_label: string;
     received_at: string | null;
     delivered_at: string | null;
-    total_labor: number;
-    total_parts: number;
-    grand_total: number;
-    total_paid: number;
+}
+
+interface Invoice {
+    id: number;
+    invoice_number: string;
+    description: string;
+    issued_date: string;
+    amount: number;
+    paid: number;
     remaining: number;
 }
 
@@ -40,11 +46,16 @@ interface CustomerTransaction {
     type: 'payment' | 'discount';
     type_label: string;
     amount: number;
-    payment_method: 'cash' | 'whish' | 'omt' | null;
+    payment_method: 'cash' | 'whish' | 'omt' | 'check' | null;
     payment_method_label: string | null;
     reference_no: string | null;
     notes: string | null;
     transaction_date: string;
+}
+
+interface ContactPerson {
+    name: string;
+    phone: string;
 }
 
 interface Customer {
@@ -58,6 +69,14 @@ interface Customer {
     account_type: 'direct' | 'account';
     opening_balance: number;
     opening_balance_notes: string | null;
+    client_type: 'individual' | 'military' | 'garage' | 'company';
+    client_type_label: string;
+    address: string | null;
+    responsible_name: string | null;
+    accounting_name: string | null;
+    accounting_phone: string | null;
+    accounting_email: string | null;
+    contacts: ContactPerson[];
     created_at: string;
 }
 
@@ -72,6 +91,7 @@ interface Summary {
 interface Props {
     customer: Customer;
     motors: Motor[];
+    invoices: Invoice[];
     summary: Summary;
     customer_transactions: CustomerTransaction[];
 }
@@ -79,8 +99,8 @@ interface Props {
 const statusColors: Record<string, string> = {
     in_workshop: 'bg-blue-100 text-blue-800 border-blue-200',
     in_progress: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    ready:       'bg-green-100 text-green-800 border-green-200',
-    delivered:   'bg-gray-100 text-gray-700 border-gray-200',
+    ready: 'bg-green-100 text-green-800 border-green-200',
+    delivered: 'bg-gray-100 text-gray-700 border-gray-200',
 };
 
 function fmt(n: number) {
@@ -88,37 +108,53 @@ function fmt(n: number) {
 }
 
 const paymentTypeConfig = {
-    payment:  { label: 'دفعة',  color: 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300',     active: 'ring-2 ring-green-400'  },
-    discount: { label: 'خصم',   color: 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300', active: 'ring-2 ring-purple-400' },
+    payment: {
+        label: 'دفعة',
+        color: 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300',
+        active: 'ring-2 ring-green-400',
+    },
+    discount: {
+        label: 'خصم',
+        color: 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300',
+        active: 'ring-2 ring-purple-400',
+    },
 };
 
-function AccountTransactionsSection({ customerId, transactions, totalInvoiced }: {
+function AccountTransactionsSection({
+    customerId,
+    transactions,
+    totalInvoiced,
+}: {
     customerId: number;
     transactions: CustomerTransaction[];
     totalInvoiced: number;
 }) {
-    const [showForm, setShowForm]   = useState(false);
+    const can = useCan();
+    const [showForm, setShowForm] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<CustomerTransaction | null>(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        type:             'payment' as 'payment' | 'discount',
-        amount:           '',
-        payment_method:   'cash' as 'cash' | 'whish' | 'omt',
-        reference_no:     '',
-        notes:            '',
+        type: 'payment' as 'payment' | 'discount',
+        amount: '',
+        payment_method: 'cash' as 'cash' | 'whish' | 'omt',
+        reference_no: '',
+        notes: '',
         transaction_date: new Date().toISOString().split('T')[0],
     });
 
-    const totalPaid     = transactions.filter(t => t.type === 'payment').reduce((s, t) => s + t.amount, 0);
-    const totalDiscount = transactions.filter(t => t.type === 'discount').reduce((s, t) => s + t.amount, 0);
+    const totalPaid = transactions.filter((t) => t.type === 'payment').reduce((s, t) => s + t.amount, 0);
+    const totalDiscount = transactions.filter((t) => t.type === 'discount').reduce((s, t) => s + t.amount, 0);
     const totalCredited = totalPaid + totalDiscount;
-    const remaining     = totalInvoiced - totalCredited;
+    const remaining = totalInvoiced - totalCredited;
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
         post(`/customers/${customerId}/transactions`, {
             preserveScroll: true,
-            onSuccess: () => { reset(); setShowForm(false); },
+            onSuccess: () => {
+                reset();
+                setShowForm(false);
+            },
         });
     }
 
@@ -148,22 +184,39 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                     <div className="grid grid-cols-3 gap-3">
                         <div className="rounded-xl border bg-muted/40 px-4 py-3">
                             <p className="text-xs text-muted-foreground">إجمالي الفواتير</p>
-                            <p className="mt-0.5 text-lg font-bold font-mono" dir="ltr">$ {fmt(totalInvoiced)}</p>
+                            <p className="mt-0.5 font-mono text-lg font-bold" dir="ltr">
+                                $ {fmt(totalInvoiced)}
+                            </p>
                         </div>
                         <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 dark:border-green-900 dark:bg-green-950/30">
                             <p className="text-xs text-green-700 dark:text-green-400">المدفوع</p>
-                            <p className="mt-0.5 text-lg font-bold text-green-700 dark:text-green-400 font-mono" dir="ltr">$ {fmt(totalCredited)}</p>
+                            <p className="mt-0.5 font-mono text-lg font-bold text-green-700 dark:text-green-400" dir="ltr">
+                                $ {fmt(totalCredited)}
+                            </p>
                         </div>
-                        <div className={cn(
-                            'rounded-xl border px-4 py-3',
-                            remaining <= 0
-                                ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30'
-                                : 'border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/30',
-                        )}>
-                            <p className={cn('text-xs', remaining <= 0 ? 'text-green-700 dark:text-green-400' : 'text-orange-700 dark:text-orange-400')}>
+                        <div
+                            className={cn(
+                                'rounded-xl border px-4 py-3',
+                                remaining <= 0
+                                    ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30'
+                                    : 'border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/30',
+                            )}
+                        >
+                            <p
+                                className={cn(
+                                    'text-xs',
+                                    remaining <= 0 ? 'text-green-700 dark:text-green-400' : 'text-orange-700 dark:text-orange-400',
+                                )}
+                            >
                                 المتبقي
                             </p>
-                            <p className={cn('mt-0.5 text-lg font-bold font-mono', remaining <= 0 ? 'text-green-700 dark:text-green-400' : 'text-orange-700 dark:text-orange-400')} dir="ltr">
+                            <p
+                                className={cn(
+                                    'mt-0.5 font-mono text-lg font-bold',
+                                    remaining <= 0 ? 'text-green-700 dark:text-green-400' : 'text-orange-700 dark:text-orange-400',
+                                )}
+                                dir="ltr"
+                            >
                                 {remaining <= 0 ? '✓ مسدد' : `$ ${fmt(remaining)}`}
                             </p>
                         </div>
@@ -171,7 +224,7 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
 
                     {/* Add payment form */}
                     {showForm && (
-                        <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 space-y-3">
+                        <div className="space-y-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4">
                             <form onSubmit={submit} className="space-y-3">
                                 <div className="flex gap-2">
                                     {(Object.entries(paymentTypeConfig) as [string, typeof paymentTypeConfig.payment][]).map(([val, cfg]) => (
@@ -180,7 +233,7 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                                             type="button"
                                             onClick={() => setData('type', val as 'payment' | 'discount')}
                                             className={cn(
-                                                'rounded-lg border px-4 py-1.5 text-sm font-semibold transition-all cursor-pointer',
+                                                'cursor-pointer rounded-lg border px-4 py-1.5 text-sm font-semibold transition-all',
                                                 cfg.color,
                                                 data.type === val && cfg.active,
                                             )}
@@ -199,7 +252,7 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                                             type="number"
                                             min="0.01"
                                             step="0.01"
-                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                             placeholder="0.00"
                                             value={data.amount}
                                             onChange={(e) => setData('amount', e.target.value)}
@@ -210,7 +263,7 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                                         <label className="text-xs font-medium text-muted-foreground">التاريخ</label>
                                         <input
                                             type="date"
-                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                             value={data.transaction_date}
                                             onChange={(e) => setData('transaction_date', e.target.value)}
                                         />
@@ -219,7 +272,7 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                                         <label className="text-xs font-medium text-muted-foreground">ملاحظة</label>
                                         <input
                                             type="text"
-                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                             placeholder="اختياري..."
                                             value={data.notes}
                                             onChange={(e) => setData('notes', e.target.value)}
@@ -232,19 +285,21 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                                         <div className="space-y-1">
                                             <label className="text-xs font-medium text-muted-foreground">طريقة الدفع</label>
                                             <div className="grid grid-cols-3 gap-1.5">
-                                                {([
-                                                    { value: 'cash', label: 'Cash' },
-                                                    { value: 'whish', label: 'Whish' },
-                                                    { value: 'omt', label: 'Omt' },
-                                                ] as const).map((opt) => (
+                                                {(
+                                                    [
+                                                        { value: 'cash', label: 'Cash' },
+                                                        { value: 'whish', label: 'Whish' },
+                                                        { value: 'omt', label: 'Omt' },
+                                                    ] as const
+                                                ).map((opt) => (
                                                     <button
                                                         key={opt.value}
                                                         type="button"
                                                         onClick={() => setData('payment_method', opt.value)}
                                                         className={cn(
-                                                            'rounded-lg border px-2 py-1.5 text-xs font-semibold transition-all cursor-pointer',
+                                                            'cursor-pointer rounded-lg border px-2 py-1.5 text-xs font-semibold transition-all',
                                                             data.payment_method === opt.value
-                                                                ? 'border-green-400 bg-green-50 text-green-700 ring-2 ring-green-400 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300'
+                                                                ? 'border-green-400 bg-green-50 text-green-700 ring-2 ring-green-400 dark:border-green-700 dark:bg-green-950/40 dark:text-green-300'
                                                                 : 'border-muted bg-muted/20 text-muted-foreground hover:bg-muted/50',
                                                         )}
                                                     >
@@ -259,7 +314,7 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                                                 <input
                                                     type="text"
                                                     dir="ltr"
-                                                    className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                    className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                                     placeholder="مثال: 123456"
                                                     value={data.reference_no}
                                                     onChange={(e) => setData('reference_no', e.target.value)}
@@ -272,9 +327,15 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
 
                                 <div className="flex gap-2">
                                     <Button type="submit" size="sm" className="flex-1 gap-2" disabled={processing}>
-                                        {processing
-                                            ? <><Clock className="h-3.5 w-3.5 animate-spin" /> جاري الحفظ...</>
-                                            : <><CheckCircle2 className="h-3.5 w-3.5" /> تسجيل</>}
+                                        {processing ? (
+                                            <>
+                                                <Clock className="h-3.5 w-3.5 animate-spin" /> جاري الحفظ...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle2 className="h-3.5 w-3.5" /> تسجيل
+                                            </>
+                                        )}
                                     </Button>
                                     <Button type="button" variant="outline" size="sm" className="px-5" onClick={() => setShowForm(false)}>
                                         إلغاء
@@ -302,13 +363,19 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                                     {transactions.map((t) => (
                                         <TableRow key={t.id}>
                                             <TableCell>
-                                                <Badge variant="outline" className={cn('text-xs', t.type === 'payment'
-                                                    ? 'border-green-300 bg-green-50 text-green-700'
-                                                    : 'border-purple-300 bg-purple-50 text-purple-700')}>
+                                                <Badge
+                                                    variant="outline"
+                                                    className={cn(
+                                                        'text-xs',
+                                                        t.type === 'payment'
+                                                            ? 'border-green-300 bg-green-50 text-green-700'
+                                                            : 'border-purple-300 bg-purple-50 text-purple-700',
+                                                    )}
+                                                >
                                                     {t.type_label}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="font-mono font-semibold text-sm" dir="ltr">
+                                            <TableCell className="font-mono text-sm font-semibold" dir="ltr">
                                                 $ {fmt(t.amount)}
                                             </TableCell>
                                             <TableCell className="text-sm text-muted-foreground">
@@ -321,14 +388,16 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                                             </TableCell>
                                             <TableCell className="text-sm text-muted-foreground">{t.notes ?? '—'}</TableCell>
                                             <TableCell>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 text-destructive hover:text-destructive"
-                                                    onClick={() => setDeleteTarget(t)}
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
+                                                {can('delete-payments') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-destructive hover:text-destructive"
+                                                        onClick={() => setDeleteTarget(t)}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -337,9 +406,7 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                         </div>
                     )}
 
-                    {transactions.length === 0 && (
-                        <p className="py-4 text-center text-sm text-muted-foreground">لا توجد دفعات مسجلة</p>
-                    )}
+                    {transactions.length === 0 && <p className="py-4 text-center text-sm text-muted-foreground">لا توجد دفعات مسجلة</p>}
                 </CardContent>
             </Card>
 
@@ -347,13 +414,11 @@ function AccountTransactionsSection({ customerId, transactions, totalInvoiced }:
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>حذف الدفعة</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            هل أنت متأكد من حذف هذه الدفعة؟ لا يمكن التراجع.
-                        </AlertDialogDescription>
+                        <AlertDialogDescription>هل أنت متأكد من حذف هذه الدفعة؟ لا يمكن التراجع.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        <AlertDialogAction onClick={confirmDelete} className="text-destructive-foreground bg-destructive hover:bg-destructive/90">
                             حذف
                         </AlertDialogAction>
                     </AlertDialogFooter>
@@ -368,10 +433,14 @@ function AccountTypeToggle({ customer }: { customer: Customer }) {
 
     function switchTo(type: 'direct' | 'account') {
         setLoading(true);
-        router.patch(`/customers/${customer.id}/type`, { account_type: type }, {
-            preserveScroll: true,
-            onFinish: () => setLoading(false),
-        });
+        router.patch(
+            `/customers/${customer.id}/type`,
+            { account_type: type },
+            {
+                preserveScroll: true,
+                onFinish: () => setLoading(false),
+            },
+        );
     }
 
     return (
@@ -382,9 +451,7 @@ function AccountTypeToggle({ customer }: { customer: Customer }) {
                 onClick={() => switchTo('direct')}
                 className={cn(
                     'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all',
-                    customer.account_type === 'direct'
-                        ? 'bg-background shadow text-foreground'
-                        : 'text-muted-foreground hover:text-foreground',
+                    customer.account_type === 'direct' ? 'bg-background text-foreground shadow' : 'text-muted-foreground hover:text-foreground',
                 )}
             >
                 <CreditCard className="h-3.5 w-3.5" />
@@ -396,9 +463,7 @@ function AccountTypeToggle({ customer }: { customer: Customer }) {
                 onClick={() => switchTo('account')}
                 className={cn(
                     'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all',
-                    customer.account_type === 'account'
-                        ? 'bg-blue-600 shadow text-white'
-                        : 'text-muted-foreground hover:text-foreground',
+                    customer.account_type === 'account' ? 'bg-blue-600 text-white shadow' : 'text-muted-foreground hover:text-foreground',
                 )}
             >
                 <Wallet className="h-3.5 w-3.5" />
@@ -408,7 +473,7 @@ function AccountTypeToggle({ customer }: { customer: Customer }) {
     );
 }
 
-export default function CustomerShow({ customer, motors, summary, customer_transactions }: Props) {
+export default function CustomerShow({ customer, motors, invoices, summary, customer_transactions }: Props) {
     const isAccount = customer.account_type === 'account';
 
     return (
@@ -424,13 +489,13 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                     <span className="text-muted-foreground">/</span>
                     <span className="font-semibold">{customer.name}</span>
                     {customer.is_loyal && (
-                        <Badge className="gap-1 bg-amber-100 text-amber-800 border-amber-300">
+                        <Badge className="gap-1 border-amber-300 bg-amber-100 text-amber-800">
                             <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                             عميل دائم
                         </Badge>
                     )}
                     {isAccount && (
-                        <Badge className="gap-1 bg-blue-100 text-blue-800 border-blue-300">
+                        <Badge className="gap-1 border-blue-300 bg-blue-100 text-blue-800">
                             <Wallet className="h-3 w-3" />
                             حساب جاري
                         </Badge>
@@ -459,14 +524,19 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                         <div>
                             <div className="flex items-center gap-2">
                                 <p className="text-xl font-bold">{customer.name}</p>
+                                {customer.client_type !== 'individual' && (
+                                    <Badge variant="outline" className="text-xs">
+                                        {customer.client_type_label}
+                                    </Badge>
+                                )}
                                 {customer.is_loyal && (
-                                    <Badge className="gap-1 bg-amber-100 text-amber-800 border-amber-300 text-xs">
+                                    <Badge className="gap-1 border-amber-300 bg-amber-100 text-xs text-amber-800">
                                         <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                                         دائم
                                     </Badge>
                                 )}
                                 {isAccount && (
-                                    <Badge className="gap-1 bg-blue-100 text-blue-800 border-blue-300 text-xs">
+                                    <Badge className="gap-1 border-blue-300 bg-blue-100 text-xs text-blue-800">
                                         <Wallet className="h-3 w-3" />
                                         حساب جاري
                                     </Badge>
@@ -476,11 +546,45 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                                 <Phone className="h-3.5 w-3.5" />
                                 {customer.phone}
                             </p>
-                            {customer.email && (
-                                <p className="text-sm text-muted-foreground">{customer.email}</p>
-                            )}
+                            {customer.email && <p className="text-sm text-muted-foreground">{customer.email}</p>}
                         </div>
                     </div>
+
+                    {customer.client_type !== 'individual' && (
+                        <div className="min-w-[260px] flex-1 space-y-2 rounded-xl border bg-card px-5 py-4 text-sm shadow-sm">
+                            {customer.address && (
+                                <p>
+                                    <span className="text-muted-foreground">العنوان: </span>
+                                    {customer.address}
+                                </p>
+                            )}
+                            {customer.responsible_name && (
+                                <p>
+                                    <span className="text-muted-foreground">المسؤول عنه: </span>
+                                    {customer.responsible_name}
+                                </p>
+                            )}
+                            {customer.contacts.length > 0 && (
+                                <div>
+                                    <span className="text-muted-foreground">الشخص الذي سلّمنا العمل: </span>
+                                    {customer.contacts.map((c, i) => (
+                                        <span key={i} className="inline-flex items-center gap-1" dir="ltr">
+                                            {i > 0 && <span className="text-muted-foreground">،</span>}
+                                            {c.name} ({c.phone})
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                            {customer.accounting_name && (
+                                <p>
+                                    <span className="text-muted-foreground">مسؤول المحاسبة: </span>
+                                    {customer.accounting_name}
+                                    {customer.accounting_phone && <span dir="ltr"> — {customer.accounting_phone}</span>}
+                                    {customer.accounting_email && <span dir="ltr"> — {customer.accounting_email}</span>}
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Opening balance notice */}
@@ -489,7 +593,10 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                         <span className="mt-0.5 text-amber-600 dark:text-amber-400">↩</span>
                         <div>
                             <p className="font-semibold text-amber-800 dark:text-amber-300">
-                                رصيد مرحّل: <span className="font-mono" dir="ltr">$ {fmt(customer.opening_balance)}</span>
+                                رصيد مرحّل:{' '}
+                                <span className="font-mono" dir="ltr">
+                                    $ {fmt(customer.opening_balance)}
+                                </span>
                             </p>
                             {customer.opening_balance_notes && (
                                 <p className="text-sm text-amber-700/80 dark:text-amber-400/80">{customer.opening_balance_notes}</p>
@@ -505,7 +612,7 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                             <CardTitle className="text-sm text-muted-foreground">عدد قيود الاستلام</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-3xl font-bold text-right">{summary.total_motors}</p>
+                            <p className="text-right text-3xl font-bold">{summary.total_motors}</p>
                         </CardContent>
                     </Card>
                     <Card>
@@ -513,7 +620,9 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                             <CardTitle className="text-sm text-muted-foreground">إجمالي الفواتير</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-2xl font-bold text-right font-mono" dir="ltr">$ {fmt(summary.total_invoiced)}</p>
+                            <p className="text-right font-mono text-2xl font-bold" dir="ltr">
+                                $ {fmt(summary.total_invoiced)}
+                            </p>
                         </CardContent>
                     </Card>
                     {summary.opening_balance > 0 && (
@@ -522,7 +631,7 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                                 <CardTitle className="text-sm text-amber-700 dark:text-amber-400">رصيد مرحّل</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-2xl font-bold text-right text-amber-700 dark:text-amber-400 font-mono" dir="ltr">
+                                <p className="text-right font-mono text-2xl font-bold text-amber-700 dark:text-amber-400" dir="ltr">
                                     $ {fmt(summary.opening_balance)}
                                 </p>
                             </CardContent>
@@ -535,22 +644,30 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-2xl font-bold text-right text-green-700 dark:text-green-400 font-mono" dir="ltr">
+                            <p className="text-right font-mono text-2xl font-bold text-green-700 dark:text-green-400" dir="ltr">
                                 $ {fmt(summary.total_paid)}
                             </p>
                         </CardContent>
                     </Card>
-                    <Card className={summary.total_remaining > 0.009
-                        ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30'
-                        : 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30'}>
+                    <Card
+                        className={
+                            summary.total_remaining > 0.009
+                                ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30'
+                                : 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30'
+                        }
+                    >
                         <CardHeader className="pb-2">
-                            <CardTitle className={`text-sm ${summary.total_remaining > 0.009 ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>
+                            <CardTitle
+                                className={`text-sm ${summary.total_remaining > 0.009 ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}
+                            >
                                 المتبقي الكلي
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className={`text-2xl font-bold text-right font-mono ${summary.total_remaining > 0.009 ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}
-                                dir="ltr">
+                            <p
+                                className={`text-right font-mono text-2xl font-bold ${summary.total_remaining > 0.009 ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}
+                                dir="ltr"
+                            >
                                 {summary.total_remaining > 0.009 ? `$ ${fmt(summary.total_remaining)}` : '✓ مسدد'}
                             </p>
                         </CardContent>
@@ -566,6 +683,63 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                     />
                 )}
 
+                {/* Invoices */}
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>الفواتير</CardTitle>
+                        <Link href={`/invoices?customer_id=${customer.id}`}>
+                            <Button size="sm" className="gap-1.5">
+                                <Plus className="h-3.5 w-3.5" />
+                                فاتورة جديدة
+                            </Button>
+                        </Link>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        {invoices.length === 0 ? (
+                            <div className="py-12 text-center text-muted-foreground">لا توجد فواتير صادرة لهذا العميل</div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="text-right">رقم الفاتورة</TableHead>
+                                        <TableHead className="text-right">البيان</TableHead>
+                                        <TableHead className="text-right">التاريخ</TableHead>
+                                        <TableHead className="text-right">المبلغ</TableHead>
+                                        <TableHead className="text-right">المدفوع</TableHead>
+                                        <TableHead className="text-right">المتبقي</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {invoices.map((invoice) => (
+                                        <TableRow key={invoice.id}>
+                                            <TableCell className="font-mono font-semibold">{invoice.invoice_number}</TableCell>
+                                            <TableCell className="max-w-[220px] truncate">{invoice.description}</TableCell>
+                                            <TableCell dir="ltr" className="text-right">
+                                                {invoice.issued_date}
+                                            </TableCell>
+                                            <TableCell dir="ltr" className="text-right font-mono font-semibold">
+                                                $ {fmt(invoice.amount)}
+                                            </TableCell>
+                                            <TableCell dir="ltr" className="text-right font-mono font-semibold text-green-700 dark:text-green-400">
+                                                $ {fmt(invoice.paid)}
+                                            </TableCell>
+                                            <TableCell dir="ltr" className="text-right">
+                                                {invoice.remaining > 0.009 ? (
+                                                    <span className="font-mono font-bold text-red-600 dark:text-red-400">
+                                                        $ {fmt(invoice.remaining)}
+                                                    </span>
+                                                ) : (
+                                                    <span className="font-semibold text-green-600 dark:text-green-400">✓ مسدد</span>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
+
                 {/* Motors table */}
                 <Card>
                     <CardHeader>
@@ -573,9 +747,7 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                     </CardHeader>
                     <CardContent className="p-0">
                         {motors.length === 0 ? (
-                            <div className="py-12 text-center text-muted-foreground">
-                                لا توجد قيود استلام لهذا العميل
-                            </div>
+                            <div className="py-12 text-center text-muted-foreground">لا توجد قيود استلام لهذا العميل</div>
                         ) : (
                             <Table>
                                 <TableHeader>
@@ -583,9 +755,6 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                                         <TableHead className="text-right">الرقم المرجعي</TableHead>
                                         <TableHead className="text-right">الحالة</TableHead>
                                         <TableHead className="text-right">تاريخ الاستلام</TableHead>
-                                        <TableHead className="text-right">إجمالي الفاتورة</TableHead>
-                                        {!isAccount && <TableHead className="text-right">المدفوع</TableHead>}
-                                        {!isAccount && <TableHead className="text-right">المتبقي</TableHead>}
                                         <TableHead></TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -595,7 +764,7 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                                             <TableCell>
                                                 <Link
                                                     href={`/motors/${motor.id}`}
-                                                    className="font-mono font-semibold text-primary hover:underline underline-offset-4"
+                                                    className="font-mono font-semibold text-primary underline-offset-4 hover:underline"
                                                 >
                                                     {motor.reference_number}
                                                 </Link>
@@ -608,27 +777,14 @@ export default function CustomerShow({ customer, motors, summary, customer_trans
                                                     {motor.status_label}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell dir="ltr" className="text-right">{motor.received_at ?? '—'}</TableCell>
-                                            <TableCell dir="ltr" className="text-right font-mono font-semibold">
-                                                $ {fmt(motor.grand_total)}
+                                            <TableCell dir="ltr" className="text-right">
+                                                {motor.received_at ?? '—'}
                                             </TableCell>
-                                            {!isAccount && (
-                                                <TableCell dir="ltr" className="text-right text-green-700 dark:text-green-400 font-mono font-semibold">
-                                                    $ {fmt(motor.total_paid)}
-                                                </TableCell>
-                                            )}
-                                            {!isAccount && (
-                                                <TableCell dir="ltr" className="text-right">
-                                                    {motor.remaining > 0.009 ? (
-                                                        <span className="font-bold text-red-600 dark:text-red-400 font-mono">$ {fmt(motor.remaining)}</span>
-                                                    ) : (
-                                                        <span className="font-semibold text-green-600 dark:text-green-400">✓ مسدد</span>
-                                                    )}
-                                                </TableCell>
-                                            )}
                                             <TableCell>
                                                 <Link href={`/motors/${motor.id}`}>
-                                                    <Button variant="ghost" size="sm">عرض</Button>
+                                                    <Button variant="ghost" size="sm">
+                                                        عرض
+                                                    </Button>
                                                 </Link>
                                             </TableCell>
                                         </TableRow>

@@ -1,3 +1,8 @@
+import { Header } from '@/components/layout/header';
+import { Main } from '@/components/layout/main';
+import { PaginationLinks } from '@/components/pagination-links';
+import { ProfileDropdown } from '@/components/profile-dropdown';
+import { ThemeSwitch } from '@/components/theme-switch';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -8,22 +13,14 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Header } from '@/components/layout/header';
-import { Main } from '@/components/layout/main';
-import { ProfileDropdown } from '@/components/profile-dropdown';
-import { ThemeSwitch } from '@/components/theme-switch';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { useCan } from '@/hooks/use-can';
 import { Link, router, useForm } from '@inertiajs/react';
 import { Eye, Loader2, Package, Pencil, Plus, Save, Search, Trash2, Truck } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -63,37 +60,29 @@ type FormData = {
     notes: string;
 };
 
-function SupplierDialog({
-    open,
-    onClose,
-    supplier,
-}: {
-    open: boolean;
-    onClose: () => void;
-    supplier: Supplier | null;
-}) {
+function SupplierDialog({ open, onClose, supplier }: { open: boolean; onClose: () => void; supplier: Supplier | null }) {
     const isEdit = !!supplier;
     const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm<FormData>({
-        name:       '',
-        address:    '',
-        phone:      '',
+        name: '',
+        address: '',
+        phone: '',
         shop_phone: '',
-        email:      '',
-        specialty:  '',
-        notes:      '',
+        email: '',
+        specialty: '',
+        notes: '',
     });
 
     useEffect(() => {
         if (open) {
             if (supplier) {
                 setData({
-                    name:       supplier.name,
-                    address:    supplier.address ?? '',
-                    phone:      supplier.phone ?? '',
+                    name: supplier.name,
+                    address: supplier.address ?? '',
+                    phone: supplier.phone ?? '',
                     shop_phone: supplier.shop_phone ?? '',
-                    email:      supplier.email ?? '',
-                    specialty:  supplier.specialty ?? '',
-                    notes:      supplier.notes ?? '',
+                    email: supplier.email ?? '',
+                    specialty: supplier.specialty ?? '',
+                    notes: supplier.notes ?? '',
                 });
             } else {
                 reset();
@@ -118,7 +107,12 @@ function SupplierDialog({
     }
 
     return (
-        <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+        <Dialog
+            open={open}
+            onOpenChange={(o) => {
+                if (!o) onClose();
+            }}
+        >
             <DialogContent className="max-h-[95vh] overflow-y-auto sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>{isEdit ? 'تعديل المورد' : 'إضافة مورد جديد'}</DialogTitle>
@@ -226,9 +220,10 @@ function SupplierDialog({
 }
 
 export function Suppliers({ suppliers, filters }: Props) {
-    const [search, setSearch]           = useState(filters.search ?? '');
-    const [dialogOpen, setDialogOpen]   = useState(false);
-    const [editTarget, setEditTarget]   = useState<Supplier | null>(null);
+    const can = useCan();
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [editTarget, setEditTarget] = useState<Supplier | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
 
     function applyFilters() {
@@ -258,14 +253,16 @@ export function Suppliers({ suppliers, filters }: Props) {
                     <div className="relative max-w-sm flex-1">
                         <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
-                            className="ps-9 min-h-[44px] text-base"
+                            className="min-h-[44px] ps-9 text-base"
                             placeholder="بحث بالاسم أو التخصص أو الجوال أو البريد..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                         />
                     </div>
-                    <Button onClick={applyFilters} variant="outline" className="min-h-[44px]">بحث</Button>
+                    <Button onClick={applyFilters} variant="outline" className="min-h-[44px]">
+                        بحث
+                    </Button>
                 </div>
                 <div className="ms-auto flex items-center gap-3">
                     <ThemeSwitch />
@@ -289,13 +286,13 @@ export function Suppliers({ suppliers, filters }: Props) {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/40 hover:bg-muted/40">
-                                <TableHead className="text-right font-semibold w-48">الاسم</TableHead>
-                                <TableHead className="text-right font-semibold w-40">التخصص</TableHead>
-                                <TableHead className="text-right font-semibold w-36">الجوال</TableHead>
-                                <TableHead className="text-right font-semibold w-52">البريد الإلكتروني</TableHead>
-                                <TableHead className="text-right font-semibold w-28">عدد القطع</TableHead>
+                                <TableHead className="w-48 text-right font-semibold">الاسم</TableHead>
+                                <TableHead className="w-40 text-right font-semibold">التخصص</TableHead>
+                                <TableHead className="w-36 text-right font-semibold">الجوال</TableHead>
+                                <TableHead className="w-52 text-right font-semibold">البريد الإلكتروني</TableHead>
+                                <TableHead className="w-28 text-right font-semibold">عدد القطع</TableHead>
                                 <TableHead className="text-right font-semibold">ملاحظات</TableHead>
-                                <TableHead className="text-right font-semibold w-28">تاريخ الإضافة</TableHead>
+                                <TableHead className="w-28 text-right font-semibold">تاريخ الإضافة</TableHead>
                                 <TableHead className="w-28 text-center font-semibold">إجراءات</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -315,9 +312,9 @@ export function Suppliers({ suppliers, filters }: Props) {
                                 </TableRow>
                             ) : (
                                 suppliers.data.map((s) => (
-                                    <TableRow key={s.id} className="hover:bg-muted/30 transition-colors">
+                                    <TableRow key={s.id} className="transition-colors hover:bg-muted/30">
                                         <TableCell>
-                                            <Link href={`/suppliers/${s.id}`} className="font-semibold hover:text-primary transition-colors">
+                                            <Link href={`/suppliers/${s.id}`} className="font-semibold transition-colors hover:text-primary">
                                                 {s.name}
                                             </Link>
                                         </TableCell>
@@ -352,9 +349,16 @@ export function Suppliers({ suppliers, filters }: Props) {
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" onClick={() => openEdit(s)}>
                                                     <Pencil className="h-3.5 w-3.5" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => setDeleteTarget(s)}>
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
+                                                {can('delete-suppliers') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                        onClick={() => setDeleteTarget(s)}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -364,45 +368,29 @@ export function Suppliers({ suppliers, filters }: Props) {
                     </Table>
                 </Card>
 
-                {suppliers.last_page > 1 && (
-                    <div className="flex items-center justify-center gap-2">
-                        {suppliers.links.map((link, i) => (
-                            <Button
-                                key={i}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="sm"
-                                disabled={!link.url}
-                                onClick={() => link.url && router.visit(link.url)}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
-                )}
+                {suppliers.last_page > 1 && <PaginationLinks links={suppliers.links} />}
             </Main>
 
-            <SupplierDialog
-                open={dialogOpen}
-                onClose={() => setDialogOpen(false)}
-                supplier={editTarget}
-            />
+            <SupplierDialog open={dialogOpen} onClose={() => setDialogOpen(false)} supplier={editTarget} />
 
-            <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+            <AlertDialog
+                open={!!deleteTarget}
+                onOpenChange={(open) => {
+                    if (!open) setDeleteTarget(null);
+                }}
+            >
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
                         <AlertDialogDescription>
-                            سيتم حذف المورد{' '}
-                            <span className="font-bold text-foreground">"{deleteTarget?.name}"</span>.
+                            سيتم حذف المورد <span className="font-bold text-foreground">"{deleteTarget?.name}"</span>.
                             <br />
                             هذا الإجراء لا يمكن التراجع عنه.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                        <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={handleDelete}
-                        >
+                        <AlertDialogAction className="text-destructive-foreground bg-destructive hover:bg-destructive/90" onClick={handleDelete}>
                             نعم، احذف
                         </AlertDialogAction>
                     </AlertDialogFooter>

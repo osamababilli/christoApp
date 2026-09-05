@@ -16,6 +16,12 @@ export const bloodTypes = [
     { label: 'AB-', value: 'AB-' },
 ] as const;
 
+export const salaryPeriods = [
+    { label: 'يومي', value: 'daily' },
+    { label: 'اسبوعي', value: 'weekly' },
+    { label: 'شهري', value: 'monthly' },
+] as const;
+
 export const nationalities = [
     { label: 'سعودي', value: 'سعودي' },
     { label: 'إماراتي', value: 'إماراتي' },

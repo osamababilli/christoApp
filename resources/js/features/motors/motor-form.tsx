@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
@@ -127,7 +126,8 @@ export function MotorForm({ customers, categories: initialCategories, employees,
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        method === 'put' ? put(action) : post(action);
+        if (method === 'put') put(action);
+        else post(action);
     }
 
     return (
@@ -169,7 +169,7 @@ export function MotorForm({ customers, categories: initialCategories, employees,
                                 }
                                 onNewNameChange={(v) => setData('customer_name', v)}
                                 onNewPhoneChange={(v) => setData('customer_phone', v)}
-                                errors={errors as any}
+                                errors={errors as Record<string, string>}
                             />
                         </CardContent>
                     </Card>

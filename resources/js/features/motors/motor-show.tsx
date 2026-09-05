@@ -1,3 +1,7 @@
+import { Header } from '@/components/layout/header';
+import { Main } from '@/components/layout/main';
+import { ProfileDropdown } from '@/components/profile-dropdown';
+import { ThemeSwitch } from '@/components/theme-switch';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -8,17 +12,14 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Header } from '@/components/layout/header';
-import { Main } from '@/components/layout/main';
-import { ProfileDropdown } from '@/components/profile-dropdown';
-import { ThemeSwitch } from '@/components/theme-switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useCan } from '@/hooks/use-can';
 import { cn } from '@/lib/utils';
-import { router, Link, useForm } from '@inertiajs/react';
+import { Link, router, useForm } from '@inertiajs/react';
 import {
     ArrowRight,
     Calendar,
@@ -34,7 +35,6 @@ import {
     Phone,
     Plus,
     Printer,
-    Tag,
     Trash2,
     User,
     Wallet,
@@ -107,41 +107,65 @@ interface Motor {
     maintenance_orders: MaintenanceOrder[];
 }
 
-interface SupplierOption { id: number; name: string }
+interface SupplierOption {
+    id: number;
+    name: string;
+}
 
-interface Props { motor: Motor; suppliers: SupplierOption[] }
+interface Props {
+    motor: Motor;
+    suppliers: SupplierOption[];
+}
 
 const statusConfig: Record<string, { color: string; bar: string; active: string; dot: string }> = {
     in_workshop: {
         color: 'border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:border-blue-700 dark:text-blue-300',
-        bar:   'bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900',
-        active:'ring-2 ring-blue-400',
-        dot:   'bg-blue-500',
+        bar: 'bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900',
+        active: 'ring-2 ring-blue-400',
+        dot: 'bg-blue-500',
     },
     in_progress: {
         color: 'border-yellow-300 bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:border-yellow-700 dark:text-yellow-300',
-        bar:   'bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-900',
-        active:'ring-2 ring-yellow-400',
-        dot:   'bg-yellow-500',
+        bar: 'bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-900',
+        active: 'ring-2 ring-yellow-400',
+        dot: 'bg-yellow-500',
     },
     ready: {
         color: 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300',
-        bar:   'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900',
-        active:'ring-2 ring-green-400',
-        dot:   'bg-green-500',
+        bar: 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900',
+        active: 'ring-2 ring-green-400',
+        dot: 'bg-green-500',
     },
     delivered: {
         color: 'border-gray-300 bg-gray-50 text-gray-600 dark:bg-gray-800/40 dark:border-gray-600 dark:text-gray-300',
-        bar:   'bg-gray-50 border-gray-200 dark:bg-gray-800/20 dark:border-gray-800',
-        active:'ring-2 ring-gray-400',
-        dot:   'bg-gray-400',
+        bar: 'bg-gray-50 border-gray-200 dark:bg-gray-800/20 dark:border-gray-800',
+        active: 'ring-2 ring-gray-400',
+        dot: 'bg-gray-400',
     },
 };
 
 const maintenanceStatusConfig: Record<string, { badge: string; border: string; label: string; color: string; active: string }> = {
-    in_progress: { badge: 'bg-yellow-100 text-yellow-800 border-yellow-200', border: 'border-r-yellow-400', label: 'قيد التنفيذ', color: 'border-yellow-300 bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:border-yellow-700 dark:text-yellow-300', active: 'ring-2 ring-yellow-400' },
-    completed:   { badge: 'bg-green-100 text-green-800 border-green-200',   border: 'border-r-green-400',  label: 'مكتمل',      color: 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300',     active: 'ring-2 ring-green-400'  },
-    on_hold:     { badge: 'bg-red-100 text-red-800 border-red-200',         border: 'border-r-red-400',    label: 'موقوف',      color: 'border-red-300 bg-red-50 text-red-700 dark:bg-red-950/40 dark:border-red-700 dark:text-red-300',                 active: 'ring-2 ring-red-400'    },
+    in_progress: {
+        badge: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        border: 'border-r-yellow-400',
+        label: 'قيد التنفيذ',
+        color: 'border-yellow-300 bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:border-yellow-700 dark:text-yellow-300',
+        active: 'ring-2 ring-yellow-400',
+    },
+    completed: {
+        badge: 'bg-green-100 text-green-800 border-green-200',
+        border: 'border-r-green-400',
+        label: 'مكتمل',
+        color: 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300',
+        active: 'ring-2 ring-green-400',
+    },
+    on_hold: {
+        badge: 'bg-red-100 text-red-800 border-red-200',
+        border: 'border-r-red-400',
+        label: 'موقوف',
+        color: 'border-red-300 bg-red-50 text-red-700 dark:bg-red-950/40 dark:border-red-700 dark:text-red-300',
+        active: 'ring-2 ring-red-400',
+    },
 };
 
 const maintenanceSteps = ['in_progress', 'completed', 'on_hold'] as const;
@@ -152,21 +176,35 @@ function MaintenanceStatusBar({ order }: { order: MaintenanceOrder }) {
     const [stopReason, setStopReason] = useState(order.stop_reason ?? '');
 
     function updateStatus(status: string) {
-        if (status === 'on_hold') { setShowStopReason(true); return; }
+        if (status === 'on_hold') {
+            setShowStopReason(true);
+            return;
+        }
         setShowStopReason(false);
         setUpdating(true);
-        router.patch(`/maintenance/${order.id}/status`, { status }, {
-            preserveScroll: true,
-            onFinish: () => setUpdating(false),
-        });
+        router.patch(
+            `/maintenance/${order.id}/status`,
+            { status },
+            {
+                preserveScroll: true,
+                onFinish: () => setUpdating(false),
+            },
+        );
     }
 
     function submitOnHold() {
         setUpdating(true);
-        router.patch(`/maintenance/${order.id}/status`, { status: 'on_hold', stop_reason: stopReason }, {
-            preserveScroll: true,
-            onFinish: () => { setUpdating(false); setShowStopReason(false); },
-        });
+        router.patch(
+            `/maintenance/${order.id}/status`,
+            { status: 'on_hold', stop_reason: stopReason },
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setUpdating(false);
+                    setShowStopReason(false);
+                },
+            },
+        );
     }
 
     return (
@@ -215,13 +253,11 @@ function MaintenanceStatusBar({ order }: { order: MaintenanceOrder }) {
     );
 }
 
-
-
 const statusSteps = [
-    { value: 'in_workshop', label: 'في الورشة'     },
-    { value: 'in_progress', label: 'قيد الإصلاح'   },
-    { value: 'ready',       label: 'جاهز للاستلام' },
-    { value: 'delivered',   label: 'تم التسليم'     },
+    { value: 'in_workshop', label: 'في الورشة' },
+    { value: 'in_progress', label: 'قيد الإصلاح' },
+    { value: 'ready', label: 'جاهز للاستلام' },
+    { value: 'delivered', label: 'تم التسليم' },
 ];
 
 function StatusUpdateBar({ motor }: { motor: Motor }) {
@@ -238,9 +274,13 @@ function StatusUpdateBar({ motor }: { motor: Motor }) {
                         disabled={updating || isCurrent}
                         onClick={() => {
                             setUpdating(true);
-                            router.patch(`/motors/${motor.id}/status`, { status: s.value }, {
-                                onFinish: () => setUpdating(false),
-                            });
+                            router.patch(
+                                `/motors/${motor.id}/status`,
+                                { status: s.value },
+                                {
+                                    onFinish: () => setUpdating(false),
+                                },
+                            );
                         }}
                         className={cn(
                             'rounded-lg border px-3 py-2.5 text-sm font-semibold transition-all',
@@ -257,21 +297,25 @@ function StatusUpdateBar({ motor }: { motor: Motor }) {
     );
 }
 
-function PartsSection({ order, suppliers, onDeletePart, isLocked }: { order: MaintenanceOrder; suppliers: SupplierOption[]; onDeletePart: (id: number, name: string) => void; isLocked: boolean }) {
+function PartsSection({
+    order,
+    suppliers,
+    onDeletePart,
+    isLocked,
+}: {
+    order: MaintenanceOrder;
+    suppliers: SupplierOption[];
+    onDeletePart: (id: number, name: string) => void;
+    isLocked: boolean;
+}) {
+    const can = useCan();
     const [showForm, setShowForm] = useState(false);
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    القطع والمستلزمات ({order.parts.length})
-                </p>
+                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">القطع والمستلزمات ({order.parts.length})</p>
                 {!isLocked && (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 gap-1.5 text-xs"
-                        onClick={() => setShowForm(!showForm)}
-                    >
+                    <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => setShowForm(!showForm)}>
                         <Plus className="h-3.5 w-3.5" />
                         إضافة قطعة
                     </Button>
@@ -303,51 +347,59 @@ function PartsSection({ order, suppliers, onDeletePart, isLocked }: { order: Mai
                             {order.parts.map((part) => {
                                 const isCompany = part.purchased_by === 'company';
                                 return (
-                                <TableRow key={part.id}>
-                                    <TableCell className="text-sm font-medium">{part.part_name}</TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={cn('text-xs', isCompany
-                                            ? 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300'
-                                            : 'border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:border-blue-700 dark:text-blue-300')}>
-                                            {isCompany ? 'الشركة' : 'العميل'}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-sm">{Number(part.quantity)}</TableCell>
-                                    <TableCell className="text-sm text-muted-foreground">
-                                        {isCompany
-                                            ? Number(part.unit_cost).toFixed(2)
-                                            : <span className="text-muted-foreground">—</span>}
-                                    </TableCell>
-                                    <TableCell className="text-sm font-medium">
-                                        {isCompany
-                                            ? <span className="text-purple-700 dark:text-purple-400">{Number(part.unit_price).toFixed(2)}</span>
-                                            : <span className="text-muted-foreground">—</span>}
-                                    </TableCell>
-                                    <TableCell className="text-sm font-semibold">
-                                        {isCompany
-                                            ? Number(part.total_cost).toFixed(2)
-                                            : <span className="text-muted-foreground">—</span>}
-                                    </TableCell>
-                                    <TableCell>
-                                        {part.purchased_by === 'customer'
-                                            ? <span className="text-xs font-medium text-blue-600 dark:text-blue-400">العميل يجلبها</span>
-                                            : part.is_paid
-                                                ? <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                                : <Clock className="h-4 w-4 text-orange-500" />}
-                                    </TableCell>
-                                    {!isLocked && (
+                                    <TableRow key={part.id}>
+                                        <TableCell className="text-sm font-medium">{part.part_name}</TableCell>
                                         <TableCell>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 text-destructive hover:text-destructive"
-                                                onClick={() => onDeletePart(part.id, part.part_name)}
+                                            <Badge
+                                                variant="outline"
+                                                className={cn(
+                                                    'text-xs',
+                                                    isCompany
+                                                        ? 'border-purple-300 bg-purple-50 text-purple-700 dark:border-purple-700 dark:bg-purple-950/40 dark:text-purple-300'
+                                                        : 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/40 dark:text-blue-300',
+                                                )}
                                             >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </Button>
+                                                {isCompany ? 'الشركة' : 'العميل'}
+                                            </Badge>
                                         </TableCell>
-                                    )}
-                                </TableRow>
+                                        <TableCell className="text-sm">{Number(part.quantity)}</TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {isCompany ? Number(part.unit_cost).toFixed(2) : <span className="text-muted-foreground">—</span>}
+                                        </TableCell>
+                                        <TableCell className="text-sm font-medium">
+                                            {isCompany ? (
+                                                <span className="text-purple-700 dark:text-purple-400">{Number(part.unit_price).toFixed(2)}</span>
+                                            ) : (
+                                                <span className="text-muted-foreground">—</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-sm font-semibold">
+                                            {isCompany ? Number(part.total_cost).toFixed(2) : <span className="text-muted-foreground">—</span>}
+                                        </TableCell>
+                                        <TableCell>
+                                            {part.purchased_by === 'customer' ? (
+                                                <span className="text-xs font-medium text-blue-600 dark:text-blue-400">العميل يجلبها</span>
+                                            ) : part.is_paid ? (
+                                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                            ) : (
+                                                <Clock className="h-4 w-4 text-orange-500" />
+                                            )}
+                                        </TableCell>
+                                        {!isLocked && (
+                                            <TableCell>
+                                                {can('delete-parts') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-destructive hover:text-destructive"
+                                                        onClick={() => onDeletePart(part.id, part.part_name)}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                )}
+                                            </TableCell>
+                                        )}
+                                    </TableRow>
                                 );
                             })}
                         </TableBody>
@@ -359,33 +411,45 @@ function PartsSection({ order, suppliers, onDeletePart, isLocked }: { order: Mai
 }
 
 const paymentTypeConfig = {
-    payment:  { label: 'دفعة',  color: 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300',     active: 'ring-2 ring-green-400'  },
-    discount: { label: 'خصم',   color: 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300', active: 'ring-2 ring-purple-400' },
+    payment: {
+        label: 'دفعة',
+        color: 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300',
+        active: 'ring-2 ring-green-400',
+    },
+    discount: {
+        label: 'خصم',
+        color: 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300',
+        active: 'ring-2 ring-purple-400',
+    },
 };
 
 function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandTotal: number; isLocked: boolean }) {
+    const can = useCan();
     const [showForm, setShowForm] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        type:             'payment' as 'payment' | 'discount',
-        amount:           '',
-        payment_method:   'cash' as 'cash' | 'whish' | 'omt',
-        account_name:     '',
-        notes:            '',
+        type: 'payment' as 'payment' | 'discount',
+        amount: '',
+        payment_method: 'cash' as 'cash' | 'whish' | 'omt',
+        account_name: '',
+        notes: '',
         transaction_date: new Date().toISOString().split('T')[0],
     });
 
-    const totalPaid     = motor.transactions.filter((t) => t.type === 'payment').reduce((s, t) => s + t.amount, 0);
+    const totalPaid = motor.transactions.filter((t) => t.type === 'payment').reduce((s, t) => s + t.amount, 0);
     const totalDiscount = motor.transactions.filter((t) => t.type === 'discount').reduce((s, t) => s + t.amount, 0);
     const totalCredited = totalPaid + totalDiscount;
-    const remaining     = grandTotal - totalCredited;
+    const remaining = grandTotal - totalCredited;
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
         post(`/motors/${motor.id}/transactions`, {
             preserveScroll: true,
-            onSuccess: () => { reset(); setShowForm(false); },
+            onSuccess: () => {
+                reset();
+                setShowForm(false);
+            },
         });
     }
 
@@ -413,7 +477,6 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-
                     {/* Summary */}
                     <div className="grid grid-cols-3 gap-3">
                         <div className="rounded-xl border bg-muted/40 px-4 py-3">
@@ -424,16 +487,28 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                             <p className="text-xs text-green-700 dark:text-green-400">المدفوع</p>
                             <p className="mt-0.5 text-lg font-bold text-green-700 dark:text-green-400">{totalCredited.toFixed(2)}</p>
                         </div>
-                        <div className={cn(
-                            'rounded-xl border px-4 py-3',
-                            remaining <= 0
-                                ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30'
-                                : 'border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/30',
-                        )}>
-                            <p className={cn('text-xs', remaining <= 0 ? 'text-green-700 dark:text-green-400' : 'text-orange-700 dark:text-orange-400')}>
+                        <div
+                            className={cn(
+                                'rounded-xl border px-4 py-3',
+                                remaining <= 0
+                                    ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30'
+                                    : 'border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/30',
+                            )}
+                        >
+                            <p
+                                className={cn(
+                                    'text-xs',
+                                    remaining <= 0 ? 'text-green-700 dark:text-green-400' : 'text-orange-700 dark:text-orange-400',
+                                )}
+                            >
                                 المتبقي
                             </p>
-                            <p className={cn('mt-0.5 text-lg font-bold', remaining <= 0 ? 'text-green-700 dark:text-green-400' : 'text-orange-700 dark:text-orange-400')}>
+                            <p
+                                className={cn(
+                                    'mt-0.5 text-lg font-bold',
+                                    remaining <= 0 ? 'text-green-700 dark:text-green-400' : 'text-orange-700 dark:text-orange-400',
+                                )}
+                            >
                                 {remaining <= 0 ? '✓ مسدد' : remaining.toFixed(2)}
                             </p>
                         </div>
@@ -441,7 +516,7 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
 
                     {/* Add payment form */}
                     {showForm && (
-                        <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 space-y-3">
+                        <div className="space-y-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4">
                             <form onSubmit={submit} className="space-y-3">
                                 {/* Type chips */}
                                 <div className="flex gap-2">
@@ -451,7 +526,7 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                                             type="button"
                                             onClick={() => setData('type', val as 'payment' | 'discount')}
                                             className={cn(
-                                                'rounded-lg border px-4 py-1.5 text-sm font-semibold transition-all cursor-pointer',
+                                                'cursor-pointer rounded-lg border px-4 py-1.5 text-sm font-semibold transition-all',
                                                 cfg.color,
                                                 data.type === val && cfg.active,
                                             )}
@@ -471,7 +546,7 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                                             type="number"
                                             min="0.01"
                                             step="0.01"
-                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                             placeholder="0.00"
                                             value={data.amount}
                                             onChange={(e) => setData('amount', e.target.value)}
@@ -482,7 +557,7 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                                         <label className="text-xs font-medium text-muted-foreground">التاريخ</label>
                                         <input
                                             type="date"
-                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                             value={data.transaction_date}
                                             onChange={(e) => setData('transaction_date', e.target.value)}
                                         />
@@ -491,7 +566,7 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                                         <label className="text-xs font-medium text-muted-foreground">ملاحظة</label>
                                         <input
                                             type="text"
-                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                             placeholder="اختياري..."
                                             value={data.notes}
                                             onChange={(e) => setData('notes', e.target.value)}
@@ -504,19 +579,21 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                                         <div className="space-y-1">
                                             <label className="text-xs font-medium text-muted-foreground">طريقة الدفع</label>
                                             <div className="grid grid-cols-3 gap-1.5">
-                                                {([
-                                                    { value: 'cash', label: 'نقدًا' },
-                                                    { value: 'whish', label: 'Whish' },
-                                                    { value: 'omt', label: 'OMT' },
-                                                ] as const).map((opt) => (
+                                                {(
+                                                    [
+                                                        { value: 'cash', label: 'نقدًا' },
+                                                        { value: 'whish', label: 'Whish' },
+                                                        { value: 'omt', label: 'OMT' },
+                                                    ] as const
+                                                ).map((opt) => (
                                                     <button
                                                         key={opt.value}
                                                         type="button"
                                                         onClick={() => setData('payment_method', opt.value)}
                                                         className={cn(
-                                                            'rounded-lg border px-2 py-1.5 text-xs font-semibold transition-all cursor-pointer',
+                                                            'cursor-pointer rounded-lg border px-2 py-1.5 text-xs font-semibold transition-all',
                                                             data.payment_method === opt.value
-                                                                ? 'border-green-400 bg-green-50 text-green-700 ring-2 ring-green-400 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300'
+                                                                ? 'border-green-400 bg-green-50 text-green-700 ring-2 ring-green-400 dark:border-green-700 dark:bg-green-950/40 dark:text-green-300'
                                                                 : 'border-muted bg-muted/20 text-muted-foreground hover:bg-muted/50',
                                                         )}
                                                     >
@@ -529,7 +606,7 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                                             <label className="text-xs font-medium text-muted-foreground">الحساب المستلم</label>
                                             <input
                                                 type="text"
-                                                className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                className="flex h-9 w-full rounded-md border bg-background px-3 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                                 placeholder="مثال: صندوق الورشة..."
                                                 value={data.account_name}
                                                 onChange={(e) => setData('account_name', e.target.value)}
@@ -540,7 +617,15 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
 
                                 <div className="flex gap-2">
                                     <Button type="submit" size="sm" className="flex-1 gap-2" disabled={processing}>
-                                        {processing ? <><Clock className="h-3.5 w-3.5 animate-spin" /> جاري الحفظ...</> : <><CheckCircle2 className="h-3.5 w-3.5" /> تسجيل</>}
+                                        {processing ? (
+                                            <>
+                                                <Clock className="h-3.5 w-3.5 animate-spin" /> جاري الحفظ...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle2 className="h-3.5 w-3.5" /> تسجيل
+                                            </>
+                                        )}
                                     </Button>
                                     <Button type="button" variant="outline" size="sm" className="px-5" onClick={() => setShowForm(false)}>
                                         إلغاء
@@ -571,9 +656,11 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                                             <TableCell>
                                                 <Badge
                                                     variant="outline"
-                                                    className={cn('text-xs', t.type === 'payment'
-                                                        ? 'border-green-200 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300'
-                                                        : 'border-purple-200 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-300'
+                                                    className={cn(
+                                                        'text-xs',
+                                                        t.type === 'payment'
+                                                            ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950/40 dark:text-green-300'
+                                                            : 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-300',
                                                     )}
                                                 >
                                                     {t.type_label}
@@ -585,17 +672,19 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                                                     : '—'}
                                             </TableCell>
                                             <TableCell className="text-sm text-muted-foreground">{t.notes ?? '—'}</TableCell>
-                                            <TableCell className="font-semibold text-sm">{t.amount.toFixed(2)}</TableCell>
+                                            <TableCell className="text-sm font-semibold">{t.amount.toFixed(2)}</TableCell>
                                             {!isLocked && (
                                                 <TableCell>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-destructive hover:text-destructive"
-                                                        onClick={() => setDeleteTarget(t)}
-                                                    >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                    </Button>
+                                                    {can('delete-payments') && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7 text-destructive hover:text-destructive"
+                                                            onClick={() => setDeleteTarget(t)}
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    )}
                                                 </TableCell>
                                             )}
                                         </TableRow>
@@ -606,13 +695,18 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                     )}
 
                     {motor.transactions.length === 0 && !showForm && (
-                        <p className="text-center text-sm text-muted-foreground py-4">لا توجد دفعات مسجلة</p>
+                        <p className="py-4 text-center text-sm text-muted-foreground">لا توجد دفعات مسجلة</p>
                     )}
                 </CardContent>
             </Card>
 
             {/* Delete transaction confirmation */}
-            <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+            <AlertDialog
+                open={!!deleteTarget}
+                onOpenChange={(open) => {
+                    if (!open) setDeleteTarget(null);
+                }}
+            >
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
@@ -625,10 +719,7 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                        <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={confirmDelete}
-                        >
+                        <AlertDialogAction className="text-destructive-foreground bg-destructive hover:bg-destructive/90" onClick={confirmDelete}>
                             نعم، احذف
                         </AlertDialogAction>
                     </AlertDialogFooter>
@@ -639,17 +730,18 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
 }
 
 export function MotorShow({ motor, suppliers }: Props) {
-    const [showAddMaintenance, setShowAddMaintenance]   = useState(false);
+    const can = useCan();
+    const [showAddMaintenance, setShowAddMaintenance] = useState(false);
     const [deleteMaintenanceTarget, setDeleteMaintenanceTarget] = useState<MaintenanceOrder | null>(null);
-    const [deletePartTarget, setDeletePartTarget]       = useState<{ id: number; part_name: string } | null>(null);
+    const [deletePartTarget, setDeletePartTarget] = useState<{ id: number; part_name: string } | null>(null);
 
     const isAccountCustomer = motor.customer.account_type === 'account';
-    const totalLabor    = motor.maintenance_orders.reduce((s, o) => s + Number(o.labor_cost), 0);
-    const totalParts    = motor.maintenance_orders.flatMap((o) => o.parts).reduce((s, p) => s + Number(p.total_cost), 0);
-    const grandTotal    = totalLabor + totalParts;
+    const totalLabor = motor.maintenance_orders.reduce((s, o) => s + Number(o.labor_cost), 0);
+    const totalParts = motor.maintenance_orders.flatMap((o) => o.parts).reduce((s, p) => s + Number(p.total_cost), 0);
+    const grandTotal = totalLabor + totalParts;
     const totalCredited = motor.transactions.reduce((s, t) => s + t.amount, 0);
-    const remaining     = grandTotal - totalCredited;
-    const isLocked      = motor.status === 'delivered' && (isAccountCustomer || remaining <= 0.009);
+    const remaining = grandTotal - totalCredited;
+    const isLocked = motor.status === 'delivered' && (isAccountCustomer || remaining <= 0.009);
 
     function deleteMaintenance(id: number) {
         const order = motor.maintenance_orders.find((o) => o.id === id);
@@ -690,15 +782,12 @@ export function MotorShow({ motor, suppliers }: Props) {
             </Header>
 
             <Main className="flex flex-col gap-6 pb-10">
-
                 {/* ── Hero ── */}
                 <div className={cn('rounded-xl border p-6', cfg.bar)}>
                     <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="space-y-2">
                             <div className="flex flex-wrap items-center gap-3">
-                                <h1 className="font-mono text-3xl font-bold tracking-wide">
-                                    {motor.reference_number}
-                                </h1>
+                                <h1 className="font-mono text-3xl font-bold tracking-wide">{motor.reference_number}</h1>
                                 <Badge variant="outline" className={cn('px-3 py-1 text-sm font-semibold', cfg.color)}>
                                     <span className={cn('me-1.5 inline-block h-2 w-2 rounded-full', cfg.dot)} />
                                     {motor.status_label}
@@ -779,7 +868,6 @@ export function MotorShow({ motor, suppliers }: Props) {
 
                 {/* ── Info + Finance row ── */}
                 <div className="grid gap-6 lg:grid-cols-5">
-
                     {/* Motor details — 3 cols */}
                     <Card className="lg:col-span-3">
                         <CardHeader className="pb-3">
@@ -791,16 +879,18 @@ export function MotorShow({ motor, suppliers }: Props) {
                         <CardContent>
                             <dl className="divide-y">
                                 {[
-                                    { label: 'التصنيف',       value: motor.category_name },
+                                    { label: 'التصنيف', value: motor.category_name },
                                     { label: 'تاريخ الاستلام', value: motor.received_at },
                                     { label: 'تاريخ التسليم', value: motor.delivered_at },
-                                    { label: 'المستلم',        value: motor.received_by_name },
-                                ].filter((r) => r.value).map((row) => (
-                                    <div key={row.label} className="flex items-center justify-between py-2.5 text-sm">
-                                        <dt className="text-muted-foreground">{row.label}</dt>
-                                        <dd className="font-medium">{row.value}</dd>
-                                    </div>
-                                ))}
+                                    { label: 'المستلم', value: motor.received_by_name },
+                                ]
+                                    .filter((r) => r.value)
+                                    .map((row) => (
+                                        <div key={row.label} className="flex items-center justify-between py-2.5 text-sm">
+                                            <dt className="text-muted-foreground">{row.label}</dt>
+                                            <dd className="font-medium">{row.value}</dd>
+                                        </div>
+                                    ))}
                             </dl>
                             {motor.received_items.length > 0 && (
                                 <>
@@ -853,8 +943,7 @@ export function MotorShow({ motor, suppliers }: Props) {
                                 <span className="text-xl font-bold text-primary">{grandTotal.toFixed(2)}</span>
                             </div>
                             <p className="text-center text-xs text-muted-foreground">
-                                {motor.maintenance_orders.length} أوامر صيانة ·{' '}
-                                {motor.maintenance_orders.flatMap((o) => o.parts).length} قطعة
+                                {motor.maintenance_orders.length} أوامر صيانة · {motor.maintenance_orders.flatMap((o) => o.parts).length} قطعة
                             </p>
                         </CardContent>
                     </Card>
@@ -868,9 +957,7 @@ export function MotorShow({ motor, suppliers }: Props) {
                                 <Wallet className="h-5 w-5" />
                             </div>
                             <div className="flex-1">
-                                <p className="font-semibold text-blue-800 dark:text-blue-300">
-                                    الدفع عبر الحساب الجاري
-                                </p>
+                                <p className="font-semibold text-blue-800 dark:text-blue-300">الدفع عبر الحساب الجاري</p>
                                 <p className="mt-0.5 text-sm text-blue-700/80 dark:text-blue-400/80">
                                     هذا العميل يملك حساباً جارياً — تُسجَّل الدفعات عبر صفحة العميل وتُحتسب على مجموع فواتيره.
                                 </p>
@@ -902,9 +989,7 @@ export function MotorShow({ motor, suppliers }: Props) {
                             <Wrench className="h-5 w-5 text-muted-foreground" />
                             <h2 className="text-xl font-bold">
                                 أوامر الصيانة
-                                <span className="ms-2 text-sm font-normal text-muted-foreground">
-                                    ({motor.maintenance_orders.length})
-                                </span>
+                                <span className="ms-2 text-sm font-normal text-muted-foreground">({motor.maintenance_orders.length})</span>
                             </h2>
                         </div>
                         {!isLocked && (
@@ -918,10 +1003,7 @@ export function MotorShow({ motor, suppliers }: Props) {
                     {showAddMaintenance && (
                         <Card className="border-primary/30">
                             <CardContent className="pt-6">
-                                <MaintenanceOrderForm
-                                    motorId={motor.id}
-                                    onCancel={() => setShowAddMaintenance(false)}
-                                />
+                                <MaintenanceOrderForm motorId={motor.id} onCancel={() => setShowAddMaintenance(false)} />
                             </CardContent>
                         </Card>
                     )}
@@ -940,7 +1022,7 @@ export function MotorShow({ motor, suppliers }: Props) {
                                 const orderTotal = Number(order.labor_cost) + order.parts.reduce((s, p) => s + Number(p.total_cost), 0);
                                 return (
                                     <Card key={order.id} className={cn('border-r-4', mCfg.border)}>
-                                        <CardContent className="pt-5 space-y-4">
+                                        <CardContent className="space-y-4 pt-5">
                                             {/* Order header */}
                                             <div className="flex flex-wrap items-start justify-between gap-3">
                                                 <div className="flex flex-wrap items-center gap-2">
@@ -950,22 +1032,20 @@ export function MotorShow({ motor, suppliers }: Props) {
                                                     <Badge variant="outline" className={cn('text-sm', mCfg.badge)}>
                                                         {order.status_label}
                                                     </Badge>
-                                                    {order.stop_reason && (
-                                                        <span className="text-xs text-orange-600">
-                                                            ⚠ {order.stop_reason}
-                                                        </span>
-                                                    )}
+                                                    {order.stop_reason && <span className="text-xs text-orange-600">⚠ {order.stop_reason}</span>}
                                                 </div>
                                                 {!isLocked && (
                                                     <div className="flex items-center gap-1">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 text-destructive hover:text-destructive"
-                                                            onClick={() => deleteMaintenance(order.id)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                        {can('delete-maintenance') && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                                                onClick={() => deleteMaintenance(order.id)}
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -1012,15 +1092,22 @@ export function MotorShow({ motor, suppliers }: Props) {
             </Main>
 
             {/* Delete maintenance confirmation */}
-            <AlertDialog open={!!deleteMaintenanceTarget} onOpenChange={(open) => { if (!open) setDeleteMaintenanceTarget(null); }}>
+            <AlertDialog
+                open={!!deleteMaintenanceTarget}
+                onOpenChange={(open) => {
+                    if (!open) setDeleteMaintenanceTarget(null);
+                }}
+            >
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
                         <AlertDialogDescription>
-                            سيتم حذف أمر الصيانة{' '}
-                            <span className="font-bold text-foreground">مرحلة {deleteMaintenanceTarget?.stage}</span>
+                            سيتم حذف أمر الصيانة <span className="font-bold text-foreground">مرحلة {deleteMaintenanceTarget?.stage}</span>
                             {deleteMaintenanceTarget?.description && (
-                                <> — <span className="font-medium text-foreground">"{deleteMaintenanceTarget.description}"</span></>
+                                <>
+                                    {' '}
+                                    — <span className="font-medium text-foreground">"{deleteMaintenanceTarget.description}"</span>
+                                </>
                             )}
                             .
                             <br />
@@ -1030,7 +1117,7 @@ export function MotorShow({ motor, suppliers }: Props) {
                     <AlertDialogFooter>
                         <AlertDialogCancel>إلغاء</AlertDialogCancel>
                         <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            className="text-destructive-foreground bg-destructive hover:bg-destructive/90"
                             onClick={confirmDeleteMaintenance}
                         >
                             نعم، احذف
@@ -1040,23 +1127,24 @@ export function MotorShow({ motor, suppliers }: Props) {
             </AlertDialog>
 
             {/* Delete part confirmation */}
-            <AlertDialog open={!!deletePartTarget} onOpenChange={(open) => { if (!open) setDeletePartTarget(null); }}>
+            <AlertDialog
+                open={!!deletePartTarget}
+                onOpenChange={(open) => {
+                    if (!open) setDeletePartTarget(null);
+                }}
+            >
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
                         <AlertDialogDescription>
-                            سيتم حذف القطعة{' '}
-                            <span className="font-bold text-foreground">"{deletePartTarget?.part_name}"</span>.
+                            سيتم حذف القطعة <span className="font-bold text-foreground">"{deletePartTarget?.part_name}"</span>.
                             <br />
                             هذا الإجراء لا يمكن التراجع عنه.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                        <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={confirmDeletePart}
-                        >
+                        <AlertDialogAction className="text-destructive-foreground bg-destructive hover:bg-destructive/90" onClick={confirmDeletePart}>
                             نعم، احذف
                         </AlertDialogAction>
                     </AlertDialogFooter>

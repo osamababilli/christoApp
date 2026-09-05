@@ -8,21 +8,17 @@ export function ForgotPassword() {
         <AuthLayout>
             <Card className="gap-4">
                 <CardHeader>
-                    <CardTitle className="text-lg tracking-tight">Forgot Password</CardTitle>
-                    <CardDescription>
-                        Enter your registered email and <br /> we will send you a link to reset your password.
-                    </CardDescription>
+                    <CardTitle className="text-lg tracking-tight">استعادة كلمة المرور</CardTitle>
+                    <CardDescription>أدخل بريدك الإلكتروني المسجَّل وسنرسل لك رابطاً لتعيين كلمة مرور جديدة.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ForgotPasswordForm />
                 </CardContent>
                 <CardFooter>
                     <p className="mx-auto px-8 text-center text-sm text-balance text-muted-foreground">
-                        Don't have an account?{' '}
-                        <Link href="/sign-up" className="underline underline-offset-4 hover:text-primary">
-                            Sign up
+                        <Link href="/sign-in" className="underline underline-offset-4 hover:text-primary">
+                            العودة لتسجيل الدخول
                         </Link>
-                        .
                     </p>
                 </CardFooter>
             </Card>

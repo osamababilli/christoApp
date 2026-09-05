@@ -9,7 +9,7 @@ import { QuotationForm } from '@/features/quotations/quotation-form';
 import type { CustomerOption } from '@/features/motors/customer-combobox';
 
 interface Props {
-    quotation: any;
+    quotation: NonNullable<React.ComponentProps<typeof QuotationForm>['quotation']>;
     customers: CustomerOption[];
 }
 

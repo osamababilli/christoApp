@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\Permissions;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -49,6 +50,7 @@ class HandleInertiaRequests extends Middleware
                     'email' => $request->user()->email,
                     'role'  => $request->user()->role,
                 ] : null,
+                'can' => Permissions::forRole($request->user()?->role),
             ],
             'flash' => [
                 'success' => $request->session()->get('success'),

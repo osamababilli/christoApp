@@ -11,6 +11,8 @@ export const employeeSchema = z.object({
     emergency_contact_name: z.string().nullable().optional(),
     emergency_contact_relationship: z.string().nullable().optional(),
     id_image: z.string().nullable().optional(),
+    salary_amount: z.number().nullable().optional(),
+    salary_period: z.string().nullable().optional(),
     created_at: z.string(),
 });
 
