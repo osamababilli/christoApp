@@ -4,7 +4,7 @@ import { ProfileDropdown } from '@/components/profile-dropdown';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { Separator } from '@/components/ui/separator';
 import { SidebarNav } from '@/features/settings/components/sidebar-nav';
-import { Palette, Tag, UserCog, Users } from 'lucide-react';
+import { Palette, UserCog, Users } from 'lucide-react';
 
 const sidebarNavItems = [
     {
@@ -21,11 +21,6 @@ const sidebarNavItems = [
         title: 'المستخدمون',
         href: '/settings/users',
         icon: <Users size={18} />,
-    },
-    {
-        title: 'التصنيفات',
-        href: '/settings/categories',
-        icon: <Tag size={18} />,
     },
 ];
 

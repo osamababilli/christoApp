@@ -8,7 +8,6 @@ import {
     LayoutDashboard,
     Package,
     ReceiptText,
-    Tags,
     Truck,
     UserCircle,
     UserCog,
@@ -59,7 +58,6 @@ export const sidebarData: SidebarData = {
             title: 'الإدارة',
             items: [
                 { title: 'المستخدمون',  url: '/settings/users',      icon: UserCog, roles: ['admin'] },
-                { title: 'التصنيفات',   url: '/settings/categories', icon: Tags,    roles: ['admin'] },
             ],
         },
     ],

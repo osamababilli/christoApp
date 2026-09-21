@@ -10,6 +10,7 @@ use App\Models\Transaction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -191,20 +192,35 @@ class CustomerController extends Controller
         return back()->with('success', 'تم تسجيل الدفعة وإضافتها للصندوق');
     }
 
-    public function statement(Customer $customer): Response
+    public function statement(Request $request, Customer $customer): Response
     {
         $customer->loadCount('motors');
         $customer->load('contacts');
 
-        $invoices = $customer->invoices()
-            ->with('transactions')
+        $fromDate = $request->filled('from') ? $request->date('from')->startOfDay() : null;
+        $toDate   = $request->filled('to') ? $request->date('to')->endOfDay() : null;
+
+        $invoicesQuery = $customer->invoices()->with('transactions');
+        if ($fromDate) {
+            $invoicesQuery->whereDate('issued_date', '>=', $fromDate);
+        }
+        if ($toDate) {
+            $invoicesQuery->whereDate('issued_date', '<=', $toDate);
+        }
+        $invoices = $invoicesQuery
             ->latest('issued_date')
             ->get()
             ->map(fn(Invoice $invoice) => $this->presentInvoice($invoice));
 
         // كل الدفعات على هذا العميل — سواء مرتبطة بفاتورة محددة أو دفعة عامة على الحساب
-        $payments = $customer->transactions()
-            ->with('invoice')
+        $paymentsQuery = $customer->transactions()->with('invoice');
+        if ($fromDate) {
+            $paymentsQuery->whereDate('transaction_date', '>=', $fromDate);
+        }
+        if ($toDate) {
+            $paymentsQuery->whereDate('transaction_date', '<=', $toDate);
+        }
+        $payments = $paymentsQuery
             ->orderBy('transaction_date')
             ->orderBy('id')
             ->get()
@@ -222,7 +238,8 @@ class CustomerController extends Controller
                     : $t->transaction_date,
             ]);
 
-        $openingBalance = (float) ($customer->opening_balance ?? 0);
+        // الرصيد المرحّل يخص بداية الحساب فقط، لذا يظهر فقط عند عدم تحديد تاريخ بداية للفلترة
+        $openingBalance = ! $fromDate ? (float) ($customer->opening_balance ?? 0) : 0.0;
         $totalInvoiced  = (float) $invoices->sum('amount');
         $totalPaid      = (float) $payments->sum('amount');
 
@@ -242,6 +259,17 @@ class CustomerController extends Controller
             'payments'    => $payments->values(),
             'summary'     => $summary,
             'printed_at'  => now()->format('Y-m-d H:i'),
+            'filters'     => [
+                'from' => $fromDate?->format('Y-m-d'),
+                'to'   => $toDate?->format('Y-m-d'),
+            ],
+            // رقم مرجعي فريد لهذه النسخة من كشف الحساب — يُولَّد عند كل طباعة، غير مرتبط بترقيم الفواتير
+            'statement_number' => sprintf(
+                'STMT-%d-%s-%s',
+                $customer->id,
+                now()->format('Ymd'),
+                Str::upper(Str::random(4)),
+            ),
         ]);
     }
 

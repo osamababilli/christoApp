@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class Invoice extends Model
 {
@@ -37,17 +37,14 @@ class Invoice extends Model
         });
     }
 
+    /**
+     * رقم فريد غير متسلسل — يعتمد على الوقت ورموز عشوائية بدل عدّ الصفوف،
+     * لتفادي التعارض (race condition) بين طلبين متزامنين. الفرادة مضمونة
+     * إضافياً عبر قيد unique على العمود بقاعدة البيانات.
+     */
     public static function generateNumber(): string
     {
-        return DB::transaction(function () {
-            $year  = now()->year;
-            $count = static::withTrashed()
-                ->whereYear('created_at', $year)
-                ->lockForUpdate()
-                ->count() + 1;
-
-            return 'INV-' . $year . '-' . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
-        });
+        return 'INV-' . now()->format('Ymd') . '-' . Str::upper(Str::random(6));
     }
 
     public function paidAmount(): float

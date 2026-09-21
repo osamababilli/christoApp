@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { router } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
 /* ─── types ─── */
 interface Invoice {
@@ -44,12 +45,19 @@ interface Summary {
     total_remaining: number;
 }
 
+interface Filters {
+    from: string | null;
+    to: string | null;
+}
+
 interface Props {
     customer: Customer;
     invoices: Invoice[];
     payments: Payment[];
     summary: Summary;
     printed_at: string;
+    filters: Filters;
+    statement_number: string;
 }
 
 /* ─── helpers ─── */
@@ -62,20 +70,38 @@ const S: Record<string, React.CSSProperties> = {
     mono:    { fontFamily: "'IBM Plex Mono', 'Courier New', monospace" },
 };
 
-export default function CustomerStatement({ customer, invoices, payments, summary, printed_at }: Props) {
+export default function CustomerStatement({ customer, invoices, payments, summary, printed_at, filters, statement_number }: Props) {
     useEffect(() => { document.title = `كشف حساب — ${customer.name}`; }, [customer.name]);
+
+    const [fromDate, setFromDate] = useState(filters.from ?? '');
+    const [toDate, setToDate]     = useState(filters.to ?? '');
 
     const isAccount  = customer.account_type === 'account';
     const fullyPaid  = summary.total_remaining <= 0.009;
+    const hasFilter  = !!(filters.from || filters.to);
     const printedDate = new Date(printed_at).toLocaleDateString('ar-EG', {
         year: 'numeric', month: 'long', day: 'numeric',
     });
+
+    function applyFilter() {
+        router.get(
+            `/customers/${customer.id}/statement`,
+            { from: fromDate || undefined, to: toDate || undefined },
+            { preserveState: true, preserveScroll: true },
+        );
+    }
+
+    function clearFilter() {
+        setFromDate('');
+        setToDate('');
+        router.get(`/customers/${customer.id}/statement`, {}, { preserveState: true, preserveScroll: true });
+    }
 
     return (
         <div style={S.page}>
 
             {/* ── Toolbar ── */}
-            <div className="no-print" style={S.toolbar}>
+            <div className="no-print" style={{ ...S.toolbar, flexWrap: 'wrap' }}>
                 <button
                     onClick={() => window.print()}
                     style={{ background: '#fff', color: '#18181b', border: 'none', borderRadius: 8, padding: '8px 22px', fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', fontWeight: 700 }}
@@ -88,6 +114,40 @@ export default function CustomerStatement({ customer, invoices, payments, summar
                 >
                     ← رجوع
                 </button>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginInlineStart: 8 }}>
+                    <label style={{ fontSize: 12, color: '#a1a1aa' }}>من</label>
+                    <input
+                        type="date"
+                        dir="ltr"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                        style={{ background: '#27272a', color: '#fff', border: '1px solid #3f3f46', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'inherit' }}
+                    />
+                    <label style={{ fontSize: 12, color: '#a1a1aa' }}>إلى</label>
+                    <input
+                        type="date"
+                        dir="ltr"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                        style={{ background: '#27272a', color: '#fff', border: '1px solid #3f3f46', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'inherit' }}
+                    />
+                    <button
+                        onClick={applyFilter}
+                        style={{ background: '#fff', color: '#18181b', border: 'none', borderRadius: 6, padding: '7px 16px', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer', fontWeight: 700 }}
+                    >
+                        تطبيق
+                    </button>
+                    {hasFilter && (
+                        <button
+                            onClick={clearFilter}
+                            style={{ background: 'transparent', color: '#a1a1aa', border: '1px solid #3f3f46', borderRadius: 6, padding: '7px 14px', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' }}
+                        >
+                            إلغاء الفلترة
+                        </button>
+                    )}
+                </div>
+
                 <span style={{ fontSize: 12, color: '#71717a', marginRight: 4 }}>
                     {summary.total_invoices} فاتورة ·{' '}
                     {isAccount ? 'حساب جاري' : 'دفع مباشر'} · طُبع {printed_at}
@@ -103,10 +163,18 @@ export default function CustomerStatement({ customer, invoices, payments, summar
                         <p style={{ margin: '4px 0 0', fontSize: 13, color: '#71717a' }}>
                             {isAccount ? 'كشف الحساب الجاري' : 'كشف الحساب المالي الشامل'}
                         </p>
+                        <p style={{ ...S.mono, margin: '6px 0 0', fontSize: 12, fontWeight: 700, color: '#111' }} dir="ltr">
+                            {statement_number}
+                        </p>
                     </div>
                     <div style={{ textAlign: 'left' }}>
                         <p style={{ margin: 0, fontSize: 11, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>تاريخ الإصدار</p>
                         <p style={{ margin: '3px 0 0', fontSize: 13, fontWeight: 700 }}>{printedDate}</p>
+                        {hasFilter && (
+                            <p style={{ margin: '6px 0 0', fontSize: 11, color: '#71717a' }} dir="ltr">
+                                {filters.from ?? '…'} → {filters.to ?? '…'}
+                            </p>
+                        )}
                     </div>
                 </div>
 
@@ -313,7 +381,7 @@ export default function CustomerStatement({ customer, invoices, payments, summar
 
                 {/* ── Footer ── */}
                 <div style={{ marginTop: 32, paddingTop: 14, borderTop: '1px solid #e4e4e7', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#a1a1aa' }}>
-                    <span>ورشة غسان متري — {isAccount ? 'كشف الحساب الجاري' : 'كشف الحساب المالي'}</span>
+                    <span>ورشة غسان متري — {isAccount ? 'كشف الحساب الجاري' : 'كشف الحساب المالي'} — {statement_number}</span>
                     <span>طُبع بتاريخ: {printedDate}</span>
                 </div>
             </div>
