@@ -78,6 +78,23 @@ class InvoiceController extends Controller
         return back()->with('success', 'تم حذف الفاتورة');
     }
 
+    public function print(Invoice $invoice): Response
+    {
+        $invoice->load(['customer', 'motor', 'transactions' => fn($q) => $q->latest('transaction_date')]);
+
+        return Inertia::render('print/invoice', [
+            'invoice' => array_merge($this->present($invoice), [
+                'payments' => $invoice->transactions->map(fn(\App\Models\Transaction $t) => [
+                    'id'             => $t->id,
+                    'amount'         => (float) $t->amount,
+                    'payment_method' => \App\Models\Transaction::paymentMethodLabel($t->payment_method),
+                    'transaction_date' => $t->transaction_date?->format('Y-m-d'),
+                    'notes'          => $t->notes,
+                ]),
+            ]),
+        ]);
+    }
+
     private function validated(Request $request, ?Invoice $invoice = null): array
     {
         return $request->validate([

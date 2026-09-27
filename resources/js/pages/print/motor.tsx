@@ -44,54 +44,109 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
         document.title = `فاتورة — ${motor.reference_number}`;
     }, []);
 
-    const totalLabor  = motor.maintenance_orders.reduce((s, o) => s + o.labor_cost, 0);
-    const totalParts  = motor.maintenance_orders.flatMap((o) => o.parts).reduce((s, p) => s + p.total_cost, 0);
-    const grandTotal  = totalLabor + totalParts;
-    const totalPaid   = motor.transactions.filter((t) => t.type_label === 'دفعة').reduce((s, t) => s + t.amount, 0);
-    const totalDisc   = motor.transactions.filter((t) => t.type_label === 'خصم').reduce((s, t) => s + t.amount, 0);
-    const remaining   = grandTotal - totalPaid - totalDisc;
+    const totalLabor = motor.maintenance_orders.reduce((s, o) => s + o.labor_cost, 0);
+    const totalParts = motor.maintenance_orders.flatMap((o) => o.parts).reduce((s, p) => s + p.total_cost, 0);
+    const grandTotal = totalLabor + totalParts;
+    const totalPaid = motor.transactions.filter((t) => t.type_label === 'دفعة').reduce((s, t) => s + t.amount, 0);
+    const totalDisc = motor.transactions.filter((t) => t.type_label === 'خصم').reduce((s, t) => s + t.amount, 0);
+    const remaining = grandTotal - totalPaid - totalDisc;
 
     return (
         <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", background: '#fff', color: '#111', minHeight: '100vh' }}>
-
             {/* Print actions — hidden when printing */}
-            <div className="no-print" style={{ padding: '12px 24px', background: '#f4f4f5', borderBottom: '1px solid #e4e4e7', display: 'flex', gap: 10, alignItems: 'center' }}>
+            <div
+                className="no-print"
+                style={{
+                    padding: '12px 24px',
+                    background: '#f4f4f5',
+                    borderBottom: '1px solid #e4e4e7',
+                    display: 'flex',
+                    gap: 10,
+                    alignItems: 'center',
+                }}
+            >
                 <button
                     onClick={() => window.print()}
-                    style={{ background: '#111', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 22px', fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', fontWeight: 700 }}
+                    style={{
+                        background: '#111',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '8px 22px',
+                        fontSize: 14,
+                        fontFamily: 'inherit',
+                        cursor: 'pointer',
+                        fontWeight: 700,
+                    }}
                 >
                     🖨 طباعة
                 </button>
                 <button
                     onClick={() => window.history.back()}
-                    style={{ background: '#fff', color: '#333', border: '1px solid #d4d4d8', borderRadius: 8, padding: '8px 18px', fontSize: 14, fontFamily: 'inherit', cursor: 'pointer' }}
+                    style={{
+                        background: '#fff',
+                        color: '#333',
+                        border: '1px solid #d4d4d8',
+                        borderRadius: 8,
+                        padding: '8px 18px',
+                        fontSize: 14,
+                        fontFamily: 'inherit',
+                        cursor: 'pointer',
+                    }}
                 >
                     ← رجوع
                 </button>
-                <span style={{ fontSize: 13, color: '#71717a', marginRight: 8 }}>
-                    ستظهر هذه الأزرار فقط على الشاشة ولن تُطبع
-                </span>
+                <span style={{ fontSize: 13, color: '#71717a', marginRight: 8 }}>ستظهر هذه الأزرار فقط على الشاشة ولن تُطبع</span>
             </div>
 
             {/* Invoice content */}
             <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 40px' }}>
-
                 {/* Header */}
                 <div style={{ textAlign: 'center', marginBottom: 28, paddingBottom: 20, borderBottom: '2px solid #111' }}>
-                    <h1 style={{ fontSize: 26, fontWeight: 900, margin: 0, letterSpacing: 1 }}>ورشة غسان متري</h1>
-                    <p style={{ fontSize: 13, color: '#555', margin: '4px 0 0' }}>فاتورة / ورقة استلام وتسليم</p>
+                    <img
+                        src="/images/brand/logo-color.png"
+                        alt="ورشة غسان متري"
+                        style={{ height: 100, width: 'auto', objectFit: 'contain', margin: '0 auto 8px' }}
+                    />
+                    <p style={{ fontSize: 13, color: '#555', margin: 0 }}>فاتورة / ورقة استلام وتسليم</p>
+                    <p style={{ fontSize: 11, color: '#777', margin: '6px 0 0' }}>
+                        رقم مالي: ٩٥٠٠١٧ &nbsp;|&nbsp; هاتف: ٧٦١٦٩٠٠٨ &nbsp;|&nbsp; info@ghassan-mitri.com
+                    </p>
                 </div>
 
                 {/* Reference + dates row */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, padding: '14px 18px', background: '#f9f9f9', borderRadius: 8, border: '1px solid #e4e4e7' }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: 24,
+                        padding: '14px 18px',
+                        background: '#f9f9f9',
+                        borderRadius: 8,
+                        border: '1px solid #e4e4e7',
+                    }}
+                >
                     <div>
                         <p style={{ margin: 0, fontSize: 13, color: '#777' }}>الرقم المرجعي</p>
-                        <p style={{ margin: '2px 0 0', fontSize: 22, fontWeight: 900, fontFamily: 'monospace', letterSpacing: 2 }}>{motor.reference_number}</p>
+                        <p style={{ margin: '2px 0 0', fontSize: 22, fontWeight: 900, fontFamily: 'monospace', letterSpacing: 2 }}>
+                            {motor.reference_number}
+                        </p>
                     </div>
                     <div style={{ textAlign: 'left' }}>
-                        {motor.received_at && <p style={{ margin: 0, fontSize: 13, color: '#555' }}>تاريخ الاستلام: <strong>{motor.received_at}</strong></p>}
-                        {motor.delivered_at && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#555' }}>تاريخ التسليم: <strong>{motor.delivered_at}</strong></p>}
-                        <p style={{ margin: '4px 0 0', fontSize: 13, color: '#555' }}>الحالة: <strong>{motor.status_label}</strong></p>
+                        {motor.received_at && (
+                            <p style={{ margin: 0, fontSize: 13, color: '#555' }}>
+                                تاريخ الاستلام: <strong>{motor.received_at}</strong>
+                            </p>
+                        )}
+                        {motor.delivered_at && (
+                            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#555' }}>
+                                تاريخ التسليم: <strong>{motor.delivered_at}</strong>
+                            </p>
+                        )}
+                        <p style={{ margin: '4px 0 0', fontSize: 13, color: '#555' }}>
+                            الحالة: <strong>{motor.status_label}</strong>
+                        </p>
                     </div>
                 </div>
 
@@ -120,8 +175,18 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
                         return (
                             <div key={order.id} style={{ marginBottom: 20, border: '1px solid #e4e4e7', borderRadius: 8, overflow: 'hidden' }}>
                                 {/* Order header */}
-                                <div style={{ background: '#f4f4f5', padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ fontWeight: 800, fontSize: 14 }}>مرحلة {order.stage} — {order.status_label}</span>
+                                <div
+                                    style={{
+                                        background: '#f4f4f5',
+                                        padding: '8px 14px',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                    }}
+                                >
+                                    <span style={{ fontWeight: 800, fontSize: 14 }}>
+                                        مرحلة {order.stage} — {order.status_label}
+                                    </span>
                                     <span style={{ fontSize: 13, color: '#555' }}>
                                         {order.started_at && `بدأ: ${order.started_at}`}
                                         {order.completed_at && ` | اكتمل: ${order.completed_at}`}
@@ -152,7 +217,9 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
                                                         <Td>{p.supplier_name ?? '—'}</Td>
                                                         <Td align="center">{p.quantity}</Td>
                                                         <Td align="center">{p.unit_cost.toFixed(2)}</Td>
-                                                        <Td align="center"><strong>{p.total_cost.toFixed(2)}</strong></Td>
+                                                        <Td align="center">
+                                                            <strong>{p.total_cost.toFixed(2)}</strong>
+                                                        </Td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -204,7 +271,9 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
                                         <Td>{t.transaction_date}</Td>
                                         <Td>{t.type_label}</Td>
                                         <Td>{t.notes ?? '—'}</Td>
-                                        <Td align="center"><strong>{t.amount.toFixed(2)}</strong></Td>
+                                        <Td align="center">
+                                            <strong>{t.amount.toFixed(2)}</strong>
+                                        </Td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -213,7 +282,17 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
                 )}
 
                 {/* Footer */}
-                <div style={{ marginTop: 40, paddingTop: 16, borderTop: '1px solid #e4e4e7', display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#999' }}>
+                <div
+                    style={{
+                        marginTop: 40,
+                        paddingTop: 16,
+                        borderTop: '1px solid #e4e4e7',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: 12,
+                        color: '#999',
+                    }}
+                >
                     <span>طُبع بتاريخ: {new Date().toLocaleDateString('ar-SA')}</span>
                     <span>{motor.reference_number}</span>
                 </div>
@@ -243,27 +322,27 @@ function Row({ label, value, ltr }: { label: string; value: string; ltr?: boolea
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-    return (
-        <h3 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 12px', paddingBottom: 6, borderBottom: '1px solid #e4e4e7' }}>
-            {children}
-        </h3>
-    );
+    return <h3 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 12px', paddingBottom: 6, borderBottom: '1px solid #e4e4e7' }}>{children}</h3>;
 }
 
 function Th({ children, align }: { children: React.ReactNode; align?: string }) {
     return (
-        <th style={{ padding: '6px 10px', textAlign: (align ?? 'right') as React.CSSProperties['textAlign'], fontWeight: 700, borderBottom: '1px solid #e4e4e7', color: '#555' }}>
+        <th
+            style={{
+                padding: '6px 10px',
+                textAlign: (align ?? 'right') as React.CSSProperties['textAlign'],
+                fontWeight: 700,
+                borderBottom: '1px solid #e4e4e7',
+                color: '#555',
+            }}
+        >
             {children}
         </th>
     );
 }
 
 function Td({ children, align }: { children: React.ReactNode; align?: string }) {
-    return (
-        <td style={{ padding: '5px 10px', textAlign: (align ?? 'right') as React.CSSProperties['textAlign'], color: '#333' }}>
-            {children}
-        </td>
-    );
+    return <td style={{ padding: '5px 10px', textAlign: (align ?? 'right') as React.CSSProperties['textAlign'], color: '#333' }}>{children}</td>;
 }
 
 function SummaryRow({ label, value, bold, border, color }: { label: string; value: string; bold?: boolean; border?: boolean; color?: string }) {

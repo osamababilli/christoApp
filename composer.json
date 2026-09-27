@@ -13,7 +13,9 @@
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "laravel/wayfinder": "^0.1.11"
+        "laravel/wayfinder": "^0.1.11",
+        "masbug/flysystem-google-drive-ext": "^2.5",
+        "spatie/laravel-backup": "^10.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

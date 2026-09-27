@@ -10,6 +10,7 @@ use App\Models\SupplierPurchase;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -216,6 +217,20 @@ class SupplierController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $supplier) {
+            // Lock the supplier row so two simultaneous payments can't both pass the remaining check
+            Supplier::whereKey($supplier->id)->lockForUpdate()->first();
+
+            $remaining = $supplier->outstandingBalance();
+            if ($validated['amount'] > $remaining + 0.009) {
+                throw ValidationException::withMessages([
+                    'amount' => sprintf(
+                        'المبلغ ($%s) يتجاوز المتبقي على هذا المورد ($%s)',
+                        number_format((float) $validated['amount'], 2),
+                        number_format(max($remaining, 0), 2),
+                    ),
+                ]);
+            }
+
             // Record as expense in treasury
             $entry = AccountEntry::create([
                 'type'        => 'expense',

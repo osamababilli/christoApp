@@ -10,3 +10,8 @@ Artisan::command('inspire', function () {
 
 // تشغيل تذكيرات الوثائق يومياً في الساعة 9 صباحاً
 Schedule::command('documents:send-reminders')->dailyAt('09:00');
+
+// نسخة احتياطية يومية إلى جوجل درايف (قاعدة البيانات + ملفات المحل)، ثم تنظيف النسخ القديمة ومراقبة سلامتها
+Schedule::command('backup:clean')->dailyAt('01:00');
+Schedule::command('backup:run')->dailyAt('01:30');
+Schedule::command('backup:monitor')->dailyAt('02:00');

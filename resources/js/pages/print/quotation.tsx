@@ -29,45 +29,86 @@ export default function QuotationPrint({ quotation }: { quotation: QuotationPrin
         document.title = `عرض سعر — ${quotation.reference_number}`;
     }, []);
 
-    const totalLabor  = quotation.services.reduce((s, i) => s + i.labor_cost, 0);
-    const totalParts  = quotation.parts.reduce((s, i) => s + i.total_price, 0);
-    const grandTotal  = totalLabor + totalParts;
-    const quoteDate   = new Date(quotation.created_at).toLocaleDateString('ar-SA');
+    const totalLabor = quotation.services.reduce((s, i) => s + i.labor_cost, 0);
+    const totalParts = quotation.parts.reduce((s, i) => s + i.total_price, 0);
+    const grandTotal = totalLabor + totalParts;
+    const quoteDate = new Date(quotation.created_at).toLocaleDateString('ar-SA');
 
     return (
         <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", background: '#fff', color: '#111', minHeight: '100vh' }}>
-
             {/* Toolbar — hidden when printing */}
-            <div className="no-print" style={{ padding: '12px 24px', background: '#f4f4f5', borderBottom: '1px solid #e4e4e7', display: 'flex', gap: 10, alignItems: 'center' }}>
+            <div
+                className="no-print"
+                style={{
+                    padding: '12px 24px',
+                    background: '#f4f4f5',
+                    borderBottom: '1px solid #e4e4e7',
+                    display: 'flex',
+                    gap: 10,
+                    alignItems: 'center',
+                }}
+            >
                 <button
                     onClick={() => window.print()}
-                    style={{ background: '#111', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 22px', fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', fontWeight: 700 }}
+                    style={{
+                        background: '#111',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '8px 22px',
+                        fontSize: 14,
+                        fontFamily: 'inherit',
+                        cursor: 'pointer',
+                        fontWeight: 700,
+                    }}
                 >
                     🖨 طباعة / تحميل PDF
                 </button>
                 <button
                     onClick={() => window.history.back()}
-                    style={{ background: '#fff', color: '#333', border: '1px solid #d4d4d8', borderRadius: 8, padding: '8px 18px', fontSize: 14, fontFamily: 'inherit', cursor: 'pointer' }}
+                    style={{
+                        background: '#fff',
+                        color: '#333',
+                        border: '1px solid #d4d4d8',
+                        borderRadius: 8,
+                        padding: '8px 18px',
+                        fontSize: 14,
+                        fontFamily: 'inherit',
+                        cursor: 'pointer',
+                    }}
                 >
                     ← رجوع
                 </button>
-                <span style={{ fontSize: 13, color: '#71717a', marginRight: 8 }}>
-                    لتحميل PDF: اختر "حفظ كـ PDF" من نافذة الطباعة
-                </span>
+                <span style={{ fontSize: 13, color: '#71717a', marginRight: 8 }}>لتحميل PDF: اختر "حفظ كـ PDF" من نافذة الطباعة</span>
             </div>
 
             <div style={{ maxWidth: 820, margin: '0 auto', padding: '36px 44px' }}>
-
                 {/* ── Header ── */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, paddingBottom: 20, borderBottom: '3px solid #111' }}>
-                    <div>
-                        <h1 style={{ fontSize: 28, fontWeight: 900, margin: 0, letterSpacing: 1 }}>ورشة غسان متري</h1>
-                        <p style={{ fontSize: 13, color: '#555', margin: '4px 0 0' }}>للصيانة الميكانيكية والكهربائية</p>
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: 28,
+                        paddingBottom: 20,
+                        borderBottom: '3px solid #111',
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <img src="/images/brand/logo-color.png" alt="ورشة غسان متري" style={{ height: 100, width: 'auto', objectFit: 'contain' }} />
+                        <div>
+                            <p style={{ fontSize: 13, color: '#555', margin: 0 }}>للصيانة الميكانيكية والكهربائية</p>
+                            <p style={{ fontSize: 11, color: '#777', margin: '6px 0 0' }}>
+                                رقم مالي: ٩٥٠٠١٧ &nbsp;|&nbsp; هاتف: ٧٦١٦٩٠٠٨ &nbsp;|&nbsp; info@ghassan-mitri.com
+                            </p>
+                        </div>
                     </div>
                     <div style={{ textAlign: 'left' }}>
                         <div style={{ display: 'inline-block', border: '2px solid #111', borderRadius: 8, padding: '8px 20px', textAlign: 'center' }}>
                             <p style={{ margin: 0, fontSize: 11, color: '#777', textTransform: 'uppercase', letterSpacing: 2 }}>عرض سعر</p>
-                            <p style={{ margin: '4px 0 0', fontSize: 22, fontWeight: 900, fontFamily: 'monospace', letterSpacing: 2 }}>{quotation.reference_number}</p>
+                            <p style={{ margin: '4px 0 0', fontSize: 22, fontWeight: 900, fontFamily: 'monospace', letterSpacing: 2 }}>
+                                {quotation.reference_number}
+                            </p>
                         </div>
                         <p style={{ margin: '8px 0 0', fontSize: 12, color: '#777', textAlign: 'left' }}>تاريخ العرض: {quoteDate}</p>
                     </div>
@@ -76,13 +117,13 @@ export default function QuotationPrint({ quotation }: { quotation: QuotationPrin
                 {/* ── Customer info ── */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
                     <InfoBox title="بيانات العميل">
-                        <InfoRow label="الاسم"  value={quotation.customer.name} />
+                        <InfoRow label="الاسم" value={quotation.customer.name} />
                         <InfoRow label="الهاتف" value={quotation.customer.phone} ltr />
                     </InfoBox>
                     <InfoBox title="تفاصيل العرض">
-                        <InfoRow label="رقم العرض"      value={quotation.reference_number} mono />
-                        <InfoRow label="تاريخ الإصدار"  value={quoteDate} />
-                        <InfoRow label="صلاحية العرض"   value={`${quotation.valid_days} يوماً`} />
+                        <InfoRow label="رقم العرض" value={quotation.reference_number} mono />
+                        <InfoRow label="تاريخ الإصدار" value={quoteDate} />
+                        <InfoRow label="صلاحية العرض" value={`${quotation.valid_days} يوماً`} />
                     </InfoBox>
                 </div>
 
@@ -104,19 +145,27 @@ export default function QuotationPrint({ quotation }: { quotation: QuotationPrin
                             <tr style={{ background: '#111', color: '#fff' }}>
                                 <Th light>#</Th>
                                 <Th light>وصف الخدمة</Th>
-                                <Th light align="center">تكلفة العمالة</Th>
+                                <Th light align="center">
+                                    تكلفة العمالة
+                                </Th>
                             </tr>
                         </thead>
                         <tbody>
                             {quotation.services.map((svc, i) => (
                                 <tr key={i} style={{ borderBottom: '1px solid #e4e4e7', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
-                                    <Td align="center" muted>{i + 1}</Td>
+                                    <Td align="center" muted>
+                                        {i + 1}
+                                    </Td>
                                     <Td>{svc.description || '—'}</Td>
-                                    <Td align="center"><strong>{svc.labor_cost.toFixed(2)}</strong></Td>
+                                    <Td align="center">
+                                        <strong>{svc.labor_cost.toFixed(2)}</strong>
+                                    </Td>
                                 </tr>
                             ))}
                             <tr style={{ background: '#f4f4f5', borderTop: '2px solid #e4e4e7' }}>
-                                <td colSpan={2} style={{ padding: '8px 12px', fontWeight: 700, fontSize: 13, textAlign: 'right' }}>إجمالي خدمات الصيانة</td>
+                                <td colSpan={2} style={{ padding: '8px 12px', fontWeight: 700, fontSize: 13, textAlign: 'right' }}>
+                                    إجمالي خدمات الصيانة
+                                </td>
                                 <td style={{ padding: '8px 12px', fontWeight: 800, fontSize: 14, textAlign: 'center' }}>{totalLabor.toFixed(2)}</td>
                             </tr>
                         </tbody>
@@ -134,28 +183,48 @@ export default function QuotationPrint({ quotation }: { quotation: QuotationPrin
                                 <Th light>#</Th>
                                 <Th light>اسم القطعة / المستلزم</Th>
                                 <Th light>النوع</Th>
-                                <Th light align="center">الكمية</Th>
-                                <Th light align="center">سعر الوحدة</Th>
-                                <Th light align="center">الإجمالي</Th>
+                                <Th light align="center">
+                                    الكمية
+                                </Th>
+                                <Th light align="center">
+                                    سعر الوحدة
+                                </Th>
+                                <Th light align="center">
+                                    الإجمالي
+                                </Th>
                             </tr>
                         </thead>
                         <tbody>
                             {quotation.parts.map((p, i) => (
                                 <tr key={i} style={{ borderBottom: '1px solid #e4e4e7', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
-                                    <Td align="center" muted>{i + 1}</Td>
-                                    <Td><strong>{p.description}</strong></Td>
+                                    <Td align="center" muted>
+                                        {i + 1}
+                                    </Td>
+                                    <Td>
+                                        <strong>{p.description}</strong>
+                                    </Td>
                                     <Td>
                                         {p.part_type_label ? (
-                                            <span style={{ background: '#eff6ff', color: '#1d4ed8', borderRadius: 4, padding: '2px 8px', fontSize: 12 }}>{p.part_type_label}</span>
-                                        ) : '—'}
+                                            <span
+                                                style={{ background: '#eff6ff', color: '#1d4ed8', borderRadius: 4, padding: '2px 8px', fontSize: 12 }}
+                                            >
+                                                {p.part_type_label}
+                                            </span>
+                                        ) : (
+                                            '—'
+                                        )}
                                     </Td>
                                     <Td align="center">{p.quantity}</Td>
                                     <Td align="center">{p.unit_price.toFixed(2)}</Td>
-                                    <Td align="center"><strong>{p.total_price.toFixed(2)}</strong></Td>
+                                    <Td align="center">
+                                        <strong>{p.total_price.toFixed(2)}</strong>
+                                    </Td>
                                 </tr>
                             ))}
                             <tr style={{ background: '#f4f4f5', borderTop: '2px solid #e4e4e7' }}>
-                                <td colSpan={5} style={{ padding: '8px 12px', fontWeight: 700, fontSize: 13, textAlign: 'right' }}>إجمالي القطع والمستلزمات</td>
+                                <td colSpan={5} style={{ padding: '8px 12px', fontWeight: 700, fontSize: 13, textAlign: 'right' }}>
+                                    إجمالي القطع والمستلزمات
+                                </td>
                                 <td style={{ padding: '8px 12px', fontWeight: 800, fontSize: 14, textAlign: 'center' }}>{totalParts.toFixed(2)}</td>
                             </tr>
                         </tbody>
@@ -166,7 +235,7 @@ export default function QuotationPrint({ quotation }: { quotation: QuotationPrin
                 <div style={{ marginBottom: 32 }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                         <tbody>
-                            <SummaryRow label="إجمالي خدمات الصيانة"     value={totalLabor.toFixed(2)} />
+                            <SummaryRow label="إجمالي خدمات الصيانة" value={totalLabor.toFixed(2)} />
                             <SummaryRow label="إجمالي القطع والمستلزمات" value={totalParts.toFixed(2)} />
                             <tr>
                                 <td colSpan={2}>
@@ -175,7 +244,16 @@ export default function QuotationPrint({ quotation }: { quotation: QuotationPrin
                             </tr>
                             <tr style={{ background: '#111', color: '#fff' }}>
                                 <td style={{ padding: '12px 16px', fontWeight: 900, fontSize: 16 }}>الإجمالي الكلي</td>
-                                <td style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 900, fontSize: 20, fontFamily: 'monospace', letterSpacing: 1 }}>
+                                <td
+                                    style={{
+                                        padding: '12px 16px',
+                                        textAlign: 'left',
+                                        fontWeight: 900,
+                                        fontSize: 20,
+                                        fontFamily: 'monospace',
+                                        letterSpacing: 1,
+                                    }}
+                                >
                                     {grandTotal.toFixed(2)}
                                 </td>
                             </tr>
@@ -187,7 +265,9 @@ export default function QuotationPrint({ quotation }: { quotation: QuotationPrin
                 <div style={{ marginBottom: 36, padding: '14px 18px', border: '1px solid #e4e4e7', borderRadius: 8, background: '#fafafa' }}>
                     <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700 }}>شروط وملاحظات عرض السعر</p>
                     <ul style={{ margin: 0, paddingRight: 20, fontSize: 12, color: '#555', lineHeight: 1.9 }}>
-                        <li>صلاحية العرض: <strong>{quotation.valid_days} يوماً</strong> من تاريخ الإصدار.</li>
+                        <li>
+                            صلاحية العرض: <strong>{quotation.valid_days} يوماً</strong> من تاريخ الإصدار.
+                        </li>
                         <li>الأسعار المذكورة لا تشمل أي قطع إضافية قد تظهر عند تفكيك الجهاز.</li>
                         <li>يُرجى التواصل مع الورشة لتأكيد الطلب قبل البدء بالإصلاح.</li>
                     </ul>
@@ -200,7 +280,17 @@ export default function QuotationPrint({ quotation }: { quotation: QuotationPrin
                 </div>
 
                 {/* ── Footer ── */}
-                <div style={{ marginTop: 24, paddingTop: 14, borderTop: '1px solid #e4e4e7', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#999' }}>
+                <div
+                    style={{
+                        marginTop: 24,
+                        paddingTop: 14,
+                        borderTop: '1px solid #e4e4e7',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: 11,
+                        color: '#999',
+                    }}
+                >
                     <span>طُبع بتاريخ: {new Date().toLocaleDateString('ar-SA')}</span>
                     <span>عرض سعر رقم: {quotation.reference_number}</span>
                 </div>
@@ -222,7 +312,9 @@ export default function QuotationPrint({ quotation }: { quotation: QuotationPrin
 function InfoBox({ title, children }: { title: string; children: React.ReactNode }) {
     return (
         <div style={{ border: '1px solid #e4e4e7', borderRadius: 8, overflow: 'hidden' }}>
-            <div style={{ background: '#f4f4f5', padding: '6px 14px', fontWeight: 800, fontSize: 13, borderBottom: '1px solid #e4e4e7' }}>{title}</div>
+            <div style={{ background: '#f4f4f5', padding: '6px 14px', fontWeight: 800, fontSize: 13, borderBottom: '1px solid #e4e4e7' }}>
+                {title}
+            </div>
             <div style={{ padding: '10px 14px', fontSize: 13 }}>{children}</div>
         </div>
     );
@@ -248,14 +340,16 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function Th({ children, align, light }: { children: React.ReactNode; align?: string; light?: boolean }) {
     return (
-        <th style={{
-            padding: '9px 12px',
-            textAlign: (align ?? 'right') as React.CSSProperties['textAlign'],
-            fontWeight: 700,
-            fontSize: 12,
-            color: light ? '#fff' : '#555',
-            borderBottom: '1px solid #e4e4e7',
-        }}>
+        <th
+            style={{
+                padding: '9px 12px',
+                textAlign: (align ?? 'right') as React.CSSProperties['textAlign'],
+                fontWeight: 700,
+                fontSize: 12,
+                color: light ? '#fff' : '#555',
+                borderBottom: '1px solid #e4e4e7',
+            }}
+        >
             {children}
         </th>
     );

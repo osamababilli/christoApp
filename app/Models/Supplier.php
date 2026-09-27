@@ -27,4 +27,13 @@ class Supplier extends Model
     {
         return $this->hasMany(SupplierPayment::class);
     }
+
+    public function outstandingBalance(): float
+    {
+        $motorPartsCost = (float) $this->parts()->sum('total_cost');
+        $directCost     = (float) $this->purchases()->sum('total_cost');
+        $totalPaid      = (float) $this->payments()->sum('amount');
+
+        return $motorPartsCost + $directCost - $totalPaid;
+    }
 }

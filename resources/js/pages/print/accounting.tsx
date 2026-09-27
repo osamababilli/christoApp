@@ -24,40 +24,43 @@ interface Props {
 }
 
 const TYPE_COLOR: Record<string, string> = {
-    income:  '#16a34a',
+    income: '#16a34a',
     expense: '#dc2626',
     deposit: '#0284c7',
 };
 
 const TYPE_BG: Record<string, string> = {
-    income:  '#f0fdf4',
+    income: '#f0fdf4',
     expense: '#fff1f2',
     deposit: '#f0f9ff',
 };
 
 export default function AccountingPrint({ entries, summary, filters }: Props) {
     useEffect(() => {
-        const range = filters.from && filters.to
-            ? ` (${filters.from} — ${filters.to})`
-            : '';
+        const range = filters.from && filters.to ? ` (${filters.from} — ${filters.to})` : '';
         document.title = `كشف حساب${range}`;
     }, []);
 
-    const isPositive   = summary.balance >= 0;
-    const printedAt    = new Date().toLocaleDateString('ar-EG', {
-        year: 'numeric', month: 'long', day: 'numeric',
+    const isPositive = summary.balance >= 0;
+    const printedAt = new Date().toLocaleDateString('ar-EG', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
     });
 
-    const periodLabel = filters.from && filters.to
-        ? `${filters.from} — ${filters.to}`
-        : filters.from
-            ? `من ${filters.from}`
-            : filters.to
+    const periodLabel =
+        filters.from && filters.to
+            ? `${filters.from} — ${filters.to}`
+            : filters.from
+              ? `من ${filters.from}`
+              : filters.to
                 ? `حتى ${filters.to}`
                 : 'جميع الفترات';
 
     const typeLabel: Record<string, string> = {
-        income: 'الدخل فقط', expense: 'المصاريف فقط', deposit: 'الإيداعات فقط',
+        income: 'الدخل فقط',
+        expense: 'المصاريف فقط',
+        deposit: 'الإيداعات فقط',
     };
 
     // Running balance per row
@@ -69,20 +72,36 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
 
     return (
         <div dir="rtl" style={{ fontFamily: "'Cairo', sans-serif", background: '#fff', color: '#111', minHeight: '100vh' }}>
-
             {/* ── Toolbar (no-print) ── */}
-            <div className="no-print" style={{
-                position: 'sticky', top: 0, zIndex: 10,
-                padding: '10px 24px', background: '#18181b', borderBottom: '1px solid #3f3f46',
-                display: 'flex', gap: 10, alignItems: 'center',
-            }}>
+            <div
+                className="no-print"
+                style={{
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 10,
+                    padding: '10px 24px',
+                    background: '#18181b',
+                    borderBottom: '1px solid #3f3f46',
+                    display: 'flex',
+                    gap: 10,
+                    alignItems: 'center',
+                }}
+            >
                 <button
                     onClick={() => window.print()}
                     style={{
-                        background: '#fff', color: '#18181b', border: 'none',
-                        borderRadius: 8, padding: '8px 22px', fontSize: 14,
-                        fontFamily: 'inherit', cursor: 'pointer', fontWeight: 700,
-                        display: 'flex', alignItems: 'center', gap: 6,
+                        background: '#fff',
+                        color: '#18181b',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '8px 22px',
+                        fontSize: 14,
+                        fontFamily: 'inherit',
+                        cursor: 'pointer',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
                     }}
                 >
                     🖨 طباعة
@@ -90,9 +109,14 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
                 <button
                     onClick={() => window.history.back()}
                     style={{
-                        background: 'transparent', color: '#a1a1aa', border: '1px solid #3f3f46',
-                        borderRadius: 8, padding: '8px 18px', fontSize: 14,
-                        fontFamily: 'inherit', cursor: 'pointer',
+                        background: 'transparent',
+                        color: '#a1a1aa',
+                        border: '1px solid #3f3f46',
+                        borderRadius: 8,
+                        padding: '8px 18px',
+                        fontSize: 14,
+                        fontFamily: 'inherit',
+                        cursor: 'pointer',
                     }}
                 >
                     ← رجوع
@@ -104,12 +128,25 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
 
             {/* ── Document ── */}
             <div style={{ maxWidth: 820, margin: '0 auto', padding: '36px 44px' }}>
-
                 {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, paddingBottom: 20, borderBottom: '3px solid #111' }}>
-                    <div>
-                        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, letterSpacing: 0.5 }}>ورشة غسان متري</h1>
-                        <p style={{ margin: '3px 0 0', fontSize: 13, color: '#71717a' }}>كشف حساب — المحاسبة والخزنة</p>
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: 28,
+                        paddingBottom: 20,
+                        borderBottom: '3px solid #111',
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <img src="/images/brand/logo-color.png" alt="ورشة غسان متري" style={{ height: 100, width: 'auto', objectFit: 'contain' }} />
+                        <div>
+                            <p style={{ margin: 0, fontSize: 13, color: '#71717a' }}>كشف حساب — المحاسبة والخزنة</p>
+                            <p style={{ margin: '6px 0 0', fontSize: 11, color: '#71717a' }}>
+                                رقم مالي: ٩٥٠٠١٧ &nbsp;|&nbsp; هاتف: ٧٦١٦٩٠٠٨ &nbsp;|&nbsp; info@ghassan-mitri.com
+                            </p>
+                        </div>
                     </div>
                     <div style={{ textAlign: 'left' }}>
                         <p style={{ margin: 0, fontSize: 12, color: '#71717a' }}>تاريخ الإصدار</p>
@@ -118,14 +155,19 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
                 </div>
 
                 {/* Period + filter info */}
-                <div style={{
-                    display: 'flex', gap: 12, marginBottom: 24,
-                    padding: '12px 16px', background: '#f4f4f5', borderRadius: 10, border: '1px solid #e4e4e7',
-                }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        gap: 12,
+                        marginBottom: 24,
+                        padding: '12px 16px',
+                        background: '#f4f4f5',
+                        borderRadius: 10,
+                        border: '1px solid #e4e4e7',
+                    }}
+                >
                     <InfoChip label="الفترة الزمنية" value={periodLabel} />
-                    {filters.type && (
-                        <InfoChip label="نوع القيود" value={typeLabel[filters.type] ?? filters.type} />
-                    )}
+                    {filters.type && <InfoChip label="نوع القيود" value={typeLabel[filters.type] ?? filters.type} />}
                     <InfoChip label="عدد القيود" value={String(entries.length)} />
                 </div>
 
@@ -141,9 +183,21 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
                         prefix={isPositive ? '' : '−'}
                         bold
                     />
-                    <SummaryCard label="إجمالي الدخل"       value={`$${summary.total_income.toFixed(2)}`}  color="#16a34a" bg="#f0fdf4" border="#bbf7d0" />
-                    <SummaryCard label="إجمالي الإيداعات"   value={`$${summary.total_deposit.toFixed(2)}`} color="#0284c7" bg="#f0f9ff" border="#bae6fd" />
-                    <SummaryCard label="إجمالي المصاريف"    value={`$${summary.total_expense.toFixed(2)}`} color="#dc2626" bg="#fff1f2" border="#fecaca" />
+                    <SummaryCard label="إجمالي الدخل" value={`$${summary.total_income.toFixed(2)}`} color="#16a34a" bg="#f0fdf4" border="#bbf7d0" />
+                    <SummaryCard
+                        label="إجمالي الإيداعات"
+                        value={`$${summary.total_deposit.toFixed(2)}`}
+                        color="#0284c7"
+                        bg="#f0f9ff"
+                        border="#bae6fd"
+                    />
+                    <SummaryCard
+                        label="إجمالي المصاريف"
+                        value={`$${summary.total_expense.toFixed(2)}`}
+                        color="#dc2626"
+                        bg="#fff1f2"
+                        border="#fecaca"
+                    />
                 </div>
 
                 {/* Transactions table */}
@@ -152,9 +206,7 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
                 </h2>
 
                 {entries.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: '#a1a1aa', padding: '32px 0', fontSize: 14 }}>
-                        لا توجد قيود في هذه الفترة
-                    </p>
+                    <p style={{ textAlign: 'center', color: '#a1a1aa', padding: '32px 0', fontSize: 14 }}>لا توجد قيود في هذه الفترة</p>
                 ) : (
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
                         <thead>
@@ -176,27 +228,29 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
                                     <tr key={entry.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
                                         <Td ltr>{entry.entry_date}</Td>
                                         <Td>
-                                            <span style={{
-                                                display: 'inline-block',
-                                                padding: '2px 8px',
-                                                borderRadius: 20,
-                                                fontSize: 11,
-                                                fontWeight: 700,
-                                                background: TYPE_BG[entry.type],
-                                                color: TYPE_COLOR[entry.type],
-                                            }}>
+                                            <span
+                                                style={{
+                                                    display: 'inline-block',
+                                                    padding: '2px 8px',
+                                                    borderRadius: 20,
+                                                    fontSize: 11,
+                                                    fontWeight: 700,
+                                                    background: TYPE_BG[entry.type],
+                                                    color: TYPE_COLOR[entry.type],
+                                                }}
+                                            >
                                                 {entry.type_label}
                                             </span>
                                         </Td>
                                         <Td>
                                             <div style={{ fontWeight: 600 }}>{entry.description}</div>
-                                            {entry.notes && (
-                                                <div style={{ fontSize: 11, color: '#71717a', marginTop: 1 }}>{entry.notes}</div>
-                                            )}
+                                            {entry.notes && <div style={{ fontSize: 11, color: '#71717a', marginTop: 1 }}>{entry.notes}</div>}
                                         </Td>
                                         <Td align="center">
                                             {!isExpense && (
-                                                <span style={{ color: TYPE_COLOR[entry.type], fontWeight: 700, fontFamily: 'IBM Plex Mono, monospace' }}>
+                                                <span
+                                                    style={{ color: TYPE_COLOR[entry.type], fontWeight: 700, fontFamily: 'IBM Plex Mono, monospace' }}
+                                                >
                                                     +${entry.amount.toFixed(2)}
                                                 </span>
                                             )}
@@ -209,7 +263,13 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
                                             )}
                                         </Td>
                                         <Td align="center">
-                                            <span style={{ fontWeight: 800, fontFamily: 'IBM Plex Mono, monospace', color: runningPos ? '#16a34a' : '#dc2626' }}>
+                                            <span
+                                                style={{
+                                                    fontWeight: 800,
+                                                    fontFamily: 'IBM Plex Mono, monospace',
+                                                    color: runningPos ? '#16a34a' : '#dc2626',
+                                                }}
+                                            >
                                                 {runningPos ? '' : '−'}${Math.abs(running).toFixed(2)}
                                             </span>
                                         </Td>
@@ -221,14 +281,40 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
                         {/* Totals row */}
                         <tfoot>
                             <tr style={{ background: '#18181b', color: '#fff', fontWeight: 800 }}>
-                                <td colSpan={3} style={{ padding: '9px 12px', textAlign: 'right', fontSize: 13 }}>الإجمالي</td>
-                                <td style={{ padding: '9px 12px', textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace', fontSize: 13, color: '#86efac' }}>
+                                <td colSpan={3} style={{ padding: '9px 12px', textAlign: 'right', fontSize: 13 }}>
+                                    الإجمالي
+                                </td>
+                                <td
+                                    style={{
+                                        padding: '9px 12px',
+                                        textAlign: 'center',
+                                        fontFamily: 'IBM Plex Mono, monospace',
+                                        fontSize: 13,
+                                        color: '#86efac',
+                                    }}
+                                >
                                     +${(summary.total_income + summary.total_deposit).toFixed(2)}
                                 </td>
-                                <td style={{ padding: '9px 12px', textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace', fontSize: 13, color: '#fca5a5' }}>
+                                <td
+                                    style={{
+                                        padding: '9px 12px',
+                                        textAlign: 'center',
+                                        fontFamily: 'IBM Plex Mono, monospace',
+                                        fontSize: 13,
+                                        color: '#fca5a5',
+                                    }}
+                                >
                                     −${summary.total_expense.toFixed(2)}
                                 </td>
-                                <td style={{ padding: '9px 12px', textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace', fontSize: 13, color: isPositive ? '#86efac' : '#fca5a5' }}>
+                                <td
+                                    style={{
+                                        padding: '9px 12px',
+                                        textAlign: 'center',
+                                        fontFamily: 'IBM Plex Mono, monospace',
+                                        fontSize: 13,
+                                        color: isPositive ? '#86efac' : '#fca5a5',
+                                    }}
+                                >
                                     {isPositive ? '' : '−'}${Math.abs(summary.balance).toFixed(2)}
                                 </td>
                             </tr>
@@ -237,8 +323,18 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
                 )}
 
                 {/* Footer */}
-                <div style={{ marginTop: 40, paddingTop: 14, borderTop: '1px solid #e4e4e7', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#a1a1aa' }}>
-                    <span>ورشة غسان متري — كشف حساب رسمي</span>
+                <div
+                    style={{
+                        marginTop: 40,
+                        paddingTop: 14,
+                        borderTop: '1px solid #e4e4e7',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: 11,
+                        color: '#a1a1aa',
+                    }}
+                >
+                    <span>كشف حساب رسمي</span>
                     <span>طُبع بتاريخ: {printedAt}</span>
                 </div>
             </div>
@@ -257,10 +353,23 @@ function InfoChip({ label, value }: { label: string; value: string }) {
     );
 }
 
-function SummaryCard({ label, value, sub, color, bg, border, bold }: {
-    label: string; value: string; sub?: string;
-    color: string; bg: string; border: string;
-    prefix?: string; bold?: boolean;
+function SummaryCard({
+    label,
+    value,
+    sub,
+    color,
+    bg,
+    border,
+    bold,
+}: {
+    label: string;
+    value: string;
+    sub?: string;
+    color: string;
+    bg: string;
+    border: string;
+    prefix?: string;
+    bold?: boolean;
 }) {
     return (
         <div style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '10px 14px' }}>
@@ -281,7 +390,14 @@ function Th({ children, align }: { children: React.ReactNode; align?: string }) 
 
 function Td({ children, align, ltr }: { children: React.ReactNode; align?: string; ltr?: boolean }) {
     return (
-        <td style={{ padding: '7px 12px', textAlign: (align ?? 'right') as React.CSSProperties['textAlign'], verticalAlign: 'middle', direction: ltr ? 'ltr' : undefined }}>
+        <td
+            style={{
+                padding: '7px 12px',
+                textAlign: (align ?? 'right') as React.CSSProperties['textAlign'],
+                verticalAlign: 'middle',
+                direction: ltr ? 'ltr' : undefined,
+            }}
+        >
             {children}
         </td>
     );

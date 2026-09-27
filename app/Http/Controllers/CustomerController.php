@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -164,6 +165,20 @@ class CustomerController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $customer) {
+            // Lock the customer row so two simultaneous payments can't both pass the remaining check
+            Customer::whereKey($customer->id)->lockForUpdate()->first();
+
+            $remaining = $customer->outstandingBalance();
+            if ($validated['amount'] > $remaining + 0.009) {
+                throw ValidationException::withMessages([
+                    'amount' => sprintf(
+                        'المبلغ ($%s) يتجاوز المتبقي على حساب هذا العميل ($%s)',
+                        number_format((float) $validated['amount'], 2),
+                        number_format(max($remaining, 0), 2),
+                    ),
+                ]);
+            }
+
             $transaction = Transaction::create([
                 'customer_id'      => $customer->id,
                 'motor_id'         => null,

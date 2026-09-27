@@ -149,6 +149,19 @@ class Motor extends Model
             ->update(['is_paid' => true]);
     }
 
+    /** Reopen parts that were auto-marked paid, if a payment deletion left a real balance again. */
+    public function revertPartsPaidIfNeeded(): void
+    {
+        if ($this->outstandingBalance() <= 0.009) {
+            return;
+        }
+
+        Part::whereIn('maintenance_id', $this->maintenanceOrders()->pluck('id'))
+            ->where('purchased_by', '!=', 'customer')
+            ->where('is_paid', true)
+            ->update(['is_paid' => false]);
+    }
+
     public function isLocked(): bool
     {
         if ($this->status !== 'delivered') {

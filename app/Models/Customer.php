@@ -43,6 +43,15 @@ class Customer extends Model
         return $this->hasMany(Quotation::class);
     }
 
+    /** Total invoiced + opening balance − all recorded payments/discounts (account-level balance). */
+    public function outstandingBalance(): float
+    {
+        $totalInvoiced = (float) $this->invoices()->sum('amount');
+        $totalPaid     = (float) $this->transactions()->sum('amount');
+
+        return $totalInvoiced + (float) ($this->opening_balance ?? 0) - $totalPaid;
+    }
+
     public static function clientTypeLabel(?string $type): string
     {
         return match ($type) {

@@ -145,6 +145,20 @@ class StatementController extends Controller
                     ]);
                 }
             } else {
+                // Lock the customer row so two simultaneous payments can't both pass the remaining check
+                Customer::whereKey($customer->id)->lockForUpdate()->first();
+
+                $remaining = $customer->outstandingBalance();
+                if ($validated['amount'] > $remaining + 0.009) {
+                    throw ValidationException::withMessages([
+                        'amount' => sprintf(
+                            'المبلغ ($%s) يتجاوز المتبقي على حساب هذا العميل ($%s)',
+                            number_format((float) $validated['amount'], 2),
+                            number_format(max($remaining, 0), 2),
+                        ),
+                    ]);
+                }
+
                 $transaction = Transaction::create(array_merge($paymentFields, [
                     'customer_id'      => $customer->id,
                     'motor_id'         => null,

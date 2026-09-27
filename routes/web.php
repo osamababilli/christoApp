@@ -103,6 +103,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
         Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
+        Route::get('/invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');
         Route::get('/statement', [StatementController::class, 'index'])->name('statement.index');
     });
     Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])->middleware('can:delete-invoices')->name('invoices.destroy');

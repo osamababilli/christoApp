@@ -22,7 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useCan } from '@/hooks/use-can';
 import { cn } from '@/lib/utils';
 import { router, useForm } from '@inertiajs/react';
-import { FileSpreadsheet, Loader2, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { FileSpreadsheet, Loader2, Pencil, Plus, Printer, Search, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 
 /* ─────────────────────────── types ─────────────────────────── */
@@ -347,7 +347,7 @@ export function Invoices({ invoices, customers, filters }: Props) {
                                 >
                                     <div>
                                         <p className="font-mono text-sm font-semibold">{inv.invoice_number}</p>
-                                        <p className="text-xs text-muted-foreground" dir="ltr">
+                                        <p className="text-left text-xs text-muted-foreground" dir="ltr">
                                             {inv.issued_date}
                                         </p>
                                     </div>
@@ -377,6 +377,14 @@ export function Invoices({ invoices, customers, filters }: Props) {
                                         </Badge>
                                     </div>
                                     <div className="flex items-center gap-1">
+                                        <a
+                                            href={`/invoices/${inv.id}/print`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+                                        >
+                                            <Printer className="h-3.5 w-3.5" />
+                                        </a>
                                         <button
                                             type="button"
                                             onClick={() => openEdit(inv)}

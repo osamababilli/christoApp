@@ -78,8 +78,12 @@ class TransactionController extends Controller
     public function destroy(Transaction $transaction): RedirectResponse
     {
         DB::transaction(function () use ($transaction) {
+            $motor = $transaction->motor;
+
             $transaction->accountEntry?->delete();
             $transaction->delete();
+
+            $motor?->revertPartsPaidIfNeeded();
         });
 
         return back()->with('success', 'تم حذف الدفعة وإزالتها من الصندوق');
