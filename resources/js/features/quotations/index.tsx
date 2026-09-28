@@ -92,8 +92,8 @@ export function QuotationsList({ quotations, filters }: Props) {
     return (
         <>
             <Header fixed>
-                <div className="flex flex-1 items-center gap-3">
-                    <div className="relative max-w-sm flex-1">
+                <div className="flex flex-1 flex-wrap items-center gap-3">
+                    <div className="relative w-full flex-1 sm:max-w-sm">
                         <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             className="min-h-[44px] ps-9 text-base"
@@ -150,7 +150,7 @@ export function QuotationsList({ quotations, filters }: Props) {
                 </div>
 
                 <Card>
-                    <CardContent className="p-0">
+                    <CardContent className="overflow-x-auto p-0">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -232,7 +232,7 @@ export function QuotationsList({ quotations, filters }: Props) {
 
                 {/* Pagination */}
                 {quotations.last_page > 1 && (
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                         <p className="text-sm text-muted-foreground">
                             صفحة <span className="font-semibold text-foreground">{quotations.current_page}</span> من{' '}
                             <span className="font-semibold text-foreground">{quotations.last_page}</span>

@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { downloadElementAsPdf } from '@/lib/download-pdf';
+import { useEffect, useState } from 'react';
 
 interface Part {
     part_name: string;
@@ -40,9 +41,20 @@ interface Motor {
 }
 
 export default function MotorPrint({ motor }: { motor: Motor }) {
+    const [isGenerating, setIsGenerating] = useState(false);
+
     useEffect(() => {
         document.title = `فاتورة — ${motor.reference_number}`;
     }, []);
+
+    async function handleDownload() {
+        setIsGenerating(true);
+        try {
+            await downloadElementAsPdf('print-content', `قيد-استلام-${motor.reference_number}`);
+        } finally {
+            setIsGenerating(false);
+        }
+    }
 
     const totalLabor = motor.maintenance_orders.reduce((s, o) => s + o.labor_cost, 0);
     const totalParts = motor.maintenance_orders.flatMap((o) => o.parts).reduce((s, p) => s + p.total_cost, 0);
@@ -66,7 +78,8 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
                 }}
             >
                 <button
-                    onClick={() => window.print()}
+                    onClick={handleDownload}
+                    disabled={isGenerating}
                     style={{
                         background: '#111',
                         color: '#fff',
@@ -75,11 +88,12 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
                         padding: '8px 22px',
                         fontSize: 14,
                         fontFamily: 'inherit',
-                        cursor: 'pointer',
+                        cursor: isGenerating ? 'default' : 'pointer',
                         fontWeight: 700,
+                        opacity: isGenerating ? 0.7 : 1,
                     }}
                 >
-                    🖨 طباعة
+                    {isGenerating ? '... جارٍ التحميل' : '⬇ تحميل PDF'}
                 </button>
                 <button
                     onClick={() => window.history.back()}
@@ -96,11 +110,11 @@ export default function MotorPrint({ motor }: { motor: Motor }) {
                 >
                     ← رجوع
                 </button>
-                <span style={{ fontSize: 13, color: '#71717a', marginRight: 8 }}>ستظهر هذه الأزرار فقط على الشاشة ولن تُطبع</span>
+                <span style={{ fontSize: 13, color: '#71717a', marginRight: 8 }}>سيتم تحميل الملف مباشرة كملف PDF</span>
             </div>
 
             {/* Invoice content */}
-            <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 40px' }}>
+            <div id="print-content" style={{ maxWidth: 800, margin: '0 auto', padding: '32px 40px' }}>
                 {/* Header */}
                 <div style={{ textAlign: 'center', marginBottom: 28, paddingBottom: 20, borderBottom: '2px solid #111' }}>
                     <img

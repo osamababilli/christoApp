@@ -161,8 +161,8 @@ export function Motors({ motors, filters, per_page }: Props) {
     return (
         <>
             <Header fixed>
-                <div className="flex flex-1 items-center gap-3">
-                    <div className="relative max-w-sm flex-1">
+                <div className="flex flex-1 flex-wrap items-center gap-3">
+                    <div className="relative w-full flex-1 sm:max-w-sm">
                         <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             className="min-h-[44px] ps-9 text-base"
@@ -231,7 +231,7 @@ export function Motors({ motors, filters, per_page }: Props) {
 
                 {/* Bulk action bar */}
                 {!archived && can('archive-motors') && selected.size > 0 && (
-                    <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-2.5">
+                    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-2.5">
                         <span className="text-sm font-medium">
                             تم تحديد <span className="font-bold text-destructive">{selected.size}</span> قيد استلام
                         </span>
@@ -246,7 +246,7 @@ export function Motors({ motors, filters, per_page }: Props) {
                 )}
 
                 {archived && can('purge-motors') && selected.size > 0 && (
-                    <div className="flex items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2.5">
+                    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2.5">
                         <span className="text-sm font-medium">
                             تم تحديد <span className="font-bold text-destructive">{selected.size}</span> قيد مؤرشف
                         </span>
@@ -261,7 +261,7 @@ export function Motors({ motors, filters, per_page }: Props) {
                 )}
 
                 <Card>
-                    <CardContent className="p-0">
+                    <CardContent className="overflow-x-auto p-0">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -498,8 +498,8 @@ export function Motors({ motors, filters, per_page }: Props) {
                     <AlertDialogHeader>
                         <AlertDialogTitle>حذف نهائي لـ {selected.size} قيد من الأرشيف</AlertDialogTitle>
                         <AlertDialogDescription>
-                            ستُحذف القيود المحددة نهائياً مع أوامر الصيانة والقطع والمستلَزمات وكل دفعاتها وقيود الخزنة المرتبطة بها.
-                            لا يمكن التراجع عن هذا الإجراء إطلاقاً.
+                            ستُحذف القيود المحددة نهائياً مع أوامر الصيانة والقطع والمستلَزمات وكل دفعاتها وقيود الخزنة المرتبطة بها. لا يمكن التراجع
+                            عن هذا الإجراء إطلاقاً.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -517,8 +517,8 @@ export function Motors({ motors, filters, per_page }: Props) {
                     <AlertDialogHeader>
                         <AlertDialogTitle>حذف نهائي للقيد {purgeTarget?.reference_number}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            سيُحذف القيد نهائياً مع أوامر الصيانة والقطع والمستلَزمات وكل دفعاته وقيود الخزنة المرتبطة بها.
-                            لا يمكن التراجع عن هذا الإجراء إطلاقاً.
+                            سيُحذف القيد نهائياً مع أوامر الصيانة والقطع والمستلَزمات وكل دفعاته وقيود الخزنة المرتبطة بها. لا يمكن التراجع عن هذا
+                            الإجراء إطلاقاً.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

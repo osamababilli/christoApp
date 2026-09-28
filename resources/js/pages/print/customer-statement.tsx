@@ -1,3 +1,4 @@
+import { downloadElementAsPdf } from '@/lib/download-pdf';
 import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
@@ -87,6 +88,16 @@ export default function CustomerStatement({ customer, invoices, payments, summar
 
     const [fromDate, setFromDate] = useState(filters.from ?? '');
     const [toDate, setToDate] = useState(filters.to ?? '');
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    async function handleDownload() {
+        setIsGenerating(true);
+        try {
+            await downloadElementAsPdf('print-content', `كشف-حساب-${statement_number}`);
+        } finally {
+            setIsGenerating(false);
+        }
+    }
 
     const isAccount = customer.account_type === 'account';
     const fullyPaid = summary.total_remaining <= 0.009;
@@ -116,7 +127,8 @@ export default function CustomerStatement({ customer, invoices, payments, summar
             {/* ── Toolbar ── */}
             <div className="no-print" style={{ ...S.toolbar, flexWrap: 'wrap' }}>
                 <button
-                    onClick={() => window.print()}
+                    onClick={handleDownload}
+                    disabled={isGenerating}
                     style={{
                         background: '#fff',
                         color: '#18181b',
@@ -125,11 +137,12 @@ export default function CustomerStatement({ customer, invoices, payments, summar
                         padding: '8px 22px',
                         fontSize: 14,
                         fontFamily: 'inherit',
-                        cursor: 'pointer',
+                        cursor: isGenerating ? 'default' : 'pointer',
                         fontWeight: 700,
+                        opacity: isGenerating ? 0.7 : 1,
                     }}
                 >
-                    🖨 طباعة / حفظ PDF
+                    {isGenerating ? '... جارٍ التحميل' : '⬇ تحميل PDF'}
                 </button>
                 <button
                     onClick={() => window.history.back()}
@@ -220,7 +233,7 @@ export default function CustomerStatement({ customer, invoices, payments, summar
                 </span>
             </div>
 
-            <div style={S.doc}>
+            <div id="print-content" style={S.doc}>
                 {/* ── Header ── */}
                 <div
                     style={{

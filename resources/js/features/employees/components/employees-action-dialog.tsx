@@ -113,7 +113,11 @@ export function EmployeesActionDialog({ currentRow, open, onOpenChange }: Employ
                 forceFormData: true,
                 preserveState: true,
                 preserveScroll: true,
-                onSuccess: () => { form.reset(); setImageFile(null); onOpenChange(false); },
+                onSuccess: () => {
+                    form.reset();
+                    setImageFile(null);
+                    onOpenChange(false);
+                },
                 onError: (errors) => {
                     Object.entries(errors).forEach(([key, msg]) => form.setError(key as Parameters<typeof form.setError>[0], { message: msg }));
                 },
@@ -124,7 +128,12 @@ export function EmployeesActionDialog({ currentRow, open, onOpenChange }: Employ
                 forceFormData: true,
                 preserveState: true,
                 preserveScroll: true,
-                onSuccess: () => { form.reset(); setImageFile(null); setImagePreview(null); onOpenChange(false); },
+                onSuccess: () => {
+                    form.reset();
+                    setImageFile(null);
+                    setImagePreview(null);
+                    onOpenChange(false);
+                },
                 onError: (errors) => {
                     Object.entries(errors).forEach(([key, msg]) => form.setError(key as Parameters<typeof form.setError>[0], { message: msg }));
                 },
@@ -145,17 +154,11 @@ export function EmployeesActionDialog({ currentRow, open, onOpenChange }: Employ
             <DialogContent className="max-h-[95vh] overflow-y-auto sm:max-w-2xl">
                 <DialogHeader className="text-start">
                     <DialogTitle>{isEdit ? 'تعديل بيانات موظف' : 'إضافة موظف جديد'}</DialogTitle>
-                    <DialogDescription>
-                        {isEdit ? 'تحديث بيانات الموظف.' : 'إنشاء سجل موظف جديد.'} انقر حفظ عند الانتهاء.
-                    </DialogDescription>
+                    <DialogDescription>{isEdit ? 'تحديث بيانات الموظف.' : 'إنشاء سجل موظف جديد.'} انقر حفظ عند الانتهاء.</DialogDescription>
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form
-                        id="employee-form"
-                        onSubmit={form.handleSubmit(onSubmit)}
-                        className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2"
-                    >
+                    <form id="employee-form" onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
                         <FormField
                             control={form.control}
                             name="full_name"
@@ -313,19 +316,15 @@ export function EmployeesActionDialog({ currentRow, open, onOpenChange }: Employ
                         />
 
                         {/* صورة الهوية */}
-                        <div className="flex items-center gap-3 sm:col-span-2">
+                        <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
                             <span className="shrink-0 text-sm font-medium">صورة الهوية</span>
                             {imagePreview ? (
                                 <div className="relative w-fit">
-                                    <img
-                                        src={imagePreview}
-                                        alt="معاينة صورة الهوية"
-                                        className="h-16 w-24 rounded-md border object-cover"
-                                    />
+                                    <img src={imagePreview} alt="معاينة صورة الهوية" className="h-16 w-24 rounded-md border object-cover" />
                                     <button
                                         type="button"
                                         onClick={clearImage}
-                                        className="absolute -right-2 -top-2 rounded-full bg-destructive p-0.5 text-destructive-foreground"
+                                        className="text-destructive-foreground absolute -top-2 -right-2 rounded-full bg-destructive p-0.5"
                                     >
                                         <X size={14} />
                                     </button>
@@ -339,21 +338,9 @@ export function EmployeesActionDialog({ currentRow, open, onOpenChange }: Employ
                                     <span className="text-[10px]">انقر لرفع صورة</span>
                                 </div>
                             )}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={handleImageChange}
-                            />
+                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                             {imagePreview && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-xs"
-                                    onClick={() => fileInputRef.current?.click()}
-                                >
+                                <Button type="button" variant="outline" size="sm" className="text-xs" onClick={() => fileInputRef.current?.click()}>
                                     تغيير الصورة
                                 </Button>
                             )}

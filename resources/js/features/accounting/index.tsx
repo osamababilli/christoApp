@@ -717,7 +717,7 @@ export function Accounting({ entries, summary, filters }: Props) {
                 {/* ── Entries ── */}
                 <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
                     {/* Table header */}
-                    <div className="grid grid-cols-[1fr_auto_2fr_auto_auto] items-center gap-4 border-b bg-muted/30 px-5 py-3 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                    <div className="hidden grid-cols-[1fr_auto_2fr_auto_auto] items-center gap-4 border-b bg-muted/30 px-5 py-3 text-xs font-semibold tracking-widest text-muted-foreground uppercase sm:grid">
                         <span>التاريخ</span>
                         <span>النوع</span>
                         <span>البيان</span>
@@ -744,19 +744,19 @@ export function Accounting({ entries, summary, filters }: Props) {
                                     <div
                                         key={entry.id}
                                         className={cn(
-                                            'group grid grid-cols-[1fr_auto_2fr_auto_auto] items-center gap-4 border-s-4 px-5 py-4 transition-colors duration-150 hover:bg-muted/30',
+                                            'group flex flex-wrap items-center gap-x-4 gap-y-2 border-s-4 px-5 py-4 transition-colors duration-150 hover:bg-muted/30 sm:grid sm:grid-cols-[1fr_auto_2fr_auto_auto] sm:flex-nowrap',
                                             cfg.rowAccent,
                                         )}
                                     >
                                         {/* Date */}
-                                        <span className="block text-right font-mono text-xs text-muted-foreground" dir="ltr">
+                                        <span className="order-1 block text-right font-mono text-xs text-muted-foreground sm:order-none" dir="ltr">
                                             {entry.entry_date}
                                         </span>
 
                                         {/* Type badge */}
                                         <span
                                             className={cn(
-                                                'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
+                                                'order-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold sm:order-none',
                                                 cfg.badgeCls,
                                             )}
                                         >
@@ -765,13 +765,19 @@ export function Accounting({ entries, summary, filters }: Props) {
                                         </span>
 
                                         {/* Description + notes */}
-                                        <div className="min-w-0">
+                                        <div className="order-4 w-full min-w-0 sm:order-none sm:w-auto">
                                             <p className="truncate text-sm font-medium">{entry.description}</p>
                                             {entry.notes && <p className="mt-0.5 truncate text-xs text-muted-foreground">{entry.notes}</p>}
                                         </div>
 
                                         {/* Amount */}
-                                        <span className={cn('font-mono text-sm font-bold tabular-nums', cfg.amountCls)} dir="ltr">
+                                        <span
+                                            className={cn(
+                                                'order-3 ms-auto font-mono text-sm font-bold tabular-nums sm:order-none sm:ms-0',
+                                                cfg.amountCls,
+                                            )}
+                                            dir="ltr"
+                                        >
                                             {cfg.sign}${Number(entry.amount).toFixed(2)}
                                         </span>
 
@@ -780,7 +786,7 @@ export function Accounting({ entries, summary, filters }: Props) {
                                             <button
                                                 type="button"
                                                 onClick={() => setDeleteTarget(entry)}
-                                                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground opacity-0 transition-all duration-150 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+                                                className="order-5 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground opacity-100 transition-all duration-150 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive sm:order-none sm:opacity-0"
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </button>

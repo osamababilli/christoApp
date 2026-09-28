@@ -32,7 +32,7 @@ export function AppearanceForm() {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-lg">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-lg space-y-8">
                 <FormField
                     control={form.control}
                     name="theme"
@@ -44,7 +44,7 @@ export function AppearanceForm() {
                             <RadioGroup
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
-                                className="grid max-w-md grid-cols-2 gap-8 pt-2"
+                                className="grid max-w-md grid-cols-2 gap-4 pt-2 sm:gap-8"
                             >
                                 <FormItem>
                                     <FormLabel className="[&:has([data-state=checked])>div]:border-primary">

@@ -8,19 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { router, Link } from '@inertiajs/react';
-import {
-    BarChart3,
-    ClipboardList,
-    Clock,
-    DollarSign,
-    FilterX,
-    Package,
-    Truck,
-    Users,
-    Wallet,
-    Wrench,
-} from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { BarChart3, ClipboardList, Clock, DollarSign, FilterX, Package, Truck, Users, Wallet, Wrench } from 'lucide-react';
 import { useState } from 'react';
 
 interface Financial {
@@ -69,24 +58,52 @@ interface Props {
 }
 
 const motorStatusConfig: Record<string, { label: string; color: string; dot: string }> = {
-    in_workshop: { label: 'في الورشة',      color: 'border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-300',           dot: 'bg-blue-500'   },
-    in_progress: { label: 'قيد الإصلاح',   color: 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:border-yellow-800 dark:text-yellow-300', dot: 'bg-yellow-500' },
-    ready:       { label: 'جاهز للاستلام', color: 'border-green-200 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300',       dot: 'bg-green-500'  },
-    delivered:   { label: 'تم التسليم',     color: 'border-gray-200 bg-gray-50 text-gray-600 dark:bg-gray-800/40 dark:border-gray-700 dark:text-gray-300',             dot: 'bg-gray-400'   },
+    in_workshop: {
+        label: 'في الورشة',
+        color: 'border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-300',
+        dot: 'bg-blue-500',
+    },
+    in_progress: {
+        label: 'قيد الإصلاح',
+        color: 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:border-yellow-800 dark:text-yellow-300',
+        dot: 'bg-yellow-500',
+    },
+    ready: {
+        label: 'جاهز للاستلام',
+        color: 'border-green-200 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300',
+        dot: 'bg-green-500',
+    },
+    delivered: {
+        label: 'تم التسليم',
+        color: 'border-gray-200 bg-gray-50 text-gray-600 dark:bg-gray-800/40 dark:border-gray-700 dark:text-gray-300',
+        dot: 'bg-gray-400',
+    },
 };
 
 const maintenanceStatusConfig: Record<string, { label: string; color: string; dot: string }> = {
-    in_progress: { label: 'قيد التنفيذ', color: 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:border-yellow-800 dark:text-yellow-300', dot: 'bg-yellow-500' },
-    completed:   { label: 'مكتمل',       color: 'border-green-200 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300',         dot: 'bg-green-500'  },
-    on_hold:     { label: 'موقوف',        color: 'border-red-200 bg-red-50 text-red-700 dark:bg-red-950/40 dark:border-red-800 dark:text-red-300',                     dot: 'bg-red-500'    },
+    in_progress: {
+        label: 'قيد التنفيذ',
+        color: 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:border-yellow-800 dark:text-yellow-300',
+        dot: 'bg-yellow-500',
+    },
+    completed: {
+        label: 'مكتمل',
+        color: 'border-green-200 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300',
+        dot: 'bg-green-500',
+    },
+    on_hold: {
+        label: 'موقوف',
+        color: 'border-red-200 bg-red-50 text-red-700 dark:bg-red-950/40 dark:border-red-800 dark:text-red-300',
+        dot: 'bg-red-500',
+    },
 };
 
 const typeColors: Record<string, string> = {
-    part:      'bg-blue-100 text-blue-700 border-blue-200',
-    oil:       'bg-amber-100 text-amber-700 border-amber-200',
+    part: 'bg-blue-100 text-blue-700 border-blue-200',
+    oil: 'bg-amber-100 text-amber-700 border-amber-200',
     transport: 'bg-purple-100 text-purple-700 border-purple-200',
-    cleaning:  'bg-cyan-100 text-cyan-700 border-cyan-200',
-    other:     'bg-gray-100 text-gray-600 border-gray-200',
+    cleaning: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+    other: 'bg-gray-100 text-gray-600 border-gray-200',
 };
 
 function StatCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string | number; color: string }) {
@@ -105,16 +122,28 @@ function StatCard({ icon: Icon, label, value, color }: { icon: React.ElementType
     );
 }
 
-function StatusBreakdown({ title, data, config }: { title: string; data: Record<string, number>; config: Record<string, { label: string; color: string; dot: string }> }) {
+function StatusBreakdown({
+    title,
+    data,
+    config,
+}: {
+    title: string;
+    data: Record<string, number>;
+    config: Record<string, { label: string; color: string; dot: string }>;
+}) {
     const total = Object.values(data).reduce((s, n) => s + n, 0);
     return (
         <Card>
-            <CardHeader className="pb-3"><CardTitle className="text-base">{title}</CardTitle></CardHeader>
+            <CardHeader className="pb-3">
+                <CardTitle className="text-base">{title}</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-2">
-                {total === 0 ? <p className="text-sm text-muted-foreground">لا توجد بيانات</p> : (
+                {total === 0 ? (
+                    <p className="text-sm text-muted-foreground">لا توجد بيانات</p>
+                ) : (
                     Object.entries(config).map(([key, cfg]) => {
                         const count = data[key] ?? 0;
-                        const pct   = total > 0 ? Math.round((count / total) * 100) : 0;
+                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                         return (
                             <div key={key} className="space-y-1">
                                 <div className="flex items-center justify-between text-sm">
@@ -138,7 +167,7 @@ function StatusBreakdown({ title, data, config }: { title: string; data: Record<
 
 export function Reports({ financial, motors_by_status, maintenance_by_status, parts_by_type, recent_motors, totals, filters }: Props) {
     const [dateFrom, setDateFrom] = useState(filters.date_from ?? '');
-    const [dateTo, setDateTo]     = useState(filters.date_to   ?? '');
+    const [dateTo, setDateTo] = useState(filters.date_to ?? '');
 
     const isFiltered = !!(filters.date_from || filters.date_to);
 
@@ -157,28 +186,28 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
     return (
         <>
             <Header fixed>
-                <div className="flex flex-1 items-center gap-4">
+                <div className="flex flex-1 flex-wrap items-center gap-3 sm:gap-4">
                     <div className="flex items-center gap-2">
                         <BarChart3 className="h-5 w-5 text-muted-foreground" />
                         <h1 className="text-lg font-semibold">التقارير والإحصائيات</h1>
                     </div>
                     {/* Date filter */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <div className="flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5">
-                            <label className="text-xs text-muted-foreground whitespace-nowrap">من:</label>
+                            <label className="text-xs whitespace-nowrap text-muted-foreground">من:</label>
                             <input
                                 type="date"
-                                className="bg-transparent text-sm focus:outline-none w-32"
+                                className="w-28 bg-transparent text-sm focus:outline-none sm:w-32"
                                 value={dateFrom}
                                 onChange={(e) => setDateFrom(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                             />
                         </div>
                         <div className="flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5">
-                            <label className="text-xs text-muted-foreground whitespace-nowrap">إلى:</label>
+                            <label className="text-xs whitespace-nowrap text-muted-foreground">إلى:</label>
                             <input
                                 type="date"
-                                className="bg-transparent text-sm focus:outline-none w-32"
+                                className="w-28 bg-transparent text-sm focus:outline-none sm:w-32"
                                 value={dateTo}
                                 onChange={(e) => setDateTo(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
@@ -202,14 +231,12 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
             </Header>
 
             <Main className="flex flex-col gap-6 pb-10">
-
                 {/* Active filter banner */}
                 {isFiltered && (
                     <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm">
                         <BarChart3 className="h-4 w-4 text-primary" />
                         <span>
-                            عرض البيانات من{' '}
-                            {filters.date_from && <strong>{filters.date_from}</strong>}
+                            عرض البيانات من {filters.date_from && <strong>{filters.date_from}</strong>}
                             {filters.date_from && filters.date_to && ' حتى '}
                             {filters.date_to && <strong>{filters.date_to}</strong>}
                         </span>
@@ -218,11 +245,36 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
 
                 {/* ── Overview counts ── */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                    <StatCard icon={Wrench}       label="قيود الاستلام"     value={totals.motors}      color="bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300" />
-                    <StatCard icon={Users}         label="العملاء"       value={totals.customers}   color="bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300" />
-                    <StatCard icon={Truck}         label="الموردون"      value={totals.suppliers}   color="bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300" />
-                    <StatCard icon={ClipboardList} label="أوامر الصيانة" value={totals.maintenance} color="bg-yellow-100 text-yellow-700 dark:bg-yellow-950/60 dark:text-yellow-300" />
-                    <StatCard icon={Package}       label="القطع"         value={totals.parts}       color="bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300" />
+                    <StatCard
+                        icon={Wrench}
+                        label="قيود الاستلام"
+                        value={totals.motors}
+                        color="bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+                    />
+                    <StatCard
+                        icon={Users}
+                        label="العملاء"
+                        value={totals.customers}
+                        color="bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300"
+                    />
+                    <StatCard
+                        icon={Truck}
+                        label="الموردون"
+                        value={totals.suppliers}
+                        color="bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                    />
+                    <StatCard
+                        icon={ClipboardList}
+                        label="أوامر الصيانة"
+                        value={totals.maintenance}
+                        color="bg-yellow-100 text-yellow-700 dark:bg-yellow-950/60 dark:text-yellow-300"
+                    />
+                    <StatCard
+                        icon={Package}
+                        label="القطع"
+                        value={totals.parts}
+                        color="bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300"
+                    />
                 </div>
 
                 {/* ── Financial summary ── */}
@@ -255,7 +307,9 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
                             </div>
                             <div className="rounded-xl border border-violet-200 bg-violet-50 px-5 py-4 dark:border-violet-900 dark:bg-violet-950/30">
                                 <p className="text-xs text-violet-700 dark:text-violet-400">خصومات ممنوحة</p>
-                                <p className="mt-1 text-xl font-semibold text-violet-700 dark:text-violet-400">{financial.total_discount.toFixed(2)}</p>
+                                <p className="mt-1 text-xl font-semibold text-violet-700 dark:text-violet-400">
+                                    {financial.total_discount.toFixed(2)}
+                                </p>
                             </div>
                             <div className="rounded-xl border border-orange-200 bg-orange-50 px-5 py-4 dark:border-orange-900 dark:bg-orange-950/30">
                                 <p className="flex items-center gap-1 text-xs text-orange-700 dark:text-orange-400">
@@ -269,7 +323,7 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
 
                 {/* ── Status breakdowns ── */}
                 <div className="grid gap-6 lg:grid-cols-2">
-                    <StatusBreakdown title="قيود الاستلام حسب الحالة"      data={motors_by_status}      config={motorStatusConfig} />
+                    <StatusBreakdown title="قيود الاستلام حسب الحالة" data={motors_by_status} config={motorStatusConfig} />
                     <StatusBreakdown title="أوامر الصيانة حسب الحالة" data={maintenance_by_status} config={maintenanceStatusConfig} />
                 </div>
 
@@ -289,10 +343,12 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
                                     {parts_by_type.map((p) => (
                                         <div key={p.type} className="flex items-center justify-between rounded-lg border px-3 py-2">
                                             <div className="flex items-center gap-2">
-                                                <Badge variant="outline" className={cn('text-xs', typeColors[p.type] ?? '')}>{p.label}</Badge>
+                                                <Badge variant="outline" className={cn('text-xs', typeColors[p.type] ?? '')}>
+                                                    {p.label}
+                                                </Badge>
                                                 <span className="text-sm text-muted-foreground">{p.count} قطعة</span>
                                             </div>
-                                            <span className="font-semibold text-sm">{p.total.toFixed(2)}</span>
+                                            <span className="text-sm font-semibold">{p.total.toFixed(2)}</span>
                                         </div>
                                     ))}
                                     <Separator />
@@ -312,7 +368,7 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
                                 {isFiltered ? 'قيود الاستلام في الفترة المحددة' : 'آخر قيود الاستلام المضافة'}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-0">
+                        <CardContent className="overflow-x-auto p-0">
                             {recent_motors.length === 0 ? (
                                 <p className="px-6 py-4 text-sm text-muted-foreground">لا توجد قيود استلام</p>
                             ) : (
@@ -331,12 +387,18 @@ export function Reports({ financial, motors_by_status, maintenance_by_status, pa
                                             return (
                                                 <TableRow key={m.id}>
                                                     <TableCell>
-                                                        <Link href={`/motors/${m.id}`} className="font-mono text-sm font-semibold text-primary hover:underline underline-offset-4">
+                                                        <Link
+                                                            href={`/motors/${m.id}`}
+                                                            className="font-mono text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                                                        >
                                                             {m.reference_number}
                                                         </Link>
                                                     </TableCell>
                                                     <TableCell className="text-sm">
-                                                        <Link href={`/customers/${m.customer_id}`} className="hover:underline underline-offset-4 text-primary">
+                                                        <Link
+                                                            href={`/customers/${m.customer_id}`}
+                                                            className="text-primary underline-offset-4 hover:underline"
+                                                        >
                                                             {m.customer_name}
                                                         </Link>
                                                     </TableCell>

@@ -480,14 +480,14 @@ export default function CustomerShow({ customer, motors, invoices, summary, cust
     return (
         <>
             <Header fixed>
-                <div className="flex flex-1 items-center gap-3">
+                <div className="flex flex-1 flex-wrap items-center gap-2 sm:gap-3">
                     <Link href="/customers">
                         <Button variant="ghost" size="sm" className="gap-1">
                             <ArrowRight className="h-4 w-4" />
                             العملاء
                         </Button>
                     </Link>
-                    <span className="text-muted-foreground">/</span>
+                    <span className="hidden text-muted-foreground sm:inline">/</span>
                     <span className="font-semibold">{customer.name}</span>
                     {customer.is_loyal && (
                         <Badge className="gap-1 border-amber-300 bg-amber-100 text-amber-800">
@@ -502,12 +502,12 @@ export default function CustomerShow({ customer, motors, invoices, summary, cust
                         </Badge>
                     )}
                 </div>
-                <div className="ms-auto flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:ms-auto sm:gap-3">
                     <AccountTypeToggle customer={customer} />
                     <a href={`/customers/${customer.id}/statement`} target="_blank" rel="noreferrer">
                         <Button variant="outline" size="sm" className="gap-2">
                             <FileText className="h-4 w-4" />
-                            كشف حساب PDF
+                            <span className="hidden sm:inline">كشف حساب PDF</span>
                         </Button>
                     </a>
                     <ThemeSwitch />
@@ -697,7 +697,7 @@ export default function CustomerShow({ customer, motors, invoices, summary, cust
 
                 {/* Invoices */}
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                    <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
                         <CardTitle>الفواتير</CardTitle>
                         <Link href={`/invoices?customer_id=${customer.id}`}>
                             <Button size="sm" className="gap-1.5">
@@ -706,7 +706,7 @@ export default function CustomerShow({ customer, motors, invoices, summary, cust
                             </Button>
                         </Link>
                     </CardHeader>
-                    <CardContent className="p-0">
+                    <CardContent className="overflow-x-auto p-0">
                         {invoices.length === 0 ? (
                             <div className="py-12 text-center text-muted-foreground">لا توجد فواتير صادرة لهذا العميل</div>
                         ) : (
@@ -757,7 +757,7 @@ export default function CustomerShow({ customer, motors, invoices, summary, cust
                     <CardHeader>
                         <CardTitle>سجل قيود الاستلام</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-0">
+                    <CardContent className="overflow-x-auto p-0">
                         {motors.length === 0 ? (
                             <div className="py-12 text-center text-muted-foreground">لا توجد قيود استلام لهذا العميل</div>
                         ) : (

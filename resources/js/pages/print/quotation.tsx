@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { downloadElementAsPdf } from '@/lib/download-pdf';
+import { useEffect, useState } from 'react';
 
 interface ServiceItem {
     description: string;
@@ -25,9 +26,20 @@ interface QuotationPrint {
 }
 
 export default function QuotationPrint({ quotation }: { quotation: QuotationPrint }) {
+    const [isGenerating, setIsGenerating] = useState(false);
+
     useEffect(() => {
         document.title = `عرض سعر — ${quotation.reference_number}`;
     }, []);
+
+    async function handleDownload() {
+        setIsGenerating(true);
+        try {
+            await downloadElementAsPdf('print-content', `عرض-سعر-${quotation.reference_number}`);
+        } finally {
+            setIsGenerating(false);
+        }
+    }
 
     const totalLabor = quotation.services.reduce((s, i) => s + i.labor_cost, 0);
     const totalParts = quotation.parts.reduce((s, i) => s + i.total_price, 0);
@@ -49,7 +61,8 @@ export default function QuotationPrint({ quotation }: { quotation: QuotationPrin
                 }}
             >
                 <button
-                    onClick={() => window.print()}
+                    onClick={handleDownload}
+                    disabled={isGenerating}
                     style={{
                         background: '#111',
                         color: '#fff',
@@ -58,11 +71,12 @@ export default function QuotationPrint({ quotation }: { quotation: QuotationPrin
                         padding: '8px 22px',
                         fontSize: 14,
                         fontFamily: 'inherit',
-                        cursor: 'pointer',
+                        cursor: isGenerating ? 'default' : 'pointer',
                         fontWeight: 700,
+                        opacity: isGenerating ? 0.7 : 1,
                     }}
                 >
-                    🖨 طباعة / تحميل PDF
+                    {isGenerating ? '... جارٍ التحميل' : '⬇ تحميل PDF'}
                 </button>
                 <button
                     onClick={() => window.history.back()}
@@ -79,10 +93,10 @@ export default function QuotationPrint({ quotation }: { quotation: QuotationPrin
                 >
                     ← رجوع
                 </button>
-                <span style={{ fontSize: 13, color: '#71717a', marginRight: 8 }}>لتحميل PDF: اختر "حفظ كـ PDF" من نافذة الطباعة</span>
+                <span style={{ fontSize: 13, color: '#71717a', marginRight: 8 }}>سيتم تحميل الملف مباشرة كملف PDF</span>
             </div>
 
-            <div style={{ maxWidth: 820, margin: '0 auto', padding: '36px 44px' }}>
+            <div id="print-content" style={{ maxWidth: 820, margin: '0 auto', padding: '36px 44px' }}>
                 {/* ── Header ── */}
                 <div
                     style={{

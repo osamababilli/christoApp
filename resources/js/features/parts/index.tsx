@@ -142,7 +142,7 @@ function ShopPurchasesSection({ purchases, suppliers }: { purchases: ShopPurchas
         <>
             <Card>
                 <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                         <CardTitle className="flex items-center gap-2 text-base">
                             <Store className="h-4 w-4 text-muted-foreground" />
                             مشتريات المحل (غير مرتبطة بقيد استلام)
@@ -170,7 +170,7 @@ function ShopPurchasesSection({ purchases, suppliers }: { purchases: ShopPurchas
                                     />
                                     {errors.part_name && <p className="text-xs text-destructive">{errors.part_name}</p>}
                                 </div>
-                                <div className="grid gap-3 sm:grid-cols-4">
+                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                     <div className="space-y-1">
                                         <Label className="text-xs">الكمية</Label>
                                         <Input
@@ -348,8 +348,8 @@ export function Parts({ parts, shop_purchases, suppliers, filters }: Props) {
     return (
         <>
             <Header fixed>
-                <div className="flex flex-1 items-center gap-3">
-                    <div className="relative max-w-sm flex-1">
+                <div className="flex flex-1 flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
+                    <div className="relative w-full min-w-[140px] flex-1 sm:max-w-sm">
                         <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             className="min-h-[44px] ps-9 text-base"
@@ -363,7 +363,7 @@ export function Parts({ parts, shop_purchases, suppliers, filters }: Props) {
                         بحث
                     </Button>
                 </div>
-                <div className="ms-auto flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:ms-auto sm:gap-3">
                     <ThemeSwitch />
                     <ProfileDropdown />
                 </div>
@@ -399,7 +399,7 @@ export function Parts({ parts, shop_purchases, suppliers, filters }: Props) {
                     <CardHeader className="pb-3">
                         <CardTitle className="text-base">قطع مرتبطة بقيود الاستلام</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-0">
+                    <CardContent className="overflow-x-auto p-0">
                         <Table>
                             <TableHeader>
                                 <TableRow>

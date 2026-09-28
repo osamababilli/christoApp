@@ -318,8 +318,8 @@ export function Invoices({ invoices, customers, filters }: Props) {
                 </div>
 
                 {/* Invoices list */}
-                <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-                    <div className="grid grid-cols-[1fr_1.5fr_2fr_1fr_1fr_auto] items-center gap-4 border-b bg-muted/30 px-5 py-3 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
+                    <div className="grid min-w-[720px] grid-cols-[1fr_1.5fr_2fr_1fr_1fr_auto] items-center gap-4 border-b bg-muted/30 px-5 py-3 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                         <span>الفاتورة</span>
                         <span>العميل</span>
                         <span>البيان</span>
@@ -329,7 +329,7 @@ export function Invoices({ invoices, customers, filters }: Props) {
                     </div>
 
                     {invoices.data.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center gap-4 py-20 text-muted-foreground">
+                        <div className="flex min-w-[720px] flex-col items-center justify-center gap-4 py-20 text-muted-foreground">
                             <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/20">
                                 <FileSpreadsheet className="h-7 w-7 opacity-30" />
                             </div>
@@ -339,7 +339,7 @@ export function Invoices({ invoices, customers, filters }: Props) {
                             </div>
                         </div>
                     ) : (
-                        <div className="divide-y">
+                        <div className="min-w-[720px] divide-y">
                             {invoices.data.map((inv) => (
                                 <div
                                     key={inv.id}

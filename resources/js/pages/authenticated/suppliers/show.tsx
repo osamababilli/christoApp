@@ -607,7 +607,7 @@ export default function SupplierShow({ supplier, parts, purchases, payments, sum
                     {/* Purchases */}
                     <Card>
                         <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
                                 <CardTitle className="flex items-center gap-2 text-base">
                                     <SectionIcon icon={<ShoppingCart />} bg="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" />
                                     مشتريات مباشرة
@@ -629,7 +629,7 @@ export default function SupplierShow({ supplier, parts, purchases, payments, sum
                                 <EmptyState icon={<ShoppingCart />} text="لا توجد مشتريات مباشرة مسجلة" />
                             ) : (
                                 purchases.length > 0 && (
-                                    <div className="overflow-hidden rounded-lg border">
+                                    <div className="overflow-x-auto rounded-lg border">
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -702,7 +702,7 @@ export default function SupplierShow({ supplier, parts, purchases, payments, sum
                     {/* Payments */}
                     <Card className="border-green-200/80 dark:border-green-900/60">
                         <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
                                 <CardTitle className="flex items-center gap-2 text-base">
                                     <SectionIcon icon={<Wallet />} bg="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" />
                                     الدفعات للمورد
@@ -729,7 +729,7 @@ export default function SupplierShow({ supplier, parts, purchases, payments, sum
                                 <EmptyState icon={<Wallet />} text="لا توجد دفعات مسجلة" />
                             ) : (
                                 payments.length > 0 && (
-                                    <div className="overflow-hidden rounded-lg border border-green-100 dark:border-green-900/40">
+                                    <div className="overflow-x-auto rounded-lg border border-green-100 dark:border-green-900/40">
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="bg-green-50/80 hover:bg-green-50/80 dark:bg-green-950/20 dark:hover:bg-green-950/20">
@@ -820,7 +820,7 @@ export default function SupplierShow({ supplier, parts, purchases, payments, sum
                     </CardHeader>
 
                     {showMotorParts && (
-                        <CardContent className="border-t p-0">
+                        <CardContent className="overflow-x-auto border-t p-0">
                             {parts.length === 0 ? (
                                 <div className="p-5">
                                     <EmptyState icon={<Package />} text="لا توجد قطع مرتبطة بقيود" />

@@ -72,13 +72,13 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
             </Header>
 
             <Main>
-                <div className="mb-6 flex items-center justify-between">
+                <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">لوحة التحكم</h1>
+                        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">لوحة التحكم</h1>
                         <p className="mt-1 text-muted-foreground">نظرة عامة على حالة الورشة</p>
                     </div>
                     <Link href="/motors/create">
-                        <Button size="lg" className="min-h-12 gap-2 text-base">
+                        <Button size="lg" className="min-h-12 w-full gap-2 text-base sm:w-auto">
                             <Plus className="h-5 w-5" />
                             تسجيل طلب جديد
                         </Button>
@@ -86,84 +86,65 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                 </div>
 
                 <div className="mb-3">
-                    <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">اليوم</h2>
+                    <h2 className="text-sm font-semibold tracking-widest text-muted-foreground uppercase">اليوم</h2>
                 </div>
-                <div className="mb-6 grid gap-4 grid-cols-2">
+                <div className="mb-6 grid grid-cols-2 gap-4">
                     <Card className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium text-green-700 dark:text-green-400">
-                                استُلم اليوم
-                            </CardTitle>
+                            <CardTitle className="text-sm font-medium text-green-700 dark:text-green-400">استُلم اليوم</CardTitle>
                             <PackagePlus className="h-5 w-5 text-green-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-4xl font-bold text-green-700 dark:text-green-400">
-                                {stats.receivedToday}
-                            </div>
+                            <div className="text-4xl font-bold text-green-700 dark:text-green-400">{stats.receivedToday}</div>
                             <p className="mt-1 text-xs text-green-600/70">طلب استُلم اليوم</p>
                         </CardContent>
                     </Card>
 
                     <Card className="border-teal-200 bg-teal-50 dark:border-teal-900 dark:bg-teal-950/30">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium text-teal-700 dark:text-teal-400">
-                                سُلِّم اليوم
-                            </CardTitle>
+                            <CardTitle className="text-sm font-medium text-teal-700 dark:text-teal-400">سُلِّم اليوم</CardTitle>
                             <PackageCheck className="h-5 w-5 text-teal-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-4xl font-bold text-teal-700 dark:text-teal-400">
-                                {stats.deliveredToday}
-                            </div>
+                            <div className="text-4xl font-bold text-teal-700 dark:text-teal-400">{stats.deliveredToday}</div>
                             <p className="mt-1 text-xs text-teal-600/70">طلب سُلِّم اليوم</p>
                         </CardContent>
                     </Card>
-
                 </div>
 
                 <div className="mb-3">
-                    <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">الإجمالي</h2>
+                    <h2 className="text-sm font-semibold tracking-widest text-muted-foreground uppercase">الإجمالي</h2>
                 </div>
                 <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <Card className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-400">
-                                في الورشة
-                            </CardTitle>
+                            <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-400">في الورشة</CardTitle>
                             <Wrench className="h-5 w-5 text-blue-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-4xl font-bold text-blue-700 dark:text-blue-400">
-                                {stats.inWorkshop}
-                            </div>
+                            <div className="text-4xl font-bold text-blue-700 dark:text-blue-400">{stats.inWorkshop}</div>
                             <p className="mt-1 text-xs text-blue-600/70">طلب نشط</p>
                         </CardContent>
                     </Card>
 
                     <Card className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium text-green-700 dark:text-green-400">
-                                جاهز للاستلام
-                            </CardTitle>
+                            <CardTitle className="text-sm font-medium text-green-700 dark:text-green-400">جاهز للاستلام</CardTitle>
                             <CheckCircle2 className="h-5 w-5 text-green-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-4xl font-bold text-green-700 dark:text-green-400">
-                                {stats.readyCount}
-                            </div>
+                            <div className="text-4xl font-bold text-green-700 dark:text-green-400">{stats.readyCount}</div>
                             <p className="mt-1 text-xs text-green-600/70">في انتظار العميل</p>
                         </CardContent>
                     </Card>
 
-<Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30">
+                    <Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium text-red-700 dark:text-red-400">
-                                مستحق (دفع مباشر)
-                            </CardTitle>
+                            <CardTitle className="text-sm font-medium text-red-700 dark:text-red-400">مستحق (دفع مباشر)</CardTitle>
                             <DollarSign className="h-5 w-5 text-red-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold text-red-700 dark:text-red-400 font-mono" dir="ltr">
+                            <div className="font-mono text-3xl font-bold text-red-700 dark:text-red-400" dir="ltr">
                                 $ {stats.unpaidTotal}
                             </div>
                             <p className="mt-1 text-xs text-red-600/70">{stats.unpaidCount} فاتورة غير مسددة</p>
@@ -172,13 +153,11 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
 
                     <Card className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-400">
-                                مستحق (حساب جاري)
-                            </CardTitle>
+                            <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-400">مستحق (حساب جاري)</CardTitle>
                             <Wallet className="h-5 w-5 text-blue-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold text-blue-700 dark:text-blue-400 font-mono" dir="ltr">
+                            <div className="font-mono text-3xl font-bold text-blue-700 dark:text-blue-400" dir="ltr">
                                 $ {stats.accountOutstanding}
                             </div>
                             <p className="mt-1 text-xs text-blue-600/70">{stats.accountCount} عميل بحساب جاري</p>
@@ -188,13 +167,15 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
 
                 {unpaidMotors.length > 0 && (
                     <Card className="mb-6 border-red-100">
-                        <CardHeader className="flex flex-row items-center justify-between">
+                        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
                             <CardTitle className="text-lg text-red-700 dark:text-red-400">أعلى الفواتير غير المدفوعة</CardTitle>
                             <Link href="/motors">
-                                <Button variant="outline" size="sm">عرض الكل</Button>
+                                <Button variant="outline" size="sm">
+                                    عرض الكل
+                                </Button>
                             </Link>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -212,17 +193,22 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                                             <TableCell>
                                                 <Link
                                                     href={`/motors/${motor.id}`}
-                                                    className="font-mono font-medium text-primary hover:underline underline-offset-4"
+                                                    className="font-mono font-medium text-primary underline-offset-4 hover:underline"
                                                 >
                                                     {motor.reference_number}
                                                 </Link>
                                             </TableCell>
                                             <TableCell className="font-medium">
-                                                <Link href={`/customers/${motor.customer_id}`} className="hover:underline underline-offset-4 text-primary">
+                                                <Link
+                                                    href={`/customers/${motor.customer_id}`}
+                                                    className="text-primary underline-offset-4 hover:underline"
+                                                >
                                                     {motor.customer_name}
                                                 </Link>
                                             </TableCell>
-                                            <TableCell dir="ltr" className="text-right">{motor.customer_phone}</TableCell>
+                                            <TableCell dir="ltr" className="text-right">
+                                                {motor.customer_phone}
+                                            </TableCell>
                                             <TableCell>
                                                 <Badge
                                                     variant="outline"
@@ -231,12 +217,12 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                                                     {motor.status_label}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="font-bold text-red-600 dark:text-red-400">
-                                                {motor.remaining}
-                                            </TableCell>
+                                            <TableCell className="font-bold text-red-600 dark:text-red-400">{motor.remaining}</TableCell>
                                             <TableCell>
                                                 <Link href={`/motors/${motor.id}`}>
-                                                    <Button variant="ghost" size="sm">عرض</Button>
+                                                    <Button variant="ghost" size="sm">
+                                                        عرض
+                                                    </Button>
                                                 </Link>
                                             </TableCell>
                                         </TableRow>
@@ -248,7 +234,7 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                 )}
 
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                    <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
                         <CardTitle className="text-xl">آخر الطلبات المستلمة</CardTitle>
                         <Link href="/motors">
                             <Button variant="outline" size="sm">
@@ -256,7 +242,7 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                             </Button>
                         </Link>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className={recentMotors.length === 0 ? undefined : 'overflow-x-auto'}>
                         {recentMotors.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                                 <AlertCircle className="mb-3 h-10 w-10 opacity-40" />
@@ -285,22 +271,23 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                                             <TableCell>
                                                 <Link
                                                     href={`/motors/${motor.id}`}
-                                                    className="font-mono font-medium text-primary hover:underline underline-offset-4"
+                                                    className="font-mono font-medium text-primary underline-offset-4 hover:underline"
                                                 >
                                                     {motor.reference_number}
                                                 </Link>
                                             </TableCell>
                                             <TableCell className="font-medium">
-                                                <Link href={`/customers/${motor.customer_id}`} className="hover:underline underline-offset-4 text-primary">
+                                                <Link
+                                                    href={`/customers/${motor.customer_id}`}
+                                                    className="text-primary underline-offset-4 hover:underline"
+                                                >
                                                     {motor.customer_name}
                                                 </Link>
                                             </TableCell>
                                             <TableCell dir="ltr" className="text-right">
                                                 {motor.customer_phone}
                                             </TableCell>
-                                            <TableCell>
-                                                {motor.category_name ?? '—'}
-                                            </TableCell>
+                                            <TableCell>{motor.category_name ?? '—'}</TableCell>
                                             <TableCell>
                                                 <Badge
                                                     variant="outline"
@@ -313,7 +300,13 @@ export function WorkshopDashboard({ stats, recentMotors, unpaidMotors }: Props) 
                                                 {motor.received_by_name ? (
                                                     <span className="flex items-center gap-1.5">
                                                         <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
-                                                            {motor.received_by_name.trim().split(/\s+/).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+                                                            {motor.received_by_name
+                                                                .trim()
+                                                                .split(/\s+/)
+                                                                .map((w: string) => w[0])
+                                                                .join('')
+                                                                .slice(0, 2)
+                                                                .toUpperCase()}
                                                         </span>
                                                         <span className="font-medium">{motor.received_by_name}</span>
                                                     </span>

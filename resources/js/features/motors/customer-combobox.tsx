@@ -25,16 +25,7 @@ interface Props {
     errors?: { customer_id?: string; customer_name?: string; customer_phone?: string };
 }
 
-export function CustomerCombobox({
-    customers,
-    selectedId,
-    newName,
-    newPhone,
-    onSelectExisting,
-    onNewNameChange,
-    onNewPhoneChange,
-    errors,
-}: Props) {
+export function CustomerCombobox({ customers, selectedId, newName, newPhone, onSelectExisting, onNewNameChange, onNewPhoneChange, errors }: Props) {
     const [open, setOpen] = useState(false);
     const [isNew, setIsNew] = useState(selectedId === null && (!!newName || !!newPhone));
 
@@ -64,40 +55,29 @@ export function CustomerCombobox({
                             variant="outline"
                             role="combobox"
                             aria-expanded={open}
-                            className="w-full min-h-[48px] justify-between text-base font-normal"
+                            className="min-h-[48px] w-full justify-between text-base font-normal"
                         >
                             <span className={cn(!selected && !isNew && 'text-muted-foreground')}>
-                                {isNew
-                                    ? '— عميل جديد —'
-                                    : selected
-                                        ? selected.label
-                                        : 'اختر عميلاً موجوداً أو أضف جديداً...'}
+                                {isNew ? '— عميل جديد —' : selected ? selected.label : 'اختر عميلاً موجوداً أو أضف جديداً...'}
                             </span>
                             <ChevronDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0" align="start">
+                    <PopoverContent className="w-[400px] max-w-[92vw] p-0" align="start">
                         <Command>
-                            <CommandInput placeholder="ابحث بالاسم أو الجوال..." className="text-base h-11" />
+                            <CommandInput placeholder="ابحث بالاسم أو الجوال..." className="h-11 text-base" />
                             <CommandList>
-                                <CommandEmpty className="py-4 text-center text-sm text-muted-foreground">
-                                    لا يوجد عميل مطابق
-                                </CommandEmpty>
+                                <CommandEmpty className="py-4 text-center text-sm text-muted-foreground">لا يوجد عميل مطابق</CommandEmpty>
                                 <CommandGroup heading="العملاء الموجودون">
                                     {customers.map((customer) => (
                                         <CommandItem
                                             key={customer.id}
                                             value={customer.label}
                                             onSelect={() => handleSelectExisting(customer)}
-                                            className="flex items-center gap-2 py-3 text-base cursor-pointer"
+                                            className="flex cursor-pointer items-center gap-2 py-3 text-base"
                                         >
                                             <Check
-                                                className={cn(
-                                                    'h-4 w-4 shrink-0',
-                                                    selectedId === customer.id && !isNew
-                                                        ? 'opacity-100'
-                                                        : 'opacity-0',
-                                                )}
+                                                className={cn('h-4 w-4 shrink-0', selectedId === customer.id && !isNew ? 'opacity-100' : 'opacity-0')}
                                             />
                                             <div className="flex flex-col">
                                                 <span className="font-medium">{customer.name}</span>
@@ -112,7 +92,7 @@ export function CustomerCombobox({
                                 <CommandGroup>
                                     <CommandItem
                                         onSelect={handleSelectNew}
-                                        className="flex items-center gap-2 py-3 text-base cursor-pointer text-primary"
+                                        className="flex cursor-pointer items-center gap-2 py-3 text-base text-primary"
                                     >
                                         <UserPlus className="h-4 w-4 shrink-0" />
                                         <span className="font-medium">إضافة عميل جديد</span>
@@ -122,9 +102,7 @@ export function CustomerCombobox({
                         </Command>
                     </PopoverContent>
                 </Popover>
-                {errors?.customer_id && (
-                    <p className="text-sm text-destructive">{errors.customer_id}</p>
-                )}
+                {errors?.customer_id && <p className="text-sm text-destructive">{errors.customer_id}</p>}
             </div>
 
             {/* New customer fields — shown only when "new" is selected */}
@@ -142,9 +120,7 @@ export function CustomerCombobox({
                             placeholder="الاسم الكامل"
                             autoFocus
                         />
-                        {errors?.customer_name && (
-                            <p className="text-sm text-destructive">{errors.customer_name}</p>
-                        )}
+                        {errors?.customer_name && <p className="text-sm text-destructive">{errors.customer_name}</p>}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="customer_phone" className="text-base">
@@ -158,9 +134,7 @@ export function CustomerCombobox({
                             onChange={(e) => onNewPhoneChange(e.target.value)}
                             placeholder="05xxxxxxxx"
                         />
-                        {errors?.customer_phone && (
-                            <p className="text-sm text-destructive">{errors.customer_phone}</p>
-                        )}
+                        {errors?.customer_phone && <p className="text-sm text-destructive">{errors.customer_phone}</p>}
                     </div>
                 </div>
             )}

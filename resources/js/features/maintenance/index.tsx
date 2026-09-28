@@ -93,8 +93,8 @@ export function Maintenance({ orders, filters }: Props) {
     return (
         <>
             <Header fixed>
-                <div className="flex flex-1 items-center gap-3">
-                    <div className="relative max-w-sm flex-1">
+                <div className="flex flex-1 flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
+                    <div className="relative w-full min-w-[140px] flex-1 sm:max-w-sm">
                         <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             className="min-h-[44px] ps-9 text-base"
@@ -111,7 +111,7 @@ export function Maintenance({ orders, filters }: Props) {
                             applyFilters(undefined, v === 'all' ? '' : v);
                         }}
                     >
-                        <SelectTrigger className="min-h-[44px] w-44 text-base">
+                        <SelectTrigger className="min-h-[44px] w-full text-base sm:w-44">
                             <SelectValue placeholder="كل الحالات" />
                         </SelectTrigger>
                         <SelectContent>
@@ -122,7 +122,7 @@ export function Maintenance({ orders, filters }: Props) {
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="ms-auto flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:ms-auto sm:gap-3">
                     <ThemeSwitch />
                     <ProfileDropdown />
                 </div>
@@ -135,7 +135,7 @@ export function Maintenance({ orders, filters }: Props) {
                 </div>
 
                 <Card>
-                    <CardContent className="p-0">
+                    <CardContent className="overflow-x-auto p-0">
                         <Table>
                             <TableHeader>
                                 <TableRow>

@@ -154,7 +154,7 @@ function SupplierDialog({ open, onClose, supplier }: { open: boolean; onClose: (
                         {errors.address && <p className="text-xs text-destructive">{errors.address}</p>}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="space-y-1.5">
                             <Label htmlFor="sup-shop-phone">رقم المحل</Label>
                             <Input
@@ -249,8 +249,8 @@ export function Suppliers({ suppliers, filters }: Props) {
     return (
         <>
             <Header fixed>
-                <div className="flex flex-1 items-center gap-3">
-                    <div className="relative max-w-sm flex-1">
+                <div className="flex flex-1 flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
+                    <div className="relative w-full min-w-[140px] flex-1 sm:max-w-sm">
                         <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             className="min-h-[44px] ps-9 text-base"
@@ -264,14 +264,14 @@ export function Suppliers({ suppliers, filters }: Props) {
                         بحث
                     </Button>
                 </div>
-                <div className="ms-auto flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:ms-auto sm:gap-3">
                     <ThemeSwitch />
                     <ProfileDropdown />
                 </div>
             </Header>
 
             <Main className="flex flex-1 flex-col gap-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight">الموردون</h2>
                         <p className="text-muted-foreground">إجمالي: {suppliers.total} مورد</p>
@@ -282,7 +282,7 @@ export function Suppliers({ suppliers, filters }: Props) {
                     </Button>
                 </div>
 
-                <Card className="overflow-hidden">
+                <Card className="overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/40 hover:bg-muted/40">

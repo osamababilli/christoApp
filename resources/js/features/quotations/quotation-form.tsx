@@ -5,12 +5,12 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Link, router } from '@inertiajs/react';
-import { Loader2, Minus, Plus, Save, Send, Wrench, Package } from 'lucide-react';
+import { Loader2, Minus, Package, Plus, Save, Send, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { CustomerCombobox, type CustomerOption } from '../motors/customer-combobox';
 
 type ServiceRow = { description: string; labor_cost: string };
-type PartRow    = { description: string; quantity: string; unit_price: string };
+type PartRow = { description: string; quantity: string; unit_price: string };
 
 interface QuotationData {
     id?: number;
@@ -31,19 +31,15 @@ interface Props {
 
 export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
     const [processing, setProcessing] = useState(false);
-    const [errors,     setErrors]     = useState<Record<string, string>>({});
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
-    const [customer_id,    setCustomerId]    = useState<number | null>(quotation?.customer_id ?? null);
-    const [customer_name,  setCustomerName]  = useState(quotation?.customer_name  ?? '');
+    const [customer_id, setCustomerId] = useState<number | null>(quotation?.customer_id ?? null);
+    const [customer_name, setCustomerName] = useState(quotation?.customer_name ?? '');
     const [customer_phone, setCustomerPhone] = useState(quotation?.customer_phone ?? '');
-    const [notes,          setNotes]          = useState(quotation?.notes          ?? '');
-    const [valid_days,     setValidDays]      = useState(quotation?.valid_days     ?? 15);
-    const [services,       setServices]       = useState<ServiceRow[]>(
-        quotation?.services ?? [{ description: '', labor_cost: '' }],
-    );
-    const [parts,          setParts]          = useState<PartRow[]>(
-        quotation?.parts ?? [],
-    );
+    const [notes, setNotes] = useState(quotation?.notes ?? '');
+    const [valid_days, setValidDays] = useState(quotation?.valid_days ?? 15);
+    const [services, setServices] = useState<ServiceRow[]>(quotation?.services ?? [{ description: '', labor_cost: '' }]);
+    const [parts, setParts] = useState<PartRow[]>(quotation?.parts ?? []);
 
     /* ── Services ── */
     function addService() {
@@ -55,7 +51,7 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
     }
 
     function updateService(idx: number, field: keyof ServiceRow, value: string) {
-        setServices((prev) => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+        setServices((prev) => prev.map((row, i) => (i === idx ? { ...row, [field]: value } : row)));
     }
 
     /* ── Parts ── */
@@ -68,18 +64,18 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
     }
 
     function updatePart(idx: number, field: keyof PartRow, value: string) {
-        setParts((prev) => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+        setParts((prev) => prev.map((row, i) => (i === idx ? { ...row, [field]: value } : row)));
     }
 
     function partTotal(part: PartRow): string {
-        const qty   = parseFloat(part.quantity)  || 0;
+        const qty = parseFloat(part.quantity) || 0;
         const price = parseFloat(part.unit_price) || 0;
         return (qty * price).toFixed(2);
     }
 
     /* ── Totals ── */
     const totalServices = services.reduce((s, row) => s + (parseFloat(row.labor_cost) || 0), 0);
-    const totalParts    = parts.reduce((s, row) => {
+    const totalParts = parts.reduce((s, row) => {
         return s + (parseFloat(row.quantity) || 0) * (parseFloat(row.unit_price) || 0);
     }, 0);
     const grandTotal = totalServices + totalParts;
@@ -94,10 +90,10 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
             valid_days,
             status,
             services: services.map((s) => ({ description: s.description, labor_cost: s.labor_cost })),
-            parts:    parts.map((p) => ({
+            parts: parts.map((p) => ({
                 description: p.description,
-                quantity:    p.quantity,
-                unit_price:  p.unit_price,
+                quantity: p.quantity,
+                unit_price: p.unit_price,
             })),
         };
     }
@@ -107,7 +103,7 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
         setProcessing(true);
         setErrors({});
 
-        const action  = isEdit ? `/quotations/${quotation?.id}` : '/quotations';
+        const action = isEdit ? `/quotations/${quotation?.id}` : '/quotations';
         const payload = buildPayload(status);
 
         const options = {
@@ -127,23 +123,16 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
 
     return (
         <form onSubmit={(e) => submit(e, 'draft')} className="mx-auto max-w-5xl space-y-5 pb-10">
-
             <div>
-                <h1 className="text-2xl font-bold tracking-tight">
-                    {isEdit ? 'تعديل عرض السعر' : 'إنشاء عرض سعر جديد'}
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    أدخل بيانات العميل والخدمات والقطع المطلوبة
-                </p>
+                <h1 className="text-2xl font-bold tracking-tight">{isEdit ? 'تعديل عرض السعر' : 'إنشاء عرض سعر جديد'}</h1>
+                <p className="mt-1 text-sm text-muted-foreground">أدخل بيانات العميل والخدمات والقطع المطلوبة</p>
             </div>
 
             <Separator />
 
             <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-
                 {/* ── Left column ── */}
                 <div className="space-y-5">
-
                     {/* Customer */}
                     <Card>
                         <CardHeader className="pb-3">
@@ -163,8 +152,8 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
                                 onNewNameChange={setCustomerName}
                                 onNewPhoneChange={setCustomerPhone}
                                 errors={{
-                                    customer_id:    errors.customer_id,
-                                    customer_name:  errors.customer_name,
+                                    customer_id: errors.customer_id,
+                                    customer_name: errors.customer_name,
                                     customer_phone: errors.customer_phone,
                                 }}
                             />
@@ -180,11 +169,9 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            {services.length === 0 && (
-                                <p className="text-sm text-muted-foreground text-center py-2">لا توجد خدمات بعد</p>
-                            )}
+                            {services.length === 0 && <p className="py-2 text-center text-sm text-muted-foreground">لا توجد خدمات بعد</p>}
                             {services.map((svc, idx) => (
-                                <div key={idx} className="flex gap-2 items-start">
+                                <div key={idx} className="flex flex-col gap-2 sm:flex-row sm:items-start">
                                     <div className="flex-1 space-y-1">
                                         <Input
                                             placeholder="وصف الخدمة..."
@@ -196,27 +183,29 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
                                             <p className="text-xs text-destructive">{errors[`services.${idx}.description`]}</p>
                                         )}
                                     </div>
-                                    <div className="w-36 space-y-1">
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            placeholder="تكلفة العمالة"
-                                            value={svc.labor_cost}
-                                            onChange={(e) => updateService(idx, 'labor_cost', e.target.value)}
-                                            className="min-h-[42px]"
-                                            dir="ltr"
-                                        />
+                                    <div className="flex items-start gap-2">
+                                        <div className="w-full space-y-1 sm:w-36">
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                placeholder="تكلفة العمالة"
+                                                value={svc.labor_cost}
+                                                onChange={(e) => updateService(idx, 'labor_cost', e.target.value)}
+                                                className="min-h-[42px]"
+                                                dir="ltr"
+                                            />
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-[42px] w-[42px] shrink-0 text-destructive hover:text-destructive"
+                                            onClick={() => removeService(idx)}
+                                        >
+                                            <Minus className="h-4 w-4" />
+                                        </Button>
                                     </div>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-[42px] w-[42px] shrink-0 text-destructive hover:text-destructive"
-                                        onClick={() => removeService(idx)}
-                                    >
-                                        <Minus className="h-4 w-4" />
-                                    </Button>
                                 </div>
                             ))}
                             <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={addService}>
@@ -240,12 +229,10 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            {parts.length === 0 && (
-                                <p className="text-sm text-muted-foreground text-center py-2">لا توجد قطع بعد</p>
-                            )}
+                            {parts.length === 0 && <p className="py-2 text-center text-sm text-muted-foreground">لا توجد قطع بعد</p>}
                             {parts.map((part, idx) => (
-                                <div key={idx} className="rounded-lg border p-3 space-y-2">
-                                    <div className="flex gap-2 items-start">
+                                <div key={idx} className="space-y-2 rounded-lg border p-3">
+                                    <div className="flex items-start gap-2">
                                         <div className="flex-1">
                                             <Input
                                                 placeholder="اسم القطعة / المستلزم..."
@@ -254,7 +241,7 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
                                                 className="min-h-[42px]"
                                             />
                                             {errors[`parts.${idx}.description`] && (
-                                                <p className="text-xs text-destructive mt-1">{errors[`parts.${idx}.description`]}</p>
+                                                <p className="mt-1 text-xs text-destructive">{errors[`parts.${idx}.description`]}</p>
                                             )}
                                         </div>
                                         <Button
@@ -269,7 +256,7 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
                                     </div>
                                     <div className="grid grid-cols-3 gap-2">
                                         <div>
-                                            <Label className="text-xs text-muted-foreground mb-1 block">الكمية</Label>
+                                            <Label className="mb-1 block text-xs text-muted-foreground">الكمية</Label>
                                             <Input
                                                 type="number"
                                                 min="0.001"
@@ -281,7 +268,7 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
                                             />
                                         </div>
                                         <div>
-                                            <Label className="text-xs text-muted-foreground mb-1 block">سعر الوحدة</Label>
+                                            <Label className="mb-1 block text-xs text-muted-foreground">سعر الوحدة</Label>
                                             <Input
                                                 type="number"
                                                 min="0"
@@ -293,13 +280,8 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
                                             />
                                         </div>
                                         <div>
-                                            <Label className="text-xs text-muted-foreground mb-1 block">الإجمالي</Label>
-                                            <Input
-                                                readOnly
-                                                value={partTotal(part)}
-                                                className="min-h-[38px] bg-muted/50 font-semibold"
-                                                dir="ltr"
-                                            />
+                                            <Label className="mb-1 block text-xs text-muted-foreground">الإجمالي</Label>
+                                            <Input readOnly value={partTotal(part)} className="min-h-[38px] bg-muted/50 font-semibold" dir="ltr" />
                                         </div>
                                     </div>
                                 </div>
@@ -334,14 +316,15 @@ export function QuotationForm({ quotation, customers, isEdit = false }: Props) {
 
                 {/* ── Right sidebar ── */}
                 <div className="space-y-5">
-
                     {/* Valid days */}
                     <Card>
                         <CardHeader className="pb-3">
                             <CardTitle className="text-base">صلاحية العرض</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2">
-                            <Label htmlFor="valid_days" className="text-sm text-muted-foreground">عدد الأيام</Label>
+                            <Label htmlFor="valid_days" className="text-sm text-muted-foreground">
+                                عدد الأيام
+                            </Label>
                             <Input
                                 id="valid_days"
                                 type="number"

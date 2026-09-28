@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { downloadElementAsPdf } from '@/lib/download-pdf';
+import { useEffect, useState } from 'react';
 
 interface Entry {
     id: number;
@@ -36,10 +37,22 @@ const TYPE_BG: Record<string, string> = {
 };
 
 export default function AccountingPrint({ entries, summary, filters }: Props) {
+    const [isGenerating, setIsGenerating] = useState(false);
+
     useEffect(() => {
         const range = filters.from && filters.to ? ` (${filters.from} — ${filters.to})` : '';
         document.title = `كشف حساب${range}`;
     }, []);
+
+    async function handleDownload() {
+        setIsGenerating(true);
+        try {
+            const range = filters.from && filters.to ? `${filters.from}_${filters.to}` : new Date().toISOString().slice(0, 10);
+            await downloadElementAsPdf('print-content', `كشف-حساب-${range}`);
+        } finally {
+            setIsGenerating(false);
+        }
+    }
 
     const isPositive = summary.balance >= 0;
     const printedAt = new Date().toLocaleDateString('ar-EG', {
@@ -88,7 +101,8 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
                 }}
             >
                 <button
-                    onClick={() => window.print()}
+                    onClick={handleDownload}
+                    disabled={isGenerating}
                     style={{
                         background: '#fff',
                         color: '#18181b',
@@ -97,14 +111,15 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
                         padding: '8px 22px',
                         fontSize: 14,
                         fontFamily: 'inherit',
-                        cursor: 'pointer',
+                        cursor: isGenerating ? 'default' : 'pointer',
                         fontWeight: 700,
                         display: 'flex',
                         alignItems: 'center',
                         gap: 6,
+                        opacity: isGenerating ? 0.7 : 1,
                     }}
                 >
-                    🖨 طباعة
+                    {isGenerating ? '... جارٍ التحميل' : '⬇ تحميل PDF'}
                 </button>
                 <button
                     onClick={() => window.history.back()}
@@ -127,7 +142,7 @@ export default function AccountingPrint({ entries, summary, filters }: Props) {
             </div>
 
             {/* ── Document ── */}
-            <div style={{ maxWidth: 820, margin: '0 auto', padding: '36px 44px' }}>
+            <div id="print-content" style={{ maxWidth: 820, margin: '0 auto', padding: '36px 44px' }}>
                 {/* Header */}
                 <div
                     style={{

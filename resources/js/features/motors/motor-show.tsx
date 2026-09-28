@@ -478,7 +478,7 @@ function PaymentsSection({ motor, grandTotal, isLocked }: { motor: Motor; grandT
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {/* Summary */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                         <div className="rounded-xl border bg-muted/40 px-4 py-3">
                             <p className="text-xs text-muted-foreground">إجمالي الفاتورة</p>
                             <p className="mt-0.5 text-lg font-bold">{grandTotal.toFixed(2)}</p>
@@ -816,7 +816,7 @@ export function MotorShow({ motor, suppliers }: Props) {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <a href={`/motors/${motor.id}/print`} target="_blank" rel="noreferrer">
                                 <Button variant="outline" size="sm" className="gap-2">
                                     <Printer className="h-4 w-4" />

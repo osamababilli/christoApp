@@ -7,7 +7,10 @@ import { router, useForm } from '@inertiajs/react';
 import { Loader2, Plus, Save, X } from 'lucide-react';
 import { useState } from 'react';
 
-interface SupplierOption { id: number; name: string }
+interface SupplierOption {
+    id: number;
+    name: string;
+}
 
 interface Props {
     maintenanceId: number;
@@ -18,33 +21,37 @@ interface Props {
 export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
     const { data, setData, post, processing, errors, reset } = useForm({
         maintenance_id: maintenanceId,
-        part_name:      '',
-        type:           'part',
-        quantity:       '1',
-        unit_cost:      '',
-        unit_price:     '',
-        is_paid:        false as boolean,
-        supplier_id:    '' as string | number,
-        purchased_by:   'customer' as 'customer' | 'company',
+        part_name: '',
+        type: 'part',
+        quantity: '1',
+        unit_cost: '',
+        unit_price: '',
+        is_paid: false as boolean,
+        supplier_id: '' as string | number,
+        purchased_by: 'customer' as 'customer' | 'company',
     });
 
-    const [showNewSupplier, setShowNewSupplier]   = useState(false);
-    const [newSupName, setNewSupName]             = useState('');
-    const [newSupPhone, setNewSupPhone]           = useState('');
+    const [showNewSupplier, setShowNewSupplier] = useState(false);
+    const [newSupName, setNewSupName] = useState('');
+    const [newSupPhone, setNewSupPhone] = useState('');
     const [creatingSupplier, setCreatingSupplier] = useState(false);
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
         post('/parts', {
             preserveScroll: true,
-            onSuccess: () => { reset(); onCancel?.(); },
+            onSuccess: () => {
+                reset();
+                onCancel?.();
+            },
         });
     }
 
     function createSupplier() {
         if (!newSupName.trim()) return;
         setCreatingSupplier(true);
-        router.post('/suppliers',
+        router.post(
+            '/suppliers',
             { name: newSupName, phone: newSupPhone },
             {
                 preserveState: true,
@@ -64,7 +71,7 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
             <div className="flex items-center justify-between">
                 <h4 className="font-semibold">إضافة قطعة / مستلزم</h4>
                 {onCancel && (
-                    <button type="button" onClick={onCancel} className="text-muted-foreground hover:text-foreground transition-colors">
+                    <button type="button" onClick={onCancel} className="text-muted-foreground transition-colors hover:text-foreground">
                         <X className="h-4 w-4" />
                     </button>
                 )}
@@ -76,11 +83,15 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
                 <div className="grid grid-cols-2 gap-2">
                     <button
                         type="button"
-                        onClick={() => { setData('purchased_by', 'customer'); setData('is_paid', true); setShowNewSupplier(false); }}
+                        onClick={() => {
+                            setData('purchased_by', 'customer');
+                            setData('is_paid', true);
+                            setShowNewSupplier(false);
+                        }}
                         className={cn(
-                            'rounded-lg border px-3 py-2 text-sm font-semibold transition-all cursor-pointer',
+                            'cursor-pointer rounded-lg border px-3 py-2 text-sm font-semibold transition-all',
                             data.purchased_by === 'customer'
-                                ? 'border-blue-400 bg-blue-50 text-blue-700 ring-2 ring-blue-400 dark:bg-blue-950/40 dark:border-blue-700 dark:text-blue-300'
+                                ? 'border-blue-400 bg-blue-50 text-blue-700 ring-2 ring-blue-400 dark:border-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
                                 : 'border-muted bg-muted/20 text-muted-foreground hover:bg-muted/50',
                         )}
                     >
@@ -89,11 +100,14 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
                     </button>
                     <button
                         type="button"
-                        onClick={() => { setData('purchased_by', 'company'); setData('is_paid', false); }}
+                        onClick={() => {
+                            setData('purchased_by', 'company');
+                            setData('is_paid', false);
+                        }}
                         className={cn(
-                            'rounded-lg border px-3 py-2 text-sm font-semibold transition-all cursor-pointer',
+                            'cursor-pointer rounded-lg border px-3 py-2 text-sm font-semibold transition-all',
                             data.purchased_by === 'company'
-                                ? 'border-purple-400 bg-purple-50 text-purple-700 ring-2 ring-purple-400 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300'
+                                ? 'border-purple-400 bg-purple-50 text-purple-700 ring-2 ring-purple-400 dark:border-purple-700 dark:bg-purple-950/40 dark:text-purple-300'
                                 : 'border-muted bg-muted/20 text-muted-foreground hover:bg-muted/50',
                         )}
                     >
@@ -137,8 +151,7 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
                 {data.purchased_by === 'company' && (
                     <div className="space-y-1.5">
                         <Label htmlFor={`pf-cost-${maintenanceId}`} className="text-sm font-medium">
-                            سعر الشراء (داخلي){' '}
-                            <span className="text-destructive">*</span>
+                            سعر الشراء (داخلي) <span className="text-destructive">*</span>
                         </Label>
                         <Input
                             id={`pf-cost-${maintenanceId}`}
@@ -224,10 +237,10 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
                             type="button"
                             onClick={() => setData('is_paid', !data.is_paid)}
                             className={cn(
-                                'flex w-full items-center justify-center gap-2 rounded-lg border px-3 min-h-[40px] text-sm font-semibold transition-all cursor-pointer',
+                                'flex min-h-[40px] w-full cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold transition-all',
                                 data.is_paid
-                                    ? 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950/40 dark:border-green-700 dark:text-green-300 ring-2 ring-green-400'
-                                    : 'border-orange-300 bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:border-orange-700 dark:text-orange-300',
+                                    ? 'border-green-300 bg-green-50 text-green-700 ring-2 ring-green-400 dark:border-green-700 dark:bg-green-950/40 dark:text-green-300'
+                                    : 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-700 dark:bg-orange-950/40 dark:text-orange-300',
                             )}
                         >
                             {data.is_paid ? '✓ تم الدفع' : '⏳ لم يُدفع بعد'}
@@ -238,38 +251,44 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
 
             {/* Inline new supplier */}
             {showNewSupplier && (
-                <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3 space-y-2">
+                <div className="space-y-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
                     <div className="flex items-center justify-between">
                         <p className="text-xs font-semibold text-primary">إضافة مورد جديد</p>
-                        <button
-                            type="button"
-                            onClick={() => setShowNewSupplier(false)}
-                            className="text-muted-foreground hover:text-foreground"
-                        >
+                        <button type="button" onClick={() => setShowNewSupplier(false)} className="text-muted-foreground hover:text-foreground">
                             <X className="h-3.5 w-3.5" />
                         </button>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row">
                         <Input
                             autoFocus
                             placeholder="اسم المورد *"
                             value={newSupName}
                             onChange={(e) => setNewSupName(e.target.value)}
-                            className="min-h-[38px] w-1/2"
-                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); createSupplier(); } }}
+                            className="min-h-[38px] w-full sm:w-1/2"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    createSupplier();
+                                }
+                            }}
                         />
                         <Input
                             placeholder="الجوال"
                             dir="ltr"
                             value={newSupPhone}
                             onChange={(e) => setNewSupPhone(e.target.value)}
-                            className="min-h-[38px] w-1/2"
-                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); createSupplier(); } }}
+                            className="min-h-[38px] w-full sm:w-1/2"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    createSupplier();
+                                }
+                            }}
                         />
                         <Button
                             type="button"
                             size="sm"
-                            className="shrink-0 min-h-[38px]"
+                            className="min-h-[38px] shrink-0"
                             disabled={creatingSupplier || !newSupName.trim()}
                             onClick={createSupplier}
                         >
@@ -281,7 +300,7 @@ export function PartForm({ maintenanceId, suppliers, onCancel }: Props) {
 
             {/* Actions */}
             <div className="flex gap-2">
-                <Button type="submit" size="sm" className="gap-2 min-h-10 flex-1" disabled={processing}>
+                <Button type="submit" size="sm" className="min-h-10 flex-1 gap-2" disabled={processing}>
                     {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     {processing ? 'جاري الحفظ...' : 'إضافة القطعة'}
                 </Button>

@@ -1,3 +1,4 @@
+import { PasswordInput } from '@/components/password-input';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -13,7 +14,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PasswordInput } from '@/components/password-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { router, useForm } from '@inertiajs/react';
@@ -53,15 +53,7 @@ const statusColors: Record<string, string> = {
     suspended: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400',
 };
 
-function UserDialog({
-    open,
-    onClose,
-    user,
-}: {
-    open: boolean;
-    onClose: () => void;
-    user: User | null;
-}) {
+function UserDialog({ open, onClose, user }: { open: boolean; onClose: () => void; user: User | null }) {
     const isEdit = !!user;
     const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm<FormData>({
         name: '',
@@ -104,26 +96,29 @@ function UserDialog({
     }
 
     return (
-        <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+        <Dialog
+            open={open}
+            onOpenChange={(o) => {
+                if (!o) onClose();
+            }}
+        >
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>{isEdit ? 'تعديل المستخدم' : 'إضافة مستخدم جديد'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={submit} className="space-y-4 pt-2">
                     <div className="space-y-1.5">
-                        <Label htmlFor="u-name">الاسم <span className="text-destructive">*</span></Label>
-                        <Input
-                            id="u-name"
-                            autoFocus
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            placeholder="الاسم الكامل"
-                        />
+                        <Label htmlFor="u-name">
+                            الاسم <span className="text-destructive">*</span>
+                        </Label>
+                        <Input id="u-name" autoFocus value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder="الاسم الكامل" />
                         {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label htmlFor="u-email">البريد الإلكتروني <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="u-email">
+                            البريد الإلكتروني <span className="text-destructive">*</span>
+                        </Label>
                         <Input
                             id="u-email"
                             type="email"
@@ -149,7 +144,9 @@ function UserDialog({
 
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                            <Label>الدور <span className="text-destructive">*</span></Label>
+                            <Label>
+                                الدور <span className="text-destructive">*</span>
+                            </Label>
                             <Select value={data.role} onValueChange={(v) => setData('role', v)}>
                                 <SelectTrigger>
                                     <SelectValue />
@@ -163,7 +160,9 @@ function UserDialog({
                             {errors.role && <p className="text-xs text-destructive">{errors.role}</p>}
                         </div>
                         <div className="space-y-1.5">
-                            <Label>الحالة <span className="text-destructive">*</span></Label>
+                            <Label>
+                                الحالة <span className="text-destructive">*</span>
+                            </Label>
                             <Select value={data.status} onValueChange={(v) => setData('status', v)}>
                                 <SelectTrigger>
                                     <SelectValue />
@@ -180,8 +179,7 @@ function UserDialog({
 
                     <div className="space-y-1.5">
                         <Label htmlFor="u-pw">
-                            {isEdit ? 'كلمة المرور الجديدة' : 'كلمة المرور'}{' '}
-                            {!isEdit && <span className="text-destructive">*</span>}
+                            {isEdit ? 'كلمة المرور الجديدة' : 'كلمة المرور'} {!isEdit && <span className="text-destructive">*</span>}
                         </Label>
                         <PasswordInput
                             id="u-pw"
@@ -220,8 +218,8 @@ function UserDialog({
 }
 
 export function Users({ users }: Props) {
-    const [dialogOpen, setDialogOpen]     = useState(false);
-    const [editTarget, setEditTarget]     = useState<User | null>(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [editTarget, setEditTarget] = useState<User | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
     function openCreate() {
@@ -243,7 +241,7 @@ export function Users({ users }: Props) {
     return (
         <>
             <div className="w-full space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight">المستخدمون</h2>
                         <p className="text-muted-foreground">إدارة حسابات المستخدمين والصلاحيات</p>
@@ -279,7 +277,7 @@ export function Users({ users }: Props) {
                             </TableHeader>
                             <TableBody>
                                 {users.map((u) => (
-                                    <TableRow key={u.id} className="hover:bg-muted/30 transition-colors">
+                                    <TableRow key={u.id} className="transition-colors hover:bg-muted/30">
                                         <TableCell className="font-medium">{u.name}</TableCell>
                                         <TableCell dir="ltr" className="text-right text-sm text-muted-foreground">
                                             {u.email}
@@ -300,12 +298,7 @@ export function Users({ users }: Props) {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center justify-center gap-0.5">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 hover:bg-muted"
-                                                    onClick={() => openEdit(u)}
-                                                >
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" onClick={() => openEdit(u)}>
                                                     <Pencil className="h-3.5 w-3.5" />
                                                 </Button>
                                                 <Button
@@ -326,29 +319,26 @@ export function Users({ users }: Props) {
                 )}
             </div>
 
-            <UserDialog
-                open={dialogOpen}
-                onClose={() => setDialogOpen(false)}
-                user={editTarget}
-            />
+            <UserDialog open={dialogOpen} onClose={() => setDialogOpen(false)} user={editTarget} />
 
-            <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+            <AlertDialog
+                open={!!deleteTarget}
+                onOpenChange={(open) => {
+                    if (!open) setDeleteTarget(null);
+                }}
+            >
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
                         <AlertDialogDescription>
-                            سيتم حذف المستخدم{' '}
-                            <span className="font-bold text-foreground">"{deleteTarget?.name}"</span>.
+                            سيتم حذف المستخدم <span className="font-bold text-foreground">"{deleteTarget?.name}"</span>.
                             <br />
                             هذا الإجراء لا يمكن التراجع عنه.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                        <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={handleDelete}
-                        >
+                        <AlertDialogAction className="text-destructive-foreground bg-destructive hover:bg-destructive/90" onClick={handleDelete}>
                             نعم، احذف
                         </AlertDialogAction>
                     </AlertDialogFooter>

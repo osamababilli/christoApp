@@ -168,14 +168,14 @@ export function QuotationShow({ quotation, employees }: Props) {
                 {/* ── Page header ── */}
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1">
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                             <h2 className="text-2xl font-bold tracking-tight">عرض سعر</h2>
                             <span className="font-mono text-lg font-semibold text-muted-foreground">{quotation.reference_number}</span>
                             <Badge variant="outline" className={cn('text-sm', cfg.color)}>
                                 {cfg.label}
                             </Badge>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1.5">
                                 <User className="h-3.5 w-3.5" />
                                 {quotation.customer_name}
@@ -279,7 +279,7 @@ export function QuotationShow({ quotation, employees }: Props) {
                 {/* ── Converted motor link ── */}
                 {quotation.status === 'converted' && quotation.converted_to_motor_id && (
                     <Card className="border-purple-200 bg-purple-50 dark:bg-purple-950/20">
-                        <CardContent className="flex items-center gap-3 py-3">
+                        <CardContent className="flex flex-wrap items-center gap-3 py-3">
                             <RefreshCw className="h-4 w-4 text-purple-600" />
                             <span className="text-sm text-purple-700 dark:text-purple-400">تم تحويل هذا العرض إلى قيد استلام:</span>
                             <Link href={`/motors/${quotation.converted_to_motor_id}`}>
@@ -299,7 +299,7 @@ export function QuotationShow({ quotation, employees }: Props) {
                             <CardHeader className="pb-3">
                                 <CardTitle className="text-base">خدمات الصيانة</CardTitle>
                             </CardHeader>
-                            <CardContent className="p-0">
+                            <CardContent className="overflow-x-auto p-0">
                                 {quotation.services.length === 0 ? (
                                     <p className="py-6 text-center text-sm text-muted-foreground">لا توجد خدمات</p>
                                 ) : (
@@ -330,7 +330,7 @@ export function QuotationShow({ quotation, employees }: Props) {
                             <CardHeader className="pb-3">
                                 <CardTitle className="text-base">القطع والمستلزمات</CardTitle>
                             </CardHeader>
-                            <CardContent className="p-0">
+                            <CardContent className="overflow-x-auto p-0">
                                 {quotation.parts.length === 0 ? (
                                     <p className="py-6 text-center text-sm text-muted-foreground">لا توجد قطع</p>
                                 ) : (
