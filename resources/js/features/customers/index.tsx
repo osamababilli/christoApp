@@ -48,6 +48,7 @@ interface Customer {
     client_type_label: string;
     address?: string | null;
     responsible_name?: string | null;
+    responsible_phone?: string | null;
     accounting_name?: string | null;
     accounting_phone?: string | null;
     accounting_email?: string | null;
@@ -74,6 +75,7 @@ function emptyCustomerFormData() {
         opening_balance_notes: '',
         address: '',
         responsible_name: '',
+        responsible_phone: '',
         accounting_name: '',
         accounting_phone: '',
         accounting_email: '',
@@ -161,6 +163,7 @@ function EditCustomerDialog({ customer, onClose }: { customer: Customer | null; 
                 opening_balance_notes: customer.opening_balance_notes ?? '',
                 address: customer.address ?? '',
                 responsible_name: customer.responsible_name ?? '',
+                responsible_phone: customer.responsible_phone ?? '',
                 accounting_name: customer.accounting_name ?? '',
                 accounting_phone: customer.accounting_phone ?? '',
                 accounting_email: customer.accounting_email ?? '',
@@ -343,11 +346,9 @@ function CustomerForm({
                         </div>
                     )}
 
-                    {isMilitary && (
+                    <div className="grid gap-2 sm:grid-cols-2">
                         <div className="space-y-1">
-                            <label className="text-sm font-medium">
-                                المسؤول عنه (اسم المسؤول / المدير) <span className="text-destructive">*</span>
-                            </label>
+                            <label className="text-sm font-medium">الشخص المسؤول {isMilitary && <span className="text-destructive">*</span>}</label>
                             <Input
                                 placeholder="اسم المسؤول"
                                 value={data.responsible_name}
@@ -355,7 +356,19 @@ function CustomerForm({
                             />
                             {errors.responsible_name && <p className="text-xs text-destructive">{errors.responsible_name}</p>}
                         </div>
-                    )}
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium">
+                                هاتف الشخص المسؤول <span className="text-destructive">*</span>
+                            </label>
+                            <Input
+                                placeholder="05xxxxxxxx"
+                                dir="ltr"
+                                value={data.responsible_phone}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData('responsible_phone', e.target.value)}
+                            />
+                            {errors.responsible_phone && <p className="text-xs text-destructive">{errors.responsible_phone}</p>}
+                        </div>
+                    </div>
 
                     <div className="space-y-1">
                         <label className="text-sm font-medium text-muted-foreground">البريد الإلكتروني</label>
@@ -458,37 +471,37 @@ function CustomerForm({
                         </div>
                     )}
 
-                    {isOrg && (
-                        <div className="space-y-3 rounded-lg border p-3">
-                            <label className="text-sm font-medium">مسؤول المحاسبة</label>
-                            <div className="grid gap-2 sm:grid-cols-2">
-                                <Input
-                                    placeholder="الاسم الكامل"
-                                    value={data.accounting_name}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData('accounting_name', e.target.value)}
-                                />
-                                <Input
-                                    placeholder="رقم الهاتف"
-                                    dir="ltr"
-                                    value={data.accounting_phone}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData('accounting_phone', e.target.value)}
-                                />
-                                <Input
-                                    type="email"
-                                    placeholder="البريد الإلكتروني"
-                                    dir="ltr"
-                                    className="sm:col-span-2"
-                                    value={data.accounting_email}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData('accounting_email', e.target.value)}
-                                />
-                            </div>
-                            <div className="grid gap-1 text-xs text-destructive">
-                                {errors.accounting_name && <p>{errors.accounting_name}</p>}
-                                {errors.accounting_phone && <p>{errors.accounting_phone}</p>}
-                                {errors.accounting_email && <p>{errors.accounting_email}</p>}
-                            </div>
+                    <div className="space-y-3 rounded-lg border p-3">
+                        <label className="text-sm font-medium">
+                            مسؤول الحسابات <span className="text-destructive">*</span>
+                        </label>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                            <Input
+                                placeholder="الاسم الكامل"
+                                value={data.accounting_name}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData('accounting_name', e.target.value)}
+                            />
+                            <Input
+                                placeholder="رقم الهاتف"
+                                dir="ltr"
+                                value={data.accounting_phone}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData('accounting_phone', e.target.value)}
+                            />
+                            <Input
+                                type="email"
+                                placeholder="البريد الإلكتروني"
+                                dir="ltr"
+                                className="sm:col-span-2"
+                                value={data.accounting_email}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData('accounting_email', e.target.value)}
+                            />
                         </div>
-                    )}
+                        <div className="grid gap-1 text-xs text-destructive">
+                            {errors.accounting_name && <p>{errors.accounting_name}</p>}
+                            {errors.accounting_phone && <p>{errors.accounting_phone}</p>}
+                            {errors.accounting_email && <p>{errors.accounting_email}</p>}
+                        </div>
+                    </div>
 
                     {/* Opening balance */}
                     <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900 dark:bg-amber-950/20">

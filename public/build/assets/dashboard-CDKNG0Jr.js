@@ -1,1 +1,0 @@
-import{j as r}from"./app-B4ddh5nz.js";import{W as t}from"./index-CzoYQCKP.js";/* empty css            */import"./card-8nylNk3b.js";import"./table-BsV2Zlfi.js";import"./circle-check-BNqO4-fo.js";import"./dollar-sign-BnbSvJcD.js";import"./wallet-CPuHJ-IL.js";import"./circle-alert-D78kgIYd.js";function x(o){return r.jsx(t,{...o})}export{x as default};

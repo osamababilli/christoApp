@@ -261,18 +261,6 @@ export default function QuotationPrint({ quotation }: { quotation: QuotationPrin
                     </table>
                 </div>
 
-                {/* ── Terms & Validity ── */}
-                <div style={{ marginBottom: 36, padding: '14px 18px', border: '1px solid #e4e4e7', borderRadius: 8, background: '#fafafa' }}>
-                    <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700 }}>شروط وملاحظات عرض السعر</p>
-                    <ul style={{ margin: 0, paddingRight: 20, fontSize: 12, color: '#555', lineHeight: 1.9 }}>
-                        <li>
-                            صلاحية العرض: <strong>{quotation.valid_days} يوماً</strong> من تاريخ الإصدار.
-                        </li>
-                        <li>الأسعار المذكورة لا تشمل أي قطع إضافية قد تظهر عند تفكيك الجهاز.</li>
-                        <li>يُرجى التواصل مع الورشة لتأكيد الطلب قبل البدء بالإصلاح.</li>
-                    </ul>
-                </div>
-
                 {/* ── Signatures ── */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginBottom: 24 }}>
                     <SignatureBox label="توقيع مندوب الورشة" />

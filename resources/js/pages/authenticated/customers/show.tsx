@@ -73,6 +73,7 @@ interface Customer {
     client_type_label: string;
     address: string | null;
     responsible_name: string | null;
+    responsible_phone: string | null;
     accounting_name: string | null;
     accounting_phone: string | null;
     accounting_email: string | null;
@@ -550,7 +551,10 @@ export default function CustomerShow({ customer, motors, invoices, summary, cust
                         </div>
                     </div>
 
-                    {customer.client_type !== 'individual' && (
+                    {(customer.client_type !== 'individual' ||
+                        customer.responsible_name ||
+                        customer.responsible_phone ||
+                        customer.accounting_name) && (
                         <div className="min-w-[260px] flex-1 space-y-2 rounded-xl border bg-card px-5 py-4 text-sm shadow-sm">
                             {customer.address && (
                                 <p>
@@ -560,8 +564,16 @@ export default function CustomerShow({ customer, motors, invoices, summary, cust
                             )}
                             {customer.responsible_name && (
                                 <p>
-                                    <span className="text-muted-foreground">المسؤول عنه: </span>
+                                    <span className="text-muted-foreground">الشخص المسؤول: </span>
                                     {customer.responsible_name}
+                                </p>
+                            )}
+                            {customer.responsible_phone && (
+                                <p dir="ltr">
+                                    <span className="text-muted-foreground" dir="rtl">
+                                        هاتف المسؤول:{' '}
+                                    </span>
+                                    {customer.responsible_phone}
                                 </p>
                             )}
                             {customer.contacts.length > 0 && (

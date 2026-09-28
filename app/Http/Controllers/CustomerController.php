@@ -43,6 +43,8 @@ class CustomerController extends Controller
                 'opening_balance_notes' => $c->opening_balance_notes,
                 'client_type'           => $c->client_type ?? 'individual',
                 'client_type_label'     => Customer::clientTypeLabel($c->client_type),
+                'responsible_name'      => $c->responsible_name,
+                'responsible_phone'     => $c->responsible_phone,
                 'created_at'            => $c->created_at->format('Y-m-d'),
             ]),
             'filters' => $request->only(['search']),
@@ -90,8 +92,9 @@ class CustomerController extends Controller
             'opening_balance_notes' => 'nullable|string|max:500',
             'address'               => [$needsAddress ? 'required' : 'nullable', 'string', 'max:255'],
             'responsible_name'      => [$clientType === 'military' ? 'required' : 'nullable', 'string', 'max:255'],
-            'accounting_name'       => [$needsAddress ? 'required' : 'nullable', 'string', 'max:255'],
-            'accounting_phone'      => [$needsAddress ? 'required' : 'nullable', 'string', 'max:50'],
+            'responsible_phone'     => 'required|string|max:50',
+            'accounting_name'       => 'required|string|max:255',
+            'accounting_phone'      => 'required|string|max:50',
             'accounting_email'      => 'nullable|email|max:255',
             'contacts'              => $needsContacts ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
             'contacts.*.name'       => 'required_with:contacts|string|max:255',
@@ -101,11 +104,11 @@ class CustomerController extends Controller
         $contacts = $validated['contacts'] ?? [];
         unset($validated['contacts']);
 
-        // Garage/company accounting fields are irrelevant to other client types
+        $validated['opening_balance'] = $validated['opening_balance'] ?? 0;
+
+        // Address remains garage/company-specific; accounting contact (مسؤول حسابات) applies to every client type
         if (!$needsAddress) {
-            $validated['accounting_name']  = null;
-            $validated['accounting_phone'] = null;
-            $validated['address']          = null;
+            $validated['address'] = null;
         }
         if ($clientType !== 'military') {
             $validated['responsible_name'] = null;
@@ -368,6 +371,7 @@ class CustomerController extends Controller
             'client_type_label'     => Customer::clientTypeLabel($customer->client_type),
             'address'               => $customer->address,
             'responsible_name'      => $customer->responsible_name,
+            'responsible_phone'     => $customer->responsible_phone,
             'accounting_name'       => $customer->accounting_name,
             'accounting_phone'      => $customer->accounting_phone,
             'accounting_email'      => $customer->accounting_email,

@@ -13,7 +13,7 @@ class Customer extends Model
 
     protected $fillable = [
         'name', 'phone', 'email', 'notes', 'account_type', 'opening_balance', 'opening_balance_notes',
-        'client_type', 'address', 'responsible_name', 'accounting_name', 'accounting_phone', 'accounting_email',
+        'client_type', 'address', 'responsible_name', 'responsible_phone', 'accounting_name', 'accounting_phone', 'accounting_email',
     ];
 
     protected $casts = ['opening_balance' => 'decimal:2'];
