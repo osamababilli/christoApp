@@ -172,7 +172,7 @@ export function Statement({ customers, selected_customer, invoices }: Props) {
 
             <Main className="flex flex-1 flex-col gap-6 pb-12">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">كشف حساب</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">مالية العملاء</h1>
                     <p className="text-sm text-muted-foreground mt-0.5">اختر العميل ثم سجّل دفعة على الفواتير أو على الحساب مباشرة</p>
                 </div>
 

@@ -49,7 +49,7 @@ export const sidebarData: SidebarData = {
             title: 'المالية',
             items: [
                 { title: 'الفواتير', url: '/invoices', icon: FileSpreadsheet },
-                { title: 'كشف حساب', url: '/statement', icon: ReceiptText },
+                { title: 'مالية العملاء', url: '/statement', icon: ReceiptText },
                 { title: 'المحاسبة والخزنة', url: '/accounting', icon: Vault, roles: ['admin', 'manager'] },
                 { title: 'التقارير', url: '/reports', icon: BarChart3, roles: ['admin', 'manager'] },
             ],

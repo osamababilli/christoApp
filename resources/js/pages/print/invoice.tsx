@@ -104,14 +104,11 @@ export default function InvoicePrint({ invoice }: { invoice: InvoicePrint }) {
                         borderBottom: '3px solid #111',
                     }}
                 >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
                         <img src="/images/brand/logo-color.png" alt="ورشة غسان متري" style={{ height: 100, width: 'auto', objectFit: 'contain' }} />
-                        <div>
-                            <p style={{ fontSize: 13, color: '#555', margin: 0 }}>للصيانة الميكانيكية والكهربائية</p>
-                            <p style={{ fontSize: 11, color: '#777', margin: '6px 0 0' }}>
-                                رقم مالي: ٩٥٠٠١٧ &nbsp;|&nbsp; هاتف: ٧٦١٦٩٠٠٨ &nbsp;|&nbsp; info@ghassan-mitri.com
-                            </p>
-                        </div>
+                        <p style={{ fontSize: 11, color: '#777', margin: 0 }}>
+                            رقم مالي: ٩٥٠٠١٧ &nbsp;|&nbsp; هاتف: ٧٦١٦٩٠٠٨ &nbsp;|&nbsp; info@ghassan-mitri.com
+                        </p>
                     </div>
                     <div style={{ textAlign: 'left' }}>
                         <div style={{ display: 'inline-block', border: '2px solid #111', borderRadius: 8, padding: '8px 20px', textAlign: 'center' }}>
